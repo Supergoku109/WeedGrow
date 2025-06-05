@@ -25,11 +25,9 @@ export default function Step2() {
   const [sunMenu, setSunMenu] = React.useState(false);
 
   const inputStyle = {
-    backgroundColor: '#f5f5f5',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#333',
   } as const;
 
   return (
