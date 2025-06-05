@@ -6,8 +6,11 @@ import {
   View,
   TouchableWithoutFeedback,
   Keyboard,
+  Dimensions,
+  Alert,
+  Text,
 } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, MapPressEvent } from 'react-native-maps';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TextInput, Button } from 'react-native-paper';
 import * as Location from 'expo-location';
@@ -17,6 +20,8 @@ import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+
+const screen = Dimensions.get('window');
 
 export default function Step3() {
   const router = useRouter();
@@ -47,14 +52,36 @@ export default function Step3() {
         );
         return;
       }
-      const current = await Location.getCurrentPositionAsync({});
+      // Try last known first
+      const lastKnown = await Location.getLastKnownPositionAsync();
+      if (lastKnown) {
+        setField('location', {
+          lat: lastKnown.coords.latitude,
+          lng: lastKnown.coords.longitude,
+        });
+        return;
+      }
+
+      // Fallback to full GPS if nothing cached
+      const current = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+        timeout: 5000,
+      });
       setField('location', {
         lat: current.coords.latitude,
         lng: current.coords.longitude,
       });
-    } finally {
+      } finally {
       setLoading(false);
-    }
+      }
+      };
+
+  const handleMapPress = (event: MapPressEvent) => {
+    const { latitude, longitude } = event.nativeEvent.coordinate;
+    setField('location', {
+      lat: latitude,
+      lng: longitude,
+    });
   };
 
   return (
@@ -66,86 +93,76 @@ export default function Step3() {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <ScrollView
             style={{ flex: 1 }}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, gap: 16 }}>
-          <StepIndicatorBar currentPosition={2} />
-
-          <Button
-            icon="crosshairs-gps"
-            loading={loading}
-            onPress={getLocation}
-            style={{ marginBottom: 8, marginTop: 8 }}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, gap: 16 }}
           >
-            📍 Use My Location
-          </Button>
+            <StepIndicatorBar currentPosition={2} />
 
-          {location ? (
+            <Button
+              icon="crosshairs-gps"
+              loading={loading}
+              onPress={getLocation}
+              style={{ marginBottom: 8, marginTop: 8 }}
+            >
+              📍 Use My Location
+            </Button>
+
             <TextInput
-              value={`📍 Location: ${lat}, ${lng} (from GPS)`}
-              editable={false}
+              label="Location Nickname"
+              value={locationNickname}
+              onChangeText={(text) => setField('locationNickname', text)}
               style={inputStyle}
             />
-          ) : (
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <TextInput
-                label="Latitude"
-                value={lat}
-                onChangeText={(text) =>
-                  setField('location', {
-                    lat: parseFloat(text) || 0,
-                    lng: location?.lng || 0,
-                  })
+
+            <View style={{ height: 300, borderRadius: 12, overflow: 'hidden' }}>
+              <MapView
+                style={{ width: screen.width - 32, height: 300 }}
+                onPress={handleMapPress}
+                initialRegion={{
+                  latitude: location?.lat ?? -33.9249,
+                  longitude: location?.lng ?? 18.4241,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                }}
+                region={
+                  location
+                    ? {
+                        latitude: location.lat,
+                        longitude: location.lng,
+                        latitudeDelta: 0.005,
+                        longitudeDelta: 0.005,
+                      }
+                    : undefined
                 }
-                style={[inputStyle, { flex: 1 }]}
-              />
-              <TextInput
-                label="Longitude"
-                value={lng}
-                onChangeText={(text) =>
-                  setField('location', {
-                    lat: location?.lat || 0,
-                    lng: parseFloat(text) || 0,
-                  })
-                }
-                style={[inputStyle, { flex: 1 }]}
-              />
+              >
+                {location && (
+                  <Marker
+                    coordinate={{ latitude: location.lat, longitude: location.lng }}
+                    pinColor="green"
+                    title="Plant Location"
+                  />
+                )}
+              </MapView>
             </View>
-          )}
 
-          <TextInput
-            label="Location Nickname"
-            value={locationNickname}
-            onChangeText={(text) => setField('locationNickname', text)}
-            style={inputStyle}
-          />
+            <Text style={{ color: Colors[theme].text, textAlign: 'center', marginTop: 8 }}>
+              Tap the map to adjust your location
+            </Text>
 
-          {location && (
-            <MapView
-              style={{ height: 150, borderRadius: 8 }}
-              region={{
-                latitude: location.lat,
-                longitude: location.lng,
-                latitudeDelta: 0.005,
-                longitudeDelta: 0.005,
-              }}
-            >
-              <Marker
-                coordinate={{ latitude: location.lat, longitude: location.lng }}
-                pinColor="green"
-              />
-            </MapView>
-          )}
-
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
-            <Button mode="outlined" onPress={() => router.back()}>
-              Back
-            </Button>
-            <Button mode="contained" onPress={() => router.push('/add-plant/step4')}>
-              Next
-            </Button>
-          </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
-  </SafeAreaView>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
+              <Button mode="outlined" onPress={() => router.back()}>
+                Back
+              </Button>
+              <Button
+                mode="contained"
+                onPress={() => router.push('/add-plant/step4')}
+                disabled={!location}
+              >
+                Next
+              </Button>
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
