@@ -16,10 +16,13 @@ import { useRouter } from 'expo-router';
 
 import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function Step2() {
   const router = useRouter();
   const { environment, potSize, sunlightExposure, plantedIn, setField } = usePlantForm();
+  const theme = useColorScheme() ?? 'dark';
 
   const [potMenu, setPotMenu] = React.useState(false);
   const [sunMenu, setSunMenu] = React.useState(false);
@@ -36,7 +39,9 @@ export default function Step2() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
+        <ScrollView
+          style={{ flex: 1, backgroundColor: Colors[theme].background }}
+          contentContainerStyle={{ padding: 24, gap: 16 }}>
           <StepIndicatorBar currentPosition={1} />
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>

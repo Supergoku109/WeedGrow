@@ -18,10 +18,13 @@ import { useRouter } from 'expo-router';
 
 import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function Step1() {
   const router = useRouter();
   const { name, strain, growthStage, setField } = usePlantForm();
+  const theme = useColorScheme() ?? 'dark';
 
   const isValid = name.trim().length > 0;
   const [strainMenu, setStrainMenu] = React.useState(false);
@@ -40,7 +43,9 @@ export default function Step1() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
+        <ScrollView
+          style={{ flex: 1, backgroundColor: Colors[theme].background }}
+          contentContainerStyle={{ padding: 24, gap: 16 }}>
           <StepIndicatorBar currentPosition={0} />
           <Text variant="titleLarge" style={{ textAlign: 'center', marginTop: 8 }}>
             🌱 Let’s start with the basics
