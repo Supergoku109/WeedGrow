@@ -7,12 +7,13 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   TextInput,
   Button,
   Text,
   Menu,
-  RadioButton,
+  SegmentedButtons,
 } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 
@@ -25,6 +26,7 @@ export default function Step1() {
   const router = useRouter();
   const { name, strain, growthStage, setField } = usePlantForm();
   const theme = useColorScheme() ?? 'dark';
+  const insets = useSafeAreaInsets();
 
   const isValid = name.trim().length > 0;
   const [strainMenu, setStrainMenu] = React.useState(false);
@@ -38,14 +40,15 @@ export default function Step1() {
   } as const;
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <ScrollView
-          style={{ flex: 1, backgroundColor: Colors[theme].background }}
-          contentContainerStyle={{ padding: 24, gap: 16 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: insets.top + 16 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 16 }}>
           <StepIndicatorBar currentPosition={0} />
           <Text variant="titleLarge" style={{ textAlign: 'center', marginTop: 8 }}>
             🌱 Let’s start with the basics
@@ -97,15 +100,16 @@ export default function Step1() {
             ))}
           </Menu>
 
-          <RadioButton.Group
-            onValueChange={(val) => setField('growthStage', val as any)}
+          <SegmentedButtons
             value={growthStage}
-          >
-            <RadioButton.Item label="Germination" value="germination" position="leading" />
-            <RadioButton.Item label="Seedling" value="seedling" position="leading" />
-            <RadioButton.Item label="Vegetative" value="vegetative" position="leading" />
-            <RadioButton.Item label="Flowering" value="flowering" position="leading" />
-          </RadioButton.Group>
+            onValueChange={(val) => setField('growthStage', val as any)}
+            buttons={[
+              { value: 'germination', label: 'Germination' },
+              { value: 'seedling', label: 'Seedling' },
+              { value: 'vegetative', label: 'Vegetative' },
+              { value: 'flowering', label: 'Flowering' },
+            ]}
+          />
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
             <Button mode="outlined" onPress={() => router.back()}>
@@ -122,5 +126,6 @@ export default function Step1() {
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
+  </SafeAreaView>
   );
 }
