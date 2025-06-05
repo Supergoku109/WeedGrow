@@ -61,6 +61,26 @@ npm run dev
 Vite will start a development server (usually on <http://localhost:5173>). Open
 that URL in your browser to view the web app.
 
+## Shared Firebase configuration
+
+Both projects rely on a single Firebase configuration defined in `firebase.ts`
+at the repository root. Create a `.env` file next to it and add your Firebase
+keys using the `VITE_` prefix:
+
+```
+VITE_FIREBASE_API_KEY=...
+VITE_FIREBASE_AUTH_DOMAIN=...
+VITE_FIREBASE_PROJECT_ID=...
+VITE_FIREBASE_STORAGE_BUCKET=...
+VITE_FIREBASE_MESSAGING_SENDER_ID=...
+VITE_FIREBASE_APP_ID=...
+VITE_FIREBASE_MEASUREMENT_ID=...
+```
+
+The Expo and Vite apps each import the config through their respective
+`services/firebase.ts` files, so you only need to maintain the keys in one
+place.
+
 ## Additional information
 
 For more information about each project (including build and lint commands),
