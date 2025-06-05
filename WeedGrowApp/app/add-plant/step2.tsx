@@ -10,7 +10,6 @@ import {
 import {
   TextInput,
   Button,
-  SegmentedButtons,
   Menu,
 } from 'react-native-paper';
 import { useRouter } from 'expo-router';
@@ -42,24 +41,29 @@ export default function Step2() {
         <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
           <StepIndicatorBar currentPosition={1} />
 
-          <SegmentedButtons
-            value={environment}
-            onValueChange={(val) => setField('environment', val as any)}
-            buttons={[
-              { value: 'outdoor', label: 'Outdoor' },
-              { value: 'greenhouse', label: 'Greenhouse' },
-              { value: 'indoor', label: 'Indoor' },
-            ]}
-          />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {['outdoor', 'greenhouse', 'indoor'].map((opt) => (
+              <Button
+                key={opt}
+                mode={environment === opt ? 'contained' : 'outlined'}
+                onPress={() => setField('environment', opt as any)}
+              >
+                {opt.charAt(0).toUpperCase() + opt.slice(1)}
+              </Button>
+            ))}
+          </View>
 
-          <SegmentedButtons
-            value={plantedIn}
-            onValueChange={(val) => setField('plantedIn', val as any)}
-            buttons={[
-              { value: 'pot', label: 'Pot' },
-              { value: 'ground', label: 'Ground' },
-            ]}
-          />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {['pot', 'ground'].map((opt) => (
+              <Button
+                key={opt}
+                mode={plantedIn === opt ? 'contained' : 'outlined'}
+                onPress={() => setField('plantedIn', opt as any)}
+              >
+                {opt === 'pot' ? 'Pot' : 'Ground'}
+              </Button>
+            ))}
+          </View>
 
           {plantedIn === 'pot' && (
             <Menu
@@ -101,12 +105,7 @@ export default function Step2() {
               />
             }
           >
-            {[
-              'Full Sun (6–8+ hrs)',
-              'Partial Sun (3–6 hrs)',
-              'Mostly Shade (0–3 hrs)',
-              'Not Sure',
-            ].map((opt) => (
+            {['Full Sun', 'Partial Sun', 'Mostly Shade', 'Not Sure'].map((opt) => (
               <Menu.Item
                 key={opt}
                 onPress={() => {

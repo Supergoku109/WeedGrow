@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, View, Image } from 'react-native';
+import { ScrollView, View, Image, StyleSheet } from 'react-native';
 import { Button, Card, Text, Divider } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 
@@ -16,6 +16,10 @@ export default function Review() {
     router.replace('/plants');
   };
 
+  const styles = StyleSheet.create({
+    sectionTitle: { fontWeight: 'bold', marginTop: 16, marginBottom: 8, fontSize: 16 },
+  });
+
   return (
     <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
       <StepIndicatorBar currentPosition={4} />
@@ -24,6 +28,7 @@ export default function Review() {
         <Card.Title title="Review Plant" />
         <Card.Content>
           <View style={{ gap: 8 }}>
+            <Text style={styles.sectionTitle}>Growth Info</Text>
             <View>
               <Text variant="labelLarge">Name</Text>
               <Text>{form.name}</Text>
@@ -38,7 +43,9 @@ export default function Review() {
               <Text variant="labelLarge">Growth Stage</Text>
               <Text>{form.growthStage}</Text>
             </View>
+
             <Divider />
+            <Text style={styles.sectionTitle}>Environment</Text>
             <View>
               <Text variant="labelLarge">Environment</Text>
               <Text>{form.environment}</Text>
@@ -90,49 +97,52 @@ export default function Review() {
                 </View>
               </>
             )}
+
+            <Divider />
+            <Text style={styles.sectionTitle}>Care</Text>
             {form.wateringFrequency && (
               <>
-                <Divider />
                 <View>
                   <Text variant="labelLarge">Watering</Text>
                   <Text>{form.wateringFrequency}</Text>
                 </View>
+                <Divider />
               </>
             )}
             {form.fertilizer && (
               <>
-                <Divider />
                 <View>
                   <Text variant="labelLarge">Fertilizer</Text>
                   <Text>{form.fertilizer}</Text>
                 </View>
+                <Divider />
               </>
             )}
             {form.pests && form.pests.length > 0 && (
               <>
-                <Divider />
                 <View>
                   <Text variant="labelLarge">Pests</Text>
                   <Text>{form.pests.join(', ')}</Text>
                 </View>
+                <Divider />
               </>
             )}
             {form.trainingTags && form.trainingTags.length > 0 && (
               <>
-                <Divider />
                 <View>
                   <Text variant="labelLarge">Training</Text>
                   <Text>{form.trainingTags.join(', ')}</Text>
                 </View>
+                <Divider />
               </>
             )}
             {form.notes && (
               <>
-                <Divider />
                 <View>
                   <Text variant="labelLarge">Notes</Text>
                   <Text>{form.notes}</Text>
                 </View>
+                <Divider />
               </>
             )}
             {form.imageUri && (

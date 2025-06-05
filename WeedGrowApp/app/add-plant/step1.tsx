@@ -10,9 +10,9 @@ import {
 import {
   TextInput,
   Button,
-  SegmentedButtons,
   Text,
   Menu,
+  RadioButton,
 } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 
@@ -25,6 +25,8 @@ export default function Step1() {
 
   const isValid = name.trim().length > 0;
   const [strainMenu, setStrainMenu] = React.useState(false);
+  const [strainSearch, setStrainSearch] = React.useState('');
+  const strains = ['Sativa', 'Indica', 'Hybrid'];
 
   const inputStyle = {
     backgroundColor: '#f5f5f5',
@@ -42,7 +44,9 @@ export default function Step1() {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
           <StepIndicatorBar currentPosition={0} />
-          <Text variant="titleLarge">🌱 Let’s start with the basics</Text>
+          <Text variant="titleLarge" style={{ textAlign: 'center', marginTop: 8 }}>
+            🌱 Let’s start with the basics
+          </Text>
 
           <TextInput
             label="Plant Name"
@@ -57,8 +61,8 @@ export default function Step1() {
             anchor={
               <TextInput
                 label="Strain"
-                value={strain}
-                onChangeText={(text) => setField('strain', text)}
+                value={strain || 'Unknown'}
+                editable={false}
                 style={inputStyle}
                 right={
                   <TextInput.Icon
@@ -69,28 +73,36 @@ export default function Step1() {
               />
             }
           >
-            {['Unknown', 'Sativa', 'Indica', 'Hybrid'].map((opt) => (
+            <TextInput
+              placeholder="Search..."
+              value={strainSearch}
+              onChangeText={setStrainSearch}
+              style={{ margin: 8 }}
+            />
+            {["Unknown", ...strains.filter((s) =>
+              s.toLowerCase().includes(strainSearch.toLowerCase())
+            )].map((opt) => (
               <Menu.Item
                 key={opt}
                 onPress={() => {
                   setField('strain', opt);
                   setStrainMenu(false);
+                  setStrainSearch('');
                 }}
                 title={opt}
               />
             ))}
           </Menu>
 
-          <SegmentedButtons
-            value={growthStage}
+          <RadioButton.Group
             onValueChange={(val) => setField('growthStage', val as any)}
-            buttons={[
-              { value: 'germination', label: 'Germination' },
-              { value: 'seedling', label: 'Seedling' },
-              { value: 'vegetative', label: 'Vegetative' },
-              { value: 'flowering', label: 'Flowering' },
-            ]}
-          />
+            value={growthStage}
+          >
+            <RadioButton.Item label="Germination" value="germination" position="leading" />
+            <RadioButton.Item label="Seedling" value="seedling" position="leading" />
+            <RadioButton.Item label="Vegetative" value="vegetative" position="leading" />
+            <RadioButton.Item label="Flowering" value="flowering" position="leading" />
+          </RadioButton.Group>
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
             <Button mode="outlined" onPress={() => router.back()}>
