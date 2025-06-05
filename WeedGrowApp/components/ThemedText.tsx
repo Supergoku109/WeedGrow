@@ -56,6 +56,6 @@ const styles = StyleSheet.create({
   link: {
     lineHeight: 30,
     fontSize: 16,
-    color: Colors.dark.tint,
+    color: useThemeColor({ light: Colors.light.tint, dark: Colors.dark.tint }, 'link'),
   },
 });
