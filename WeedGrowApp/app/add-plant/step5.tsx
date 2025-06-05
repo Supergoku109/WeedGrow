@@ -55,7 +55,11 @@ export default function Step5() {
           </View>
 
           {imageUri ? (
-            <Image source={{ uri: imageUri }} style={{ height: 200, borderRadius: 8 }} />
+            <Image
+              source={{ uri: imageUri }}
+              style={{ height: 200, width: 200, borderRadius: 8 }}
+              resizeMode="cover"
+            />
           ) : null}
 
           <TextInput
