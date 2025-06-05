@@ -1,17 +1,11 @@
-import RootNavigator from '@/navigation/RootNavigator';
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider
-} from '@react-navigation/native';
+import { Slot } from 'expo-router';
+import { PaperProvider } from 'react-native-paper';
+import { SafeAreaView } from 'react-native';
 import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
-
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -21,12 +15,12 @@ export default function RootLayout() {
     return null;
   }
 
-  const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
-
   return (
-    <ThemeProvider value={theme}>
-        <RootNavigator />
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <PaperProvider>
+      <SafeAreaView style={{ flex: 1 }}>
+        <Slot />
+        <StatusBar style="auto" />
+      </SafeAreaView>
+    </PaperProvider>
   );
 }
