@@ -6,6 +6,7 @@ export default function PlantDetailScreen() {
   return (
     <ThemedView style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       <ThemedText type="title">Plant Detail</ThemedText>
+      <ThemedText>Details coming soon...</ThemedText>
     </ThemedView>
   );
 }
