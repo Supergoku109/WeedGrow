@@ -37,6 +37,11 @@ export default function Step3() {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         setLoading(false);
+        Alert.alert(
+          'Permission Denied',
+          'Location permission is required to fetch your current location. Please enable it in your device settings.',
+          [{ text: 'OK' }]
+        );
         return;
       }
       const current = await Location.getCurrentPositionAsync({});
