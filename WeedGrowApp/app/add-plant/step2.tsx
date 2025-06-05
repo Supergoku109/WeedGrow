@@ -37,7 +37,7 @@ export default function Step2() {
   } as const;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: insets.top + 16 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: insets.top + 8 }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -45,7 +45,7 @@ export default function Step2() {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <ScrollView
             style={{ flex: 1 }}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 16 }}>
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, gap: 16 }}>
           <StepIndicatorBar currentPosition={1} />
 
           <SegmentedButtons

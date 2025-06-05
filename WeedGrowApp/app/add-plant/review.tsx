@@ -26,10 +26,10 @@ export default function Review() {
   });
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: insets.top + 16 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: insets.top + 8 }}>
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 16 }}>
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, gap: 16 }}>
       <StepIndicatorBar currentPosition={4} />
 
       <Card>
