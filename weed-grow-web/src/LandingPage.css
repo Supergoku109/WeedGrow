@@ -1,0 +1,20 @@
+.landing-page__container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #1b5e20, #4caf50);
+  color: white;
+  text-align: center;
+}
+
+.title {
+  font-size: 4rem;
+  margin: 0;
+}
+
+.tagline {
+  font-size: 1.5rem;
+  margin-top: 1rem;
+}
