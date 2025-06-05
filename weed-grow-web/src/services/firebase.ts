@@ -1,15 +1,15 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
-// Your Firebase configuration
+// Firebase configuration loaded from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyDXb90WBQcnldQa0wibaEfKMHGh1Z-G3P8",
-  authDomain: "weed-grow.firebaseapp.com",
-  projectId: "weed-grow",
-  storageBucket: "weed-grow.appspot.com", // fixed typo here too
-  messagingSenderId: "23884971165",
-  appId: "1:23884971165:web:be76d378e5523ba94aa874",
-  measurementId: "G-BYSP407E4V"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase
