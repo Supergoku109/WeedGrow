@@ -4,9 +4,15 @@
   font-weight: 400;
 
   color-scheme: dark;
-  color: #eceeee;
-  background-color: #151718;
+  --color-text: #eceeee;
+  --color-bg: #151718;
+  --color-link: #646cff;
+  --color-link-hover: #535bf2;
+  --color-button-bg: #00c853;
+  --color-button-hover: #00e676;
 
+  color: var(--color-text);
+  background-color: var(--color-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
