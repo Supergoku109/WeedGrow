@@ -27,11 +27,11 @@ export default function TabLayout() {
         }),
       }}>
       <Tabs.Screen
-        name="index"
+        name="unknown"
         options={{
-          title: 'Home',
+          title: 'Unknown',
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
+            <IconSymbol size={28} name="questionmark.circle" color={color} />
           ),
         }}
       />
@@ -45,20 +45,29 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="gallery"
+        name="index"
         options={{
-          title: 'Gallery',
+          title: 'Home',
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="photo.on.rectangle" color={color} />
+            <IconSymbol size={28} name="house.fill" color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="learn"
         options={{
-          title: 'Explore',
+          title: 'Learn',
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="paperplane.fill" color={color} />
+            <IconSymbol size={28} name="book.fill" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="more"
+        options={{
+          title: 'More',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="ellipsis.circle" color={color} />
           ),
         }}
       />
