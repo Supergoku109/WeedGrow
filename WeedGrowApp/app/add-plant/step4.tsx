@@ -8,6 +8,7 @@ import {
   Keyboard,
   StyleSheet,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   TextInput,
   Button,
@@ -26,6 +27,7 @@ export default function Step4() {
   const router = useRouter();
   const { wateringFrequency, fertilizer, pests, trainingTags, setField } = usePlantForm();
   const theme = useColorScheme() ?? 'dark';
+  const insets = useSafeAreaInsets();
 
   const [waterMenu, setWaterMenu] = React.useState(false);
 
@@ -43,14 +45,15 @@ export default function Step4() {
   });
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <ScrollView
-          style={{ flex: 1, backgroundColor: Colors[theme].background }}
-          contentContainerStyle={{ padding: 24, gap: 16 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: insets.top + 16 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 16 }}>
           <StepIndicatorBar currentPosition={3} />
 
           <Menu
@@ -134,5 +137,6 @@ export default function Step4() {
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
+  </SafeAreaView>
   );
 }

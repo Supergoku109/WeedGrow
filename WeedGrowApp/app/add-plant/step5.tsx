@@ -8,6 +8,7 @@ import {
   Keyboard,
   Image,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TextInput, Button, Snackbar } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
@@ -22,6 +23,7 @@ export default function Step5() {
   const { notes, imageUri, setField } = usePlantForm();
   const [snackVisible, setSnackVisible] = React.useState(false);
   const theme = useColorScheme() ?? 'dark';
+  const insets = useSafeAreaInsets();
 
   const inputStyle = {
     borderRadius: 8,
@@ -40,14 +42,15 @@ export default function Step5() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <ScrollView
-          style={{ flex: 1, backgroundColor: Colors[theme].background }}
-          contentContainerStyle={{ padding: 24, gap: 16 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: insets.top + 16 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 16 }}>
           <StepIndicatorBar currentPosition={4} />
 
           <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -91,5 +94,6 @@ export default function Step5() {
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
+  </SafeAreaView>
   );
 }

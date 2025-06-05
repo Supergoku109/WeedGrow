@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView, View, Image, StyleSheet } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Card, Text, Divider } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 
@@ -12,6 +13,7 @@ export default function Review() {
   const router = useRouter();
   const form = usePlantForm();
   const theme = useColorScheme() ?? 'dark';
+  const insets = useSafeAreaInsets();
 
   const save = () => {
     console.log('Plant saved:', { ...form });
@@ -24,9 +26,10 @@ export default function Review() {
   });
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: Colors[theme].background }}
-      contentContainerStyle={{ padding: 24, gap: 16 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: insets.top + 16 }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 16 }}>
       <StepIndicatorBar currentPosition={4} />
 
       <Card>
@@ -169,5 +172,6 @@ export default function Review() {
         </Button>
       </View>
     </ScrollView>
+  </SafeAreaView>
   );
 }

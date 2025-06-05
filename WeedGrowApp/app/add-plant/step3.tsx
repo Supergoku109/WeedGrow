@@ -8,6 +8,7 @@ import {
   Keyboard,
   Image,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TextInput, Button } from 'react-native-paper';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
@@ -23,6 +24,7 @@ export default function Step3() {
   const theme = useColorScheme() ?? 'dark';
   const lat = location?.lat?.toString() ?? '';
   const lng = location?.lng?.toString() ?? '';
+  const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = React.useState(false);
 
@@ -56,14 +58,15 @@ export default function Step3() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <ScrollView
-          style={{ flex: 1, backgroundColor: Colors[theme].background }}
-          contentContainerStyle={{ padding: 24, gap: 16 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: insets.top + 16 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 16 }}>
           <StepIndicatorBar currentPosition={2} />
 
           <Button
@@ -135,5 +138,6 @@ export default function Step3() {
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
+  </SafeAreaView>
   );
 }

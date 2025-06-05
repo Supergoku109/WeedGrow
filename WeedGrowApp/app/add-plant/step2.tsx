@@ -7,10 +7,12 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   TextInput,
   Button,
   Menu,
+  SegmentedButtons,
 } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 
@@ -23,6 +25,7 @@ export default function Step2() {
   const router = useRouter();
   const { environment, potSize, sunlightExposure, plantedIn, setField } = usePlantForm();
   const theme = useColorScheme() ?? 'dark';
+  const insets = useSafeAreaInsets();
 
   const [potMenu, setPotMenu] = React.useState(false);
   const [sunMenu, setSunMenu] = React.useState(false);
@@ -34,27 +37,26 @@ export default function Step2() {
   } as const;
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <ScrollView
-          style={{ flex: 1, backgroundColor: Colors[theme].background }}
-          contentContainerStyle={{ padding: 24, gap: 16 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: insets.top + 16 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 16 }}>
           <StepIndicatorBar currentPosition={1} />
 
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {['outdoor', 'greenhouse', 'indoor'].map((opt) => (
-              <Button
-                key={opt}
-                mode={environment === opt ? 'contained' : 'outlined'}
-                onPress={() => setField('environment', opt as any)}
-              >
-                {opt.charAt(0).toUpperCase() + opt.slice(1)}
-              </Button>
-            ))}
-          </View>
+          <SegmentedButtons
+            value={environment}
+            onValueChange={(val) => setField('environment', val as any)}
+            buttons={[
+              { value: 'outdoor', label: 'Outdoor' },
+              { value: 'greenhouse', label: 'Greenhouse' },
+              { value: 'indoor', label: 'Indoor' },
+            ]}
+          />
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {['pot', 'ground'].map((opt) => (
@@ -131,5 +133,6 @@ export default function Step2() {
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
+  </SafeAreaView>
   );
 }
