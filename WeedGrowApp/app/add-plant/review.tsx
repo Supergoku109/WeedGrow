@@ -5,10 +5,13 @@ import { useRouter } from 'expo-router';
 
 import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function Review() {
   const router = useRouter();
   const form = usePlantForm();
+  const theme = useColorScheme() ?? 'dark';
 
   const save = () => {
     console.log('Plant saved:', { ...form });
@@ -21,7 +24,9 @@ export default function Review() {
   });
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: Colors[theme].background }}
+      contentContainerStyle={{ padding: 24, gap: 16 }}>
       <StepIndicatorBar currentPosition={4} />
 
       <Card>

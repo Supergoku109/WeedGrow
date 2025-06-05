@@ -14,11 +14,14 @@ import { useRouter } from 'expo-router';
 
 import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function Step5() {
   const router = useRouter();
   const { notes, imageUri, setField } = usePlantForm();
   const [snackVisible, setSnackVisible] = React.useState(false);
+  const theme = useColorScheme() ?? 'dark';
 
   const inputStyle = {
     borderRadius: 8,
@@ -42,7 +45,9 @@ export default function Step5() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
+        <ScrollView
+          style={{ flex: 1, backgroundColor: Colors[theme].background }}
+          contentContainerStyle={{ padding: 24, gap: 16 }}>
           <StepIndicatorBar currentPosition={4} />
 
           <View style={{ flexDirection: 'row', gap: 8 }}>

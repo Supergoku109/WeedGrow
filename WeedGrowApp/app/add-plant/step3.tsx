@@ -14,10 +14,13 @@ import { useRouter } from 'expo-router';
 
 import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function Step3() {
   const router = useRouter();
   const { location, locationNickname, setField } = usePlantForm();
+  const theme = useColorScheme() ?? 'dark';
   const lat = location?.lat?.toString() ?? '';
   const lng = location?.lng?.toString() ?? '';
 
@@ -58,7 +61,9 @@ export default function Step3() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
+        <ScrollView
+          style={{ flex: 1, backgroundColor: Colors[theme].background }}
+          contentContainerStyle={{ padding: 24, gap: 16 }}>
           <StepIndicatorBar currentPosition={2} />
 
           <Button
