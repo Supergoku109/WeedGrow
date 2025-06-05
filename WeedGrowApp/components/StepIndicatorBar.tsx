@@ -1,5 +1,7 @@
 import StepIndicator from 'react-native-step-indicator';
 import React from 'react';
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const labels = ['Basic Info', 'Environment', 'Location', 'Care', 'Photo'];
 
@@ -28,12 +30,15 @@ const customStyles = {
 };
 
 export default function StepIndicatorBar({ currentPosition }: { currentPosition: number }) {
+  const insets = useSafeAreaInsets();
   return (
-    <StepIndicator
-      customStyles={customStyles}
-      currentPosition={currentPosition}
-      labels={labels}
-      stepCount={labels.length}
-    />
+    <View style={{ marginTop: insets.top + 8, marginBottom: 16 }}>
+      <StepIndicator
+        customStyles={customStyles}
+        currentPosition={currentPosition}
+        labels={labels}
+        stepCount={labels.length}
+      />
+    </View>
   );
 }

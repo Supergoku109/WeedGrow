@@ -63,34 +63,47 @@ export default function Step3() {
         <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
           <StepIndicatorBar currentPosition={2} />
 
-          <Button icon="crosshairs-gps" loading={loading} onPress={getLocation}>
+          <Button
+            icon="crosshairs-gps"
+            loading={loading}
+            onPress={getLocation}
+            style={{ marginBottom: 8, marginTop: 8 }}
+          >
             📍 Use My Location
           </Button>
 
-          <View style={{ flexDirection: 'row', gap: 8 }}>
+          {location ? (
             <TextInput
-              label="Latitude"
-              value={lat}
-              onChangeText={(text) =>
-                setField('location', {
-                  lat: parseFloat(text) || 0,
-                  lng: location?.lng || 0,
-                })
-              }
-              style={[inputStyle, { flex: 1 }]}
+              value={`📍 Location: ${lat}, ${lng} (from GPS)`}
+              editable={false}
+              style={inputStyle}
             />
-            <TextInput
-              label="Longitude"
-              value={lng}
-              onChangeText={(text) =>
-                setField('location', {
-                  lat: location?.lat || 0,
-                  lng: parseFloat(text) || 0,
-                })
-              }
-              style={[inputStyle, { flex: 1 }]}
-            />
-          </View>
+          ) : (
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TextInput
+                label="Latitude"
+                value={lat}
+                onChangeText={(text) =>
+                  setField('location', {
+                    lat: parseFloat(text) || 0,
+                    lng: location?.lng || 0,
+                  })
+                }
+                style={[inputStyle, { flex: 1 }]}
+              />
+              <TextInput
+                label="Longitude"
+                value={lng}
+                onChangeText={(text) =>
+                  setField('location', {
+                    lat: location?.lat || 0,
+                    lng: parseFloat(text) || 0,
+                  })
+                }
+                style={[inputStyle, { flex: 1 }]}
+              />
+            </View>
+          )}
 
           <TextInput
             label="Location Nickname"

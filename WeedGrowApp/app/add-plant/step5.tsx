@@ -8,7 +8,7 @@ import {
   Keyboard,
   Image,
 } from 'react-native';
-import { TextInput, Button } from 'react-native-paper';
+import { TextInput, Button, Snackbar } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 
@@ -18,6 +18,7 @@ import { usePlantForm } from '@/stores/usePlantForm';
 export default function Step5() {
   const router = useRouter();
   const { notes, imageUri, setField } = usePlantForm();
+  const [snackVisible, setSnackVisible] = React.useState(false);
 
   const inputStyle = {
     backgroundColor: '#f5f5f5',
@@ -33,6 +34,7 @@ export default function Step5() {
       : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images });
     if (!result.canceled) {
       setField('imageUri', result.assets[0].uri);
+      setSnackVisible(true);
     }
   };
 
@@ -63,13 +65,17 @@ export default function Step5() {
           ) : null}
 
           <TextInput
-            label="Notes"
+            label="Observations (optional)"
             value={notes}
             onChangeText={(text) => setField('notes', text)}
             multiline
             placeholder="Add any observations here..."
             style={[inputStyle, { height: 120 }]}
           />
+
+          <Snackbar visible={snackVisible} onDismiss={() => setSnackVisible(false)}>
+            Photo selected
+          </Snackbar>
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
             <Button mode="outlined" onPress={() => router.back()}>

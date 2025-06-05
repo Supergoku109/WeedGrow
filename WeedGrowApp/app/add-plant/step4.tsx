@@ -6,12 +6,14 @@ import {
   View,
   TouchableWithoutFeedback,
   Keyboard,
+  StyleSheet,
 } from 'react-native';
 import {
   TextInput,
   Button,
   Chip,
   Menu,
+  Text,
 } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 
@@ -34,6 +36,10 @@ export default function Step4() {
     fontSize: 16,
     color: '#333',
   } as const;
+
+  const styles = StyleSheet.create({
+    sectionTitle: { fontWeight: 'bold', marginTop: 16, marginBottom: 8, fontSize: 16 },
+  });
 
   return (
     <KeyboardAvoidingView
@@ -76,6 +82,7 @@ export default function Step4() {
             style={inputStyle}
           />
 
+          <Text style={styles.sectionTitle}>Pest History</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {pestOptions.map((p) => (
               <Chip
@@ -94,6 +101,7 @@ export default function Step4() {
             ))}
           </View>
 
+          <Text style={styles.sectionTitle}>Training Techniques</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {trainingOptions.map((t) => (
               <Chip
