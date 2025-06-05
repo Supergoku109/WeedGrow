@@ -1,13 +1,12 @@
+import RootNavigator from '@/navigation/RootNavigator';
 import {
   DarkTheme,
   DefaultTheme,
-  NavigationContainer,
-  ThemeProvider,
+  ThemeProvider
 } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-import RootNavigator from '@/navigation/RootNavigator';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -26,9 +25,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={theme}>
-      <NavigationContainer theme={theme}>
         <RootNavigator />
-      </NavigationContainer>
       <StatusBar style="auto" />
     </ThemeProvider>
   );
