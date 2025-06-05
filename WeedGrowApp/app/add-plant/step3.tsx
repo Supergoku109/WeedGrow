@@ -6,8 +6,8 @@ import {
   View,
   TouchableWithoutFeedback,
   Keyboard,
-  Image,
 } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TextInput, Button } from 'react-native-paper';
 import * as Location from 'expo-location';
@@ -119,12 +119,20 @@ export default function Step3() {
           />
 
           {location && (
-            <Image
-              source={{
-                uri: `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=15&size=600x300&markers=color:green|${lat},${lng}`,
-              }}
+            <MapView
               style={{ height: 150, borderRadius: 8 }}
-            />
+              region={{
+                latitude: location.lat,
+                longitude: location.lng,
+                latitudeDelta: 0.005,
+                longitudeDelta: 0.005,
+              }}
+            >
+              <Marker
+                coordinate={{ latitude: location.lat, longitude: location.lng }}
+                pinColor="green"
+              />
+            </MapView>
           )}
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
