@@ -1,6 +1,18 @@
 import React from 'react';
-import { ScrollView, KeyboardAvoidingView, Platform, View } from 'react-native';
-import { TextInput, Button } from 'react-native-paper';
+import {
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  View,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from 'react-native';
+import {
+  TextInput,
+  Button,
+  Chip,
+  Menu,
+} from 'react-native-paper';
 import { useRouter } from 'expo-router';
 
 import StepIndicatorBar from '@/components/StepIndicatorBar';
@@ -10,44 +22,106 @@ export default function Step4() {
   const router = useRouter();
   const { wateringFrequency, fertilizer, pests, trainingTags, setField } = usePlantForm();
 
+  const [waterMenu, setWaterMenu] = React.useState(false);
+
+  const pestOptions = ['Spider Mites', 'Powdery Mildew', 'Aphids'];
+  const trainingOptions = ['LST', 'Topping', 'SCROG'];
+
+  const inputStyle = {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: '#333',
+  } as const;
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <StepIndicatorBar currentPosition={3} />
-        <TextInput
-          label="Watering Frequency"
-          value={wateringFrequency}
-          onChangeText={(text) => setField('wateringFrequency', text)}
-          style={{ marginTop: 16 }}
-        />
-        <TextInput
-          label="Fertilizer"
-          value={fertilizer}
-          onChangeText={(text) => setField('fertilizer', text)}
-          style={{ marginTop: 16 }}
-        />
-        <TextInput
-          label="Pest History"
-          value={pests ? pests.join(', ') : ''}
-          onChangeText={(text) => setField('pests', text.split(',').map((s) => s.trim()))}
-          style={{ marginTop: 16 }}
-        />
-        <TextInput
-          label="Training Tags"
-          value={trainingTags ? trainingTags.join(', ') : ''}
-          onChangeText={(text) => setField('trainingTags', text.split(',').map((s) => s.trim()))}
-          style={{ marginTop: 16 }}
-        />
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
-          <Button mode="outlined" onPress={() => router.back()}>Back</Button>
-          <Button mode="contained" onPress={() => router.push('/add-plant/step5')}>
-            Next
-          </Button>
-        </View>
-      </ScrollView>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
+          <StepIndicatorBar currentPosition={3} />
+
+          <Menu
+            visible={waterMenu}
+            onDismiss={() => setWaterMenu(false)}
+            anchor={
+              <TextInput
+                label="Watering Frequency"
+                value={wateringFrequency}
+                style={inputStyle}
+                editable={false}
+                right={<TextInput.Icon icon="menu-down" onPress={() => setWaterMenu(true)} />}
+              />
+            }
+          >
+            {['Every day', 'Every 2 days', 'Every 3 days', 'Weekly'].map((opt) => (
+              <Menu.Item
+                key={opt}
+                onPress={() => {
+                  setField('wateringFrequency', opt);
+                  setWaterMenu(false);
+                }}
+                title={opt}
+              />
+            ))}
+          </Menu>
+
+          <TextInput
+            label="Fertilizer"
+            value={fertilizer}
+            onChangeText={(text) => setField('fertilizer', text)}
+            style={inputStyle}
+          />
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {pestOptions.map((p) => (
+              <Chip
+                key={p}
+                selected={pests?.includes(p)}
+                onPress={() => {
+                  const arr = pests || [];
+                  setField(
+                    'pests',
+                    arr.includes(p) ? arr.filter((x) => x !== p) : [...arr, p]
+                  );
+                }}
+              >
+                {p}
+              </Chip>
+            ))}
+          </View>
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {trainingOptions.map((t) => (
+              <Chip
+                key={t}
+                selected={trainingTags?.includes(t)}
+                onPress={() => {
+                  const arr = trainingTags || [];
+                  setField(
+                    'trainingTags',
+                    arr.includes(t) ? arr.filter((x) => x !== t) : [...arr, t]
+                  );
+                }}
+              >
+                {t}
+              </Chip>
+            ))}
+          </View>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
+            <Button mode="outlined" onPress={() => router.back()}>
+              Back
+            </Button>
+            <Button mode="contained" onPress={() => router.push('/add-plant/step5')}>
+              Next
+            </Button>
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }
