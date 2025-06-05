@@ -1,5 +1,5 @@
 import { Slot } from 'expo-router';
-import { PaperProvider } from 'react-native-paper';
+import { PaperProvider, MD3DarkTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native';
 import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
@@ -15,11 +15,19 @@ export default function RootLayout() {
     return null;
   }
 
+  const theme = {
+    ...MD3DarkTheme,
+    colors: {
+      ...MD3DarkTheme.colors,
+      primary: '#00c853',
+    },
+  };
+
   return (
-    <PaperProvider>
-      <SafeAreaView style={{ flex: 1 }}>
+    <PaperProvider theme={theme}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#151718' }}>
         <Slot />
-        <StatusBar style="auto" />
+        <StatusBar style="light" />
       </SafeAreaView>
     </PaperProvider>
   );
