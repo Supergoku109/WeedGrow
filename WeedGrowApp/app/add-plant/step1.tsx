@@ -29,11 +29,9 @@ export default function Step1() {
   const strains = ['Sativa', 'Indica', 'Hybrid'];
 
   const inputStyle = {
-    backgroundColor: '#f5f5f5',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#333',
   } as const;
 
   return (

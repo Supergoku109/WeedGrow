@@ -21,11 +21,9 @@ export default function Step5() {
   const [snackVisible, setSnackVisible] = React.useState(false);
 
   const inputStyle = {
-    backgroundColor: '#f5f5f5',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#333',
   } as const;
 
   const pickImage = async (fromCamera: boolean) => {

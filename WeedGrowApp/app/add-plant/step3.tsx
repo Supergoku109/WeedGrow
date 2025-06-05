@@ -24,11 +24,9 @@ export default function Step3() {
   const [loading, setLoading] = React.useState(false);
 
   const inputStyle = {
-    backgroundColor: '#f5f5f5',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#333',
   } as const;
 
   const getLocation = async () => {
