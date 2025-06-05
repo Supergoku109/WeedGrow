@@ -1,8 +1,13 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import {
+  DarkTheme,
+  DefaultTheme,
+  NavigationContainer,
+  ThemeProvider,
+} from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import RootNavigator from '@/navigation/RootNavigator';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -17,12 +22,13 @@ export default function RootLayout() {
     return null;
   }
 
+  const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
+    <ThemeProvider value={theme}>
+      <NavigationContainer theme={theme}>
+        <RootNavigator />
+      </NavigationContainer>
       <StatusBar style="auto" />
     </ThemeProvider>
   );
