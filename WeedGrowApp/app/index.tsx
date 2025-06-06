@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from 'react-native';
+import { FAB } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -10,7 +10,12 @@ export default function HomeScreen() {
   return (
     <ThemedView style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       <ThemedText type="title">Home</ThemedText>
-      <Button title="Add Plant" onPress={() => router.push('/add-plant')} />
+      <FAB
+        icon="plus"
+        label="Add Plant"
+        onPress={() => router.push('/add-plant')}
+        style={{ position: 'absolute', bottom: 16, right: 16, backgroundColor: 'green' }}
+      />
     </ThemedView>
   );
 }
