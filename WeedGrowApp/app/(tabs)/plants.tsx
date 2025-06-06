@@ -91,7 +91,11 @@ export default function PlantsScreen() {
           <View style={styles.filtersContainer}>
             <ThemedText style={styles.filterLabel}>Status</ThemedText>
             <View style={styles.chipRow}>
-              <Chip selected={!statusFilter} onPress={() => setStatusFilter(null)}>
+              <Chip
+                selected={!statusFilter}
+                onPress={() => setStatusFilter(null)}
+                accessibilityLabel="Clear status filter"
+              >
                 All
               </Chip>
               {['active', 'archived', 'harvested', 'dead'].map((opt) => (
