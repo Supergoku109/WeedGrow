@@ -16,7 +16,10 @@ export default function PlantDetailScreen() {
 
   useEffect(() => {
     const fetchPlant = async () => {
-      if (!id) return;
+      if (!id) {
+        setLoading(false);
+        return;
+      }
       const ref = doc(db, 'plants', String(id));
       const snap = await getDoc(ref);
       if (snap.exists()) {
