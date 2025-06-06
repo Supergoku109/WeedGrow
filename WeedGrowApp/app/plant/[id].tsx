@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ScrollView, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator } from 'react-native-paper';
 import { useLocalSearchParams } from 'expo-router';
 import Animated from 'react-native-reanimated';
 import { doc, getDoc } from 'firebase/firestore';
 import { Plant } from '@/firestoreModels';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { db } from '../../services/firebase';
 import { List } from 'react-native-paper';
 
@@ -13,6 +17,8 @@ export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [plant, setPlant] = useState<Plant | null>(null);
   const [loading, setLoading] = useState(true);
+  type Theme = keyof typeof Colors;
+  const theme = (useColorScheme() ?? 'dark') as Theme;
 
   useEffect(() => {
     const fetchPlant = async () => {
@@ -32,22 +38,27 @@ export default function PlantDetailScreen() {
 
   if (loading) {
     return (
-      <ThemedView style={styles.center}>
-        <ActivityIndicator />
-      </ThemedView>
+      <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
+        <ThemedView style={styles.center}>
+          <ActivityIndicator color={Colors[theme].tint} />
+        </ThemedView>
+      </SafeAreaView>
     );
   }
 
   if (!plant) {
     return (
-      <ThemedView style={styles.center}>
-        <ThemedText>Plant not found.</ThemedText>
-      </ThemedView>
+      <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
+        <ThemedView style={styles.center}>
+          <ThemedText>Plant not found.</ThemedText>
+        </ThemedView>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
       {plant.imageUri && (
         <Animated.View sharedTransitionTag={`plant.${id}.photo`} style={styles.imageWrapper}>
           <Image source={{ uri: plant.imageUri }} style={styles.image} />
@@ -94,7 +105,8 @@ export default function PlantDetailScreen() {
           <ThemedText>{plant.pests.join(', ')}</ThemedText>
         </View>
       ) : null}
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
