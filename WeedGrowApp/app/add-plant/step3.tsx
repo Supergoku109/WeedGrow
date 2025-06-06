@@ -20,6 +20,7 @@ import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { formInputStyle } from '@/constants/FormInputStyle';
 
 const screen = Dimensions.get('window');
 
@@ -34,11 +35,6 @@ export default function Step3() {
   const [loading, setLoading] = React.useState(false);
   const mapRef = React.useRef<MapView | null>(null);
 
-  const inputStyle = {
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  } as const;
 
   const getLocation = async () => {
     try {
@@ -128,7 +124,7 @@ export default function Step3() {
               label="Location Nickname"
               value={locationNickname}
               onChangeText={(text) => setField('locationNickname', text)}
-              style={inputStyle}
+              style={formInputStyle}
             />
 
             <View style={{ height: 300, borderRadius: 12, overflow: 'hidden' }}>

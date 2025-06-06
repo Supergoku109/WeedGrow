@@ -22,6 +22,7 @@ import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { formInputStyle } from '@/constants/FormInputStyle';
 
 export default function Step4() {
   const router = useRouter();
@@ -34,11 +35,6 @@ export default function Step4() {
   const pestOptions = ['Spider Mites', 'Powdery Mildew', 'Aphids'];
   const trainingOptions = ['LST', 'Topping', 'SCROG'];
 
-  const inputStyle = {
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  } as const;
 
   const styles = StyleSheet.create({
     sectionTitle: { fontWeight: 'bold', marginTop: 16, marginBottom: 8, fontSize: 16 },
@@ -63,7 +59,7 @@ export default function Step4() {
               <TextInput
                 label="Watering Frequency"
                 value={wateringFrequency}
-                style={inputStyle}
+                style={formInputStyle}
                 editable={false}
                 right={<TextInput.Icon icon="menu-down" onPress={() => setWaterMenu(true)} />}
               />
@@ -85,7 +81,7 @@ export default function Step4() {
             label="Fertilizer"
             value={fertilizer}
             onChangeText={(text) => setField('fertilizer', text)}
-            style={inputStyle}
+            style={formInputStyle}
           />
 
           <Text style={styles.sectionTitle}>Pest History</Text>

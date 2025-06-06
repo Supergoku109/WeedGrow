@@ -17,6 +17,7 @@ import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { formInputStyle } from '@/constants/FormInputStyle';
 
 export default function Step5() {
   const router = useRouter();
@@ -25,11 +26,6 @@ export default function Step5() {
   const theme = useColorScheme() ?? 'dark';
   const insets = useSafeAreaInsets();
 
-  const inputStyle = {
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  } as const;
 
   const pickImage = async (fromCamera: boolean) => {
     const result = fromCamera
@@ -76,7 +72,7 @@ export default function Step5() {
             onChangeText={(text) => setField('notes', text)}
             multiline
             placeholder="Add any observations here..."
-            style={[inputStyle, { height: 120 }]}
+            style={[formInputStyle, { height: 120 }]}
           />
 
           <Snackbar visible={snackVisible} onDismiss={() => setSnackVisible(false)}>

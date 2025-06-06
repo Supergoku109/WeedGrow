@@ -21,6 +21,7 @@ import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { formInputStyle } from '@/constants/FormInputStyle';
 
 export default function Step1() {
   const router = useRouter();
@@ -33,11 +34,6 @@ export default function Step1() {
   const [strainSearch, setStrainSearch] = React.useState('');
   const strains = ['Sativa', 'Indica', 'Hybrid'];
 
-  const inputStyle = {
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  } as const;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: 8 }}>
@@ -58,7 +54,7 @@ export default function Step1() {
             label="Plant Name"
             value={name}
             onChangeText={(text) => setField('name', text)}
-            style={inputStyle}
+            style={formInputStyle}
           />
 
           <Menu
@@ -69,7 +65,7 @@ export default function Step1() {
                 label="Strain"
                 value={strain || 'Unknown'}
                 editable={false}
-                style={inputStyle}
+                style={formInputStyle}
                 right={
                   <TextInput.Icon
                     icon="menu-down"

@@ -20,6 +20,7 @@ import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { formInputStyle } from '@/constants/FormInputStyle';
 
 export default function Step2() {
   const router = useRouter();
@@ -30,11 +31,6 @@ export default function Step2() {
   const [potMenu, setPotMenu] = React.useState(false);
   const [sunMenu, setSunMenu] = React.useState(false);
 
-  const inputStyle = {
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  } as const;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: 8 }}>
@@ -78,7 +74,7 @@ export default function Step2() {
                 <TextInput
                   label="Pot Size"
                   value={potSize}
-                  style={inputStyle}
+                  style={formInputStyle}
                   editable={false}
                   right={<TextInput.Icon icon="menu-down" onPress={() => setPotMenu(true)} />}
                 />
@@ -104,7 +100,7 @@ export default function Step2() {
               <TextInput
                 label="Sunlight Exposure"
                 value={sunlightExposure}
-                style={inputStyle}
+                style={formInputStyle}
                 editable={false}
                 right={<TextInput.Icon icon="menu-down" onPress={() => setSunMenu(true)} />}
               />
