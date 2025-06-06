@@ -20,6 +20,7 @@ import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { ThemedText } from '@/components/ThemedText';
 
 const screen = Dimensions.get('window');
 
@@ -154,9 +155,9 @@ export default function Step3() {
               </MapView>
             </View>
 
-            <Text style={{ color: Colors[theme].text, textAlign: 'center', marginTop: 8 }}>
+            <ThemedText style={{ textAlign: 'center', marginTop: 8 }}>
               Tap the map to adjust your location
-            </Text>
+            </ThemedText>
 
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
               <Button mode="outlined" onPress={() => router.back()}>

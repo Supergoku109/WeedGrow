@@ -2,6 +2,7 @@ import React from 'react';
 import { ScrollView, View, Image, StyleSheet } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Card, Text, Divider } from 'react-native-paper';
+import { ThemedText } from '@/components/ThemedText';
 import { useRouter } from 'expo-router';
 
 import StepIndicatorBar from '@/components/StepIndicatorBar';
@@ -63,7 +64,7 @@ export default function Review() {
         <Card.Title title="Review Plant" />
         <Card.Content>
           <View style={{ gap: 8 }}>
-            <Text style={styles.sectionTitle}>Growth Info</Text>
+            <ThemedText style={styles.sectionTitle}>Growth Info</ThemedText>
             <View>
               <Text variant="labelLarge">Name</Text>
               <Text>{form.name}</Text>
@@ -80,7 +81,7 @@ export default function Review() {
             </View>
 
             <Divider />
-            <Text style={styles.sectionTitle}>Environment</Text>
+            <ThemedText style={styles.sectionTitle}>Environment</ThemedText>
             <View>
               <Text variant="labelLarge">Environment</Text>
               <Text>{form.environment}</Text>
@@ -134,7 +135,7 @@ export default function Review() {
             )}
 
             <Divider />
-            <Text style={styles.sectionTitle}>Care</Text>
+            <ThemedText style={styles.sectionTitle}>Care</ThemedText>
             {form.wateringFrequency && (
               <>
                 <View>
