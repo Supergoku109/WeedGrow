@@ -83,6 +83,7 @@ export default function PlantsScreen() {
           <IconButton
             icon={filtersVisible ? 'filter-off-outline' : 'filter-variant'}
             onPress={() => setFiltersVisible((v) => !v)}
+            accessibilityLabel={filtersVisible ? 'Hide filters' : 'Show filters'}
           />
         </View>
 
