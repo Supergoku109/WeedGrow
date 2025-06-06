@@ -6,7 +6,7 @@
 const tintColorLight = '#00c853';
 const tintColorDark = '#00c853';
 // Dark green used by the calendar
-export const calendarGreen = '#008000';
+export const calendarGreen = 'green';
 const grayColor = '#aaaaaa';
 const labelColor = '#999999';
 const whiteColor = '#ffffff';
