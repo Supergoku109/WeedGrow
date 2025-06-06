@@ -113,7 +113,10 @@ export default function Step1() {
           />
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
-            <Button mode="outlined" onPress={() => router.back()}>
+            <Button
+              mode="outlined"
+              onPress={() => router.replace('/(tabs)/plants')}
+            >
               Back
             </Button>
             <Button
