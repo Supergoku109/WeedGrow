@@ -22,7 +22,9 @@ export function PlantCard({ plant }: PlantCardProps) {
     <TouchableOpacity
       onPress={() => router.push({ pathname: '/plant/[id]', params: { id: plant.id } })}
     >
-      <ThemedView style={[styles.card, { backgroundColor: Colors[theme].background }] }>
+      <ThemedView
+        style={[styles.card, { backgroundColor: Colors[theme].tint }]}
+      >
         {plant.imageUri && (
           <Animated.View
             sharedTransitionTag={`plant.${plant.id}.photo`}
@@ -75,7 +77,7 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   imageWrap: {
     marginBottom: 8,
