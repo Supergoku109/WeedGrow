@@ -16,6 +16,7 @@ import {
   Menu,
   Text,
 } from 'react-native-paper';
+import { ThemedText } from '@/components/ThemedText';
 import { useRouter } from 'expo-router';
 
 import StepIndicatorBar from '@/components/StepIndicatorBar';
@@ -89,7 +90,7 @@ export default function Step4() {
             style={inputStyle}
           />
 
-          <Text style={styles.sectionTitle}>Pest History</Text>
+          <ThemedText style={styles.sectionTitle}>Pest History</ThemedText>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {pestOptions.map((p) => (
               <Chip
@@ -108,7 +109,7 @@ export default function Step4() {
             ))}
           </View>
 
-          <Text style={styles.sectionTitle}>Training Techniques</Text>
+          <ThemedText style={styles.sectionTitle}>Training Techniques</ThemedText>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {trainingOptions.map((t) => (
               <Chip

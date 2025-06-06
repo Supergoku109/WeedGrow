@@ -15,6 +15,7 @@ import {
   Menu,
   SegmentedButtons,
 } from 'react-native-paper';
+import { ThemedText } from '@/components/ThemedText';
 import { useRouter } from 'expo-router';
 
 import StepIndicatorBar from '@/components/StepIndicatorBar';
@@ -50,9 +51,9 @@ export default function Step1() {
             style={{ flex: 1 }}
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, gap: 16 }}>
           <StepIndicatorBar currentPosition={0} />
-          <Text variant="titleLarge" style={{ textAlign: 'center', marginTop: 8 }}>
+          <ThemedText type="title" style={{ textAlign: 'center', marginTop: 8 }}>
             🌱 Let’s start with the basics
-          </Text>
+          </ThemedText>
 
           <TextInput
             label="Plant Name"

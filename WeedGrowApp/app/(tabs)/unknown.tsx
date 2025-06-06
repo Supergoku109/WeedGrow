@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { PlantCard } from '@/components/PlantCard';
@@ -17,6 +19,8 @@ export default function UnknownScreen() {
   const [plants, setPlants] = useState<PlantItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  type Theme = keyof typeof Colors;
+  const theme = (useColorScheme() ?? 'dark') as Theme;
 
   useEffect(() => {
     const fetchPlants = async () => {
@@ -41,14 +45,19 @@ export default function UnknownScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: Colors[theme].background }]}>
       <ThemedView style={styles.container}>
         <ThemedText type="title" style={styles.title}>
           My Plants
         </ThemedText>
-        {loading && <ActivityIndicator style={styles.loading} />}
+        {loading && (
+          <ActivityIndicator
+            style={styles.loading}
+            color={Colors[theme].tint}
+          />
+        )}
         {error && (
-          <ThemedText type="error" style={styles.errorText}>
+          <ThemedText type="error" style={[styles.errorText, { color: Colors[theme].tint }] }>
             ❌ Error: {error}
           </ThemedText>
         )}
@@ -70,7 +79,6 @@ export default function UnknownScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#000',
   },
   container: {
     flex: 1,
@@ -84,7 +92,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   errorText: {
-    color: 'red',
     marginTop: 10,
   },
 });
