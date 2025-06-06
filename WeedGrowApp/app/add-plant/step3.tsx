@@ -18,7 +18,7 @@ import { useRouter } from 'expo-router';
 
 import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
-import { Colors } from '@/constants/Colors';
+import { Colors, Theme } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 const screen = Dimensions.get('window');
@@ -26,7 +26,7 @@ const screen = Dimensions.get('window');
 export default function Step3() {
   const router = useRouter();
   const { location, locationNickname, setField } = usePlantForm();
-  const theme = useColorScheme() ?? 'dark';
+  const theme: Theme = useColorScheme() ?? 'dark';
   const lat = location?.lat?.toString() ?? '';
   const lng = location?.lng?.toString() ?? '';
   const insets = useSafeAreaInsets();

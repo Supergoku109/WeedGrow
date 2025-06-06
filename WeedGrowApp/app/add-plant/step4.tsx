@@ -20,13 +20,13 @@ import { useRouter } from 'expo-router';
 
 import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
-import { Colors } from '@/constants/Colors';
+import { Colors, Theme } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function Step4() {
   const router = useRouter();
   const { wateringFrequency, fertilizer, pests, trainingTags, setField } = usePlantForm();
-  const theme = useColorScheme() ?? 'dark';
+  const theme: Theme = useColorScheme() ?? 'dark';
   const insets = useSafeAreaInsets();
 
   const [waterMenu, setWaterMenu] = React.useState(false);

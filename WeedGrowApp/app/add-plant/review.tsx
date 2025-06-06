@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 
 import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
-import { Colors } from '@/constants/Colors';
+import { Colors, Theme } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/services/firebase';
@@ -14,7 +14,7 @@ import { db } from '@/services/firebase';
 export default function Review() {
   const router = useRouter();
   const form = usePlantForm();
-  const theme = useColorScheme() ?? 'dark';
+  const theme: Theme = useColorScheme() ?? 'dark';
   const insets = useSafeAreaInsets();
 
   const save = async () => {

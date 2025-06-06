@@ -1,13 +1,13 @@
 import StepIndicator from 'react-native-step-indicator';
 import React from 'react';
 import { View } from 'react-native';
-import { Colors } from '@/constants/Colors';
+import { Colors, Theme } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 const labels = ['Basic Info', 'Environment', 'Location', 'Care', 'Photo'];
 
 export default function StepIndicatorBar({ currentPosition }: { currentPosition: number }) {
-  const theme = useColorScheme() ?? 'dark';
+  const theme: Theme = useColorScheme() ?? 'dark';
 
   const customStyles = {
     stepIndicatorSize: 25,

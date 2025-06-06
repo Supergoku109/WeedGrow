@@ -33,3 +33,5 @@ export const Colors = {
     white: whiteColor,
   },
 };
+
+export type Theme = keyof typeof Colors;
