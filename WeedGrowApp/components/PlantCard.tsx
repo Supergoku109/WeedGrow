@@ -5,10 +5,10 @@ import { useRouter } from 'expo-router';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Plant } from '@/firestoreModels';
 import { Colors, calendarGreen } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { ProgressBar } from 'react-native-paper';
 
 export interface PlantCardProps {
   plant: Plant & { id: string };
@@ -18,6 +18,14 @@ export function PlantCard({ plant }: PlantCardProps) {
   const router = useRouter();
   type Theme = keyof typeof Colors;
   const theme = (useColorScheme() ?? 'dark') as Theme;
+
+  const createdDate =
+    'toDate' in plant.createdAt ? plant.createdAt.toDate() : (plant.createdAt as any);
+  const diffMs = Date.now() - new Date(createdDate).getTime();
+  const ageDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const ageLabel = `${ageDays} day${ageDays === 1 ? '' : 's'} old`;
+
+  const waterLevel = typeof (plant as any).waterLevel === 'number' ? (plant as any).waterLevel : 0;
 
   return (
     <TouchableOpacity
@@ -36,41 +44,9 @@ export function PlantCard({ plant }: PlantCardProps) {
 
           <View style={styles.textContainer}>
             <ThemedText type="subtitle">{plant.name}</ThemedText>
-            <ThemedText>Strain: {plant.strain}</ThemedText>
-            <ThemedText>
-              <MaterialCommunityIcons name="sprout" size={16} color={Colors[theme].gray} />{' '}
-              {plant.growthStage}
-            </ThemedText>
-            <ThemedText>
-              <MaterialCommunityIcons
-                name={
-                  plant.status === 'active'
-                    ? 'check-circle-outline'
-                    : plant.status === 'archived'
-                    ? 'archive'
-                    : plant.status === 'harvested'
-                    ? 'flower'
-                    : 'skull'
-                }
-                size={16}
-                color={Colors[theme].gray}
-              />{' '}
-              {plant.status}
-            </ThemedText>
-            <ThemedText>
-              <MaterialCommunityIcons
-                name={
-                  plant.environment === 'indoor'
-                    ? 'home'
-                    : plant.environment === 'greenhouse'
-                    ? 'greenhouse'
-                    : 'tree'
-                }
-                size={16}
-                color={Colors[theme].gray}
-              />{' '}
-              {plant.environment}
-            </ThemedText>
+            <ThemedText>{plant.strain}</ThemedText>
+            <ThemedText>{ageLabel}</ThemedText>
+            <ProgressBar progress={waterLevel} style={styles.progressBar} color={Colors[theme].tint} />
           </View>
         </View>
       </ThemedView>
@@ -101,5 +77,10 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
     gap: 4,
+  },
+  progressBar: {
+    marginTop: 4,
+    height: 8,
+    borderRadius: 4,
   },
 });
