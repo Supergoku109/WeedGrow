@@ -8,6 +8,8 @@ import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/services/firebase';
 
 export default function Review() {
   const router = useRouter();
@@ -15,10 +17,34 @@ export default function Review() {
   const theme = useColorScheme() ?? 'dark';
   const insets = useSafeAreaInsets();
 
-  const save = () => {
-    console.log('Plant saved:', { ...form });
-    form.reset();
-    router.replace('/plants');
+  const save = async () => {
+    try {
+      await addDoc(collection(db, 'plants'), {
+        name: form.name,
+        strain: form.strain,
+        owners: ['demoUser'],
+        growthStage: form.growthStage,
+        status: 'active',
+        environment: form.environment,
+        plantedIn: form.plantedIn,
+        potSize: form.potSize ?? null,
+        sunlightExposure: form.sunlightExposure ?? null,
+        wateringFrequency: form.wateringFrequency ?? null,
+        fertilizer: form.fertilizer ?? null,
+        pests: form.pests ?? null,
+        trainingTags: form.trainingTags ?? null,
+        notes: form.notes ?? null,
+        imageUri: form.imageUri ?? null,
+        location: form.location ?? null,
+        locationNickname: form.locationNickname ?? null,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      form.reset();
+      router.replace('/unknown');
+    } catch (e) {
+      console.error('Error saving plant:', e);
+    }
   };
 
   const styles = StyleSheet.create({
