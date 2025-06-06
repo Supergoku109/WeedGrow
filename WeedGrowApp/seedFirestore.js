@@ -84,6 +84,7 @@ async function seedFirestore() {
     pests: ["aphids"],
     notes: "Doing great so far.",
     imageUri: null, // or a URL to a primary plant image
+    waterLevel: 1,
     location: { lat: -34.0, lng: 18.5 },
     locationNickname: "Backyard",
     reminderSchedule: {

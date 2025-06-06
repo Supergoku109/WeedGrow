@@ -20,6 +20,7 @@ export interface Plant {
     trainingTags?: string[];
     notes?: string;
     imageUri?: string;
+    waterLevel?: number; // 0-1 representing current watering level
   
     location?: {
       lat: number;
