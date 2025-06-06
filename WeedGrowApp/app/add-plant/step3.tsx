@@ -26,7 +26,8 @@ const screen = Dimensions.get('window');
 export default function Step3() {
   const router = useRouter();
   const { location, locationNickname, setField } = usePlantForm();
-  const theme = useColorScheme() ?? 'dark';
+  type Theme = keyof typeof Colors;
+  const theme = (useColorScheme() ?? 'dark') as Theme;
   const lat = location?.lat?.toString() ?? '';
   const lng = location?.lng?.toString() ?? '';
   const insets = useSafeAreaInsets();

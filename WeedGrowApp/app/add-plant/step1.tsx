@@ -25,9 +25,9 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 export default function Step1() {
   const router = useRouter();
   const { name, strain, growthStage, setField } = usePlantForm();
-  const theme = useColorScheme() ?? 'dark';
+  type Theme = keyof typeof Colors;
+  const theme = (useColorScheme() ?? 'dark') as Theme;
   const insets = useSafeAreaInsets();
-
   const isValid = name.trim().length > 0;
   const [strainMenu, setStrainMenu] = React.useState(false);
   const [strainSearch, setStrainSearch] = React.useState('');

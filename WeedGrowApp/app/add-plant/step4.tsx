@@ -26,7 +26,8 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 export default function Step4() {
   const router = useRouter();
   const { wateringFrequency, fertilizer, pests, trainingTags, setField } = usePlantForm();
-  const theme = useColorScheme() ?? 'dark';
+  type Theme = keyof typeof Colors;
+  const theme = (useColorScheme() ?? 'dark') as Theme;
   const insets = useSafeAreaInsets();
 
   const [waterMenu, setWaterMenu] = React.useState(false);

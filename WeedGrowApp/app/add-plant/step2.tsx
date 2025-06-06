@@ -24,9 +24,9 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 export default function Step2() {
   const router = useRouter();
   const { environment, potSize, sunlightExposure, plantedIn, setField } = usePlantForm();
-  const theme = useColorScheme() ?? 'dark';
+  type Theme = keyof typeof Colors;
+  const theme = (useColorScheme() ?? 'dark') as Theme;
   const insets = useSafeAreaInsets();
-
   const [potMenu, setPotMenu] = React.useState(false);
   const [sunMenu, setSunMenu] = React.useState(false);
 

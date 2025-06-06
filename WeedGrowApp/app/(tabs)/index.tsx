@@ -40,7 +40,6 @@ export default function HomeScreen() {
                 color="green"
               />
             )}
-            renderKnob={() => <View style={styles.knob} />}
             theme={{
               backgroundColor: 'white',
               calendarBackground: 'white',

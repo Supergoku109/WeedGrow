@@ -14,7 +14,8 @@ import { db } from '@/services/firebase';
 export default function Review() {
   const router = useRouter();
   const form = usePlantForm();
-  const theme = useColorScheme() ?? 'dark';
+  type Theme = keyof typeof Colors;
+  const theme = (useColorScheme() ?? 'dark') as Theme;
   const insets = useSafeAreaInsets();
 
   const save = async () => {

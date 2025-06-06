@@ -33,9 +33,9 @@ export default function Step5() {
 
   const pickImage = async (fromCamera: boolean) => {
     const result = fromCamera
-      ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaType.Images })
-      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaType.Images });
-    if (!result.canceled) {
+    ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images })
+    : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images });
+  if (!result.canceled) {
       setField('imageUri', result.assets[0].uri);
       setSnackVisible(true);
     }
