@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { ActivityIndicator } from 'react-native-paper';
-import { useLocalSearchParams } from 'expo-router';
+import { View, StyleSheet, ScrollView, Image, Alert } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActivityIndicator, IconButton } from 'react-native-paper';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated from 'react-native-reanimated';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { Plant } from '@/firestoreModels';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -19,6 +19,32 @@ export default function PlantDetailScreen() {
   const [loading, setLoading] = useState(true);
   type Theme = keyof typeof Colors;
   const theme = (useColorScheme() ?? 'dark') as Theme;
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+
+  const confirmDelete = () => {
+    Alert.alert(
+      'Delete Plant',
+      'Are you sure you want to delete this plant? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (id) {
+                await deleteDoc(doc(db, 'plants', String(id)));
+              }
+              router.replace('/(tabs)/plants');
+            } catch (e) {
+              console.error('Error deleting plant:', e);
+            }
+          },
+        },
+      ],
+    );
+  };
 
   useEffect(() => {
     const fetchPlant = async () => {
@@ -58,6 +84,15 @@ export default function PlantDetailScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
+      <IconButton
+        icon="delete"
+        mode="contained"
+        iconColor={Colors[theme].white}
+        containerColor={Colors[theme].tint}
+        onPress={confirmDelete}
+        style={[styles.deleteButton, { top: insets.top + 4 }]}
+        accessibilityLabel="Delete Plant"
+      />
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
       {plant.imageUri && (
         <Animated.View sharedTransitionTag={`plant.${id}.photo`} style={styles.imageWrapper}>
@@ -139,5 +174,10 @@ const styles = StyleSheet.create({
   section: {
     marginTop: 16,
     gap: 4,
+  },
+  deleteButton: {
+    position: 'absolute',
+    left: 16,
+    zIndex: 10,
   },
 });
