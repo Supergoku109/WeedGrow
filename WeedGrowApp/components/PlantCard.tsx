@@ -7,7 +7,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Plant } from '@/firestoreModels';
-import { Colors } from '@/constants/Colors';
+import { Colors, calendarGreen } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 export interface PlantCardProps {
@@ -23,7 +23,7 @@ export function PlantCard({ plant }: PlantCardProps) {
       onPress={() => router.push({ pathname: '/plant/[id]', params: { id: plant.id } })}
     >
       <ThemedView
-        style={[styles.card, { backgroundColor: Colors[theme].tint }]}
+        style={[styles.card, { backgroundColor: calendarGreen }]}
       >
         {plant.imageUri && (
           <Animated.View
