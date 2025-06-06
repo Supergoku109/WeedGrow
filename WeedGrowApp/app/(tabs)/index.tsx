@@ -30,7 +30,7 @@ export default function HomeScreen() {
           onMonthChange={(date) => setSelectedDate(date.dateString)}
         >
           <ExpandableCalendar
-            initialPosition="closed"
+            initialPosition={ExpandableCalendar.positions.CLOSED}
             firstDay={1}
             onDayPress={(day) => setSelectedDate(day.dateString)}
             renderArrow={(direction) => (
@@ -40,6 +40,7 @@ export default function HomeScreen() {
                 color="green"
               />
             )}
+            renderKnob={() => <View style={styles.knob} />}
             theme={{
               backgroundColor: 'white',
               calendarBackground: 'white',
@@ -52,19 +53,6 @@ export default function HomeScreen() {
               arrowColor: 'green',
               monthTextColor: 'green',
               indicatorColor: 'green',
-              knobStyle: {
-                width: 0,
-                height: 0,
-                backgroundColor: 'transparent',
-                borderLeftWidth: 10,
-                borderRightWidth: 10,
-                borderBottomWidth: 10,
-                borderLeftColor: 'transparent',
-                borderRightColor: 'transparent',
-                borderBottomColor: 'green',
-                alignSelf: 'center',
-                marginVertical: 10,
-              },
               textDayFontFamily: 'System',
               textMonthFontFamily: 'System',
               textDayHeaderFontFamily: 'System',
@@ -92,5 +80,18 @@ const styles = StyleSheet.create({
   },
   calendarContainer: {
     marginVertical: 16,
+  },
+  knob: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderLeftWidth: 10,
+    borderRightWidth: 10,
+    borderBottomWidth: 10,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: 'green',
+    alignSelf: 'center',
+    marginVertical: 10,
   },
 });
