@@ -9,7 +9,7 @@ import { Colors, Theme } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function TabLayout() {
-  const colorScheme: Theme | null = useColorScheme();
+  const colorScheme: Theme = useColorScheme() ?? 'light';
 
   return (
     <Tabs
