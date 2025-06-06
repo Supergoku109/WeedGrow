@@ -12,7 +12,12 @@ import { PlantCard } from '@/components/PlantCard';
 import { collection, getDocs, query } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { Plant } from '@/firestoreModels';
-import { ActivityIndicator, Searchbar, Menu, Button } from 'react-native-paper';
+import {
+  ActivityIndicator,
+  Searchbar,
+  IconButton,
+  Chip,
+} from 'react-native-paper';
 
 interface PlantItem extends Plant {
   id: string;
@@ -28,10 +33,7 @@ export default function PlantsScreen() {
   const [envFilter, setEnvFilter] = useState<string | null>(null);
   const [plantedFilter, setPlantedFilter] = useState<string | null>(null);
   const [trainingFilter, setTrainingFilter] = useState<string | null>(null);
-  const [statusMenu, setStatusMenu] = useState(false);
-  const [envMenu, setEnvMenu] = useState(false);
-  const [plantedMenu, setPlantedMenu] = useState(false);
-  const [trainingMenu, setTrainingMenu] = useState(false);
+  const [filtersVisible, setFiltersVisible] = useState(false);
   type Theme = keyof typeof Colors;
   const theme = (useColorScheme() ?? 'dark') as Theme;
 
@@ -71,96 +73,89 @@ export default function PlantsScreen() {
         <ThemedText type="title" style={styles.title}>
           My Plants
         </ThemedText>
-        <Searchbar
-          placeholder="Search plants"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          style={styles.searchBar}
-        />
-        <View style={styles.filterRow}>
-          <Menu
-            visible={statusMenu}
-            onDismiss={() => setStatusMenu(false)}
-            anchor={
-              <Button mode="outlined" onPress={() => setStatusMenu(true)}>
-                {statusFilter ? statusFilter : 'Status'}
-              </Button>
-            }
-          >
-            {['all', 'active', 'archived', 'harvested', 'dead'].map((opt) => (
-              <Menu.Item
-                key={opt}
-                onPress={() => {
-                  setStatusFilter(opt === 'all' ? null : opt);
-                  setStatusMenu(false);
-                }}
-                title={opt === 'all' ? 'All' : opt}
-              />
-            ))}
-          </Menu>
-          <Menu
-            visible={envMenu}
-            onDismiss={() => setEnvMenu(false)}
-            anchor={
-              <Button mode="outlined" onPress={() => setEnvMenu(true)}>
-                {envFilter ? envFilter : 'Environment'}
-              </Button>
-            }
-          >
-            {['all', 'outdoor', 'greenhouse', 'indoor'].map((opt) => (
-              <Menu.Item
-                key={opt}
-                onPress={() => {
-                  setEnvFilter(opt === 'all' ? null : opt);
-                  setEnvMenu(false);
-                }}
-                title={opt === 'all' ? 'All' : opt}
-              />
-            ))}
-          </Menu>
+        <View style={styles.searchRow}>
+          <Searchbar
+            placeholder="Search plants"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            style={[styles.searchBar, { flex: 1 }]}
+          />
+          <IconButton
+            icon={filtersVisible ? 'filter-off-outline' : 'filter-variant'}
+            onPress={() => setFiltersVisible((v) => !v)}
+          />
         </View>
-        <View style={styles.filterRow}>
-          <Menu
-            visible={plantedMenu}
-            onDismiss={() => setPlantedMenu(false)}
-            anchor={
-              <Button mode="outlined" onPress={() => setPlantedMenu(true)}>
-                {plantedFilter ? plantedFilter : 'Planted In'}
-              </Button>
-            }
-          >
-            {['all', 'pot', 'ground'].map((opt) => (
-              <Menu.Item
-                key={opt}
-                onPress={() => {
-                  setPlantedFilter(opt === 'all' ? null : opt);
-                  setPlantedMenu(false);
-                }}
-                title={opt === 'all' ? 'All' : opt}
-              />
-            ))}
-          </Menu>
-          <Menu
-            visible={trainingMenu}
-            onDismiss={() => setTrainingMenu(false)}
-            anchor={
-              <Button mode="outlined" onPress={() => setTrainingMenu(true)}>
-                {trainingFilter ? trainingFilter : 'Training'}
-              </Button>
-            }
-          >
-            {['all', 'LST', 'Topping', 'SCROG'].map((opt) => (
-              <Menu.Item
-                key={opt}
-                onPress={() => {
-                  setTrainingFilter(opt === 'all' ? null : opt);
-                  setTrainingMenu(false);
-                }}
-                title={opt === 'all' ? 'All' : opt}
-              />
-            ))}
-          </Menu>
-        </View>
+
+        {filtersVisible && (
+          <View style={styles.filtersContainer}>
+            <ThemedText style={styles.filterLabel}>Status</ThemedText>
+            <View style={styles.chipRow}>
+              <Chip selected={!statusFilter} onPress={() => setStatusFilter(null)}>
+                All
+              </Chip>
+              {['active', 'archived', 'harvested', 'dead'].map((opt) => (
+                <Chip
+                  key={opt}
+                  selected={statusFilter === opt}
+                  onPress={() => setStatusFilter(opt)}
+                >
+                  {opt}
+                </Chip>
+              ))}
+            </View>
+
+            <ThemedText style={styles.filterLabel}>Environment</ThemedText>
+            <View style={styles.chipRow}>
+              <Chip selected={!envFilter} onPress={() => setEnvFilter(null)}>
+                All
+              </Chip>
+              {['outdoor', 'greenhouse', 'indoor'].map((opt) => (
+                <Chip
+                  key={opt}
+                  selected={envFilter === opt}
+                  onPress={() => setEnvFilter(opt)}
+                >
+                  {opt}
+                </Chip>
+              ))}
+            </View>
+
+            <ThemedText style={styles.filterLabel}>Planted In</ThemedText>
+            <View style={styles.chipRow}>
+              <Chip selected={!plantedFilter} onPress={() => setPlantedFilter(null)}>
+                All
+              </Chip>
+              {['pot', 'ground'].map((opt) => (
+                <Chip
+                  key={opt}
+                  selected={plantedFilter === opt}
+                  onPress={() => setPlantedFilter(opt)}
+                >
+                  {opt}
+                </Chip>
+              ))}
+            </View>
+
+            <ThemedText style={styles.filterLabel}>Training</ThemedText>
+            <View style={styles.chipRow}>
+              <Chip
+                selected={!trainingFilter}
+                onPress={() => setTrainingFilter(null)}
+              >
+                All
+              </Chip>
+              {['LST', 'Topping', 'SCROG'].map((opt) => (
+                <Chip
+                  key={opt}
+                  selected={trainingFilter === opt}
+                  onPress={() => setTrainingFilter(opt)}
+                >
+                  {opt}
+                </Chip>
+              ))}
+            </View>
+          </View>
+        )}
         {loading && (
           <ActivityIndicator style={styles.loading} color={Colors[theme].tint} />
         )}
@@ -212,13 +207,26 @@ const styles = StyleSheet.create({
   errorText: {
     marginTop: 10,
   },
-  searchBar: {
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  filterRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  searchBar: {
+    marginRight: 8,
+  },
+  filtersContainer: {
     marginBottom: 12,
+    gap: 8,
+  },
+  filterLabel: {
+    marginBottom: 4,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
   },
   fab: {
     position: 'absolute',
