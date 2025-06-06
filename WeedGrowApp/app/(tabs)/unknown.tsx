@@ -3,6 +3,7 @@ import { StyleSheet, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
+import { PlantCard } from '@/components/PlantCard';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { Plant } from '@/firestoreModels';
@@ -61,15 +62,7 @@ export default function UnknownScreen() {
           <FlatList
             data={plants}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <ThemedView style={styles.card} key={item.id}>
-                <ThemedText type="subtitle">{item.name}</ThemedText>
-                <ThemedText>Strain: {item.strain}</ThemedText>
-                <ThemedText>Stage: {item.growthStage}</ThemedText>
-                <ThemedText>Status: {item.status}</ThemedText>
-                <ThemedText>Environment: {item.environment}</ThemedText>
-              </ThemedView>
-            )}
+            renderItem={({ item }) => <PlantCard plant={item} />}
           />
         )}
       </ThemedView>
@@ -96,11 +89,5 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     marginTop: 10,
-  },
-  card: {
-    marginBottom: 16,
-    padding: 12,
-    backgroundColor: '#333',
-    borderRadius: 8,
   },
 });
