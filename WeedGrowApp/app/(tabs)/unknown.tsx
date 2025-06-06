@@ -21,11 +21,8 @@ export default function UnknownScreen() {
   useEffect(() => {
     const fetchPlants = async () => {
       try {
-        const userId = 'testUser123';
-        const plantsQuery = query(
-          collection(db, 'plants'),
-          where('owners', 'array-contains', userId)
-        );
+        const plantsQuery = query(collection(db, 'plants'));
+        // In the future, we'll display only the current user's plants here.
         const snapshot = await getDocs(plantsQuery);
         const items: PlantItem[] = snapshot.docs.map((doc) => ({
           id: doc.id,
