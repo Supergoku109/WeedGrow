@@ -1,44 +1,73 @@
-const admin = require("firebase-admin");
-const fs = require("fs");
+/**
+ * seedFirestore.ts
+ *
+ * This script uses Firebase Admin SDK to seed Firestore with:
+ *  - users
+ *  - user settings
+ *  - plants
+ *  - plant logs
+ *  - plant weatherCache
+ *  - plant progress pictures (NEW)
+ *  - notifications
+ *  - analytics
+ *  - invites
+ *
+ * To run:
+ *   ts-node seedFirestore.ts
+ * (or compile to JS and run with `node`)
+ */
 
-const serviceAccount = JSON.parse(fs.readFileSync("serviceAccountKey.json", "utf8"));
+import admin from "firebase-admin";
+import { readFileSync } from "fs";
+
+// ─── Initialize Admin SDK ─────────────────────────────────────────────────────
+
+const serviceAccount = JSON.parse(
+  readFileSync("serviceAccountKey.json", "utf8")
+);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
+  // If you want to seed Storage, uncomment and configure:
+  // storageBucket: "<YOUR_FIREBASE_STORAGE_BUCKET_URL>",
 });
 
 const db = admin.firestore();
+const now = admin.firestore.Timestamp.now();
 
 async function seedFirestore() {
+  // ─── 1) USERS ───────────────────────────────────────────────────────────────
   const userId = "testUser123";
-  const plantId = "plant123";
-  const now = admin.firestore.Timestamp.now();
-
-  // USERS
   await db.collection("users").doc(userId).set({
     displayName: "Zane G",
     email: "zane@example.com",
     joinedAt: now,
     lastLogin: now,
-    plantRefs: [plantId],
+    plantRefs: ["plant123"],
     hasAcceptedTOS: true,
-    profileImage: null,
+    profileImage: null, // or a URL to their profile photo in Storage
   });
 
-  // USER SETTINGS
-  await db.collection("users").doc(userId).collection("settings").doc("preferences").set({
-    defaultEnvironment: "outdoor",
-    preferredUnits: "metric",
-    darkMode: true,
-    defaultReminderTime: "08:00",
-    notificationPreferences: {
-      wateringReminders: true,
-      newLogActivity: true,
-      tips: true,
-    },
-  });
+  // ─── 2) USER SETTINGS ──────────────────────────────────────────────────────
+  await db
+    .collection("users")
+    .doc(userId)
+    .collection("settings")
+    .doc("preferences")
+    .set({
+      defaultEnvironment: "outdoor",
+      preferredUnits: "metric",
+      darkMode: true,
+      defaultReminderTime: "08:00",
+      notificationPreferences: {
+        wateringReminders: true,
+        newLogActivity: true,
+        tips: true,
+      },
+    });
 
-  // PLANTS
+  // ─── 3) PLANTS ─────────────────────────────────────────────────────────────
+  const plantId = "plant123";
   await db.collection("plants").doc(plantId).set({
     name: "Northern Lights",
     strain: "Indica",
@@ -54,7 +83,7 @@ async function seedFirestore() {
     trainingTags: ["LST"],
     pests: ["aphids"],
     notes: "Doing great so far.",
-    imageUri: null,
+    imageUri: null, // or a URL to a primary plant image
     location: { lat: -34.0, lng: 18.5 },
     locationNickname: "Backyard",
     reminderSchedule: {
@@ -66,33 +95,69 @@ async function seedFirestore() {
     updatedAt: now,
   });
 
-  // LOGS
-  await db.collection("plants").doc(plantId).collection("logs").add({
+  // ─── 4) PLANT LOGS ─────────────────────────────────────────────────────────
+  await db
+    .collection("plants")
+    .doc(plantId)
+    .collection("logs")
+    .add({
+      timestamp: now,
+      type: "watering",
+      description: "Gave 500ml of water",
+      updatedBy: userId,
+    });
+
+  // ─── 5) WEATHER CACHE ──────────────────────────────────────────────────────
+  await db
+    .collection("plants")
+    .doc(plantId)
+    .collection("weatherCache")
+    .doc("2025-06-06")
+    .set({
+      date: "2025-06-06",
+      temperature: "23°C",
+      humidity: "60%",
+      uvIndex: 5,
+      windSpeed: "10 km/h",
+      summary: "Sunny and mild",
+      fetchedAt: now,
+    });
+
+  // ─── 6) PROGRESS PICTURES (NEW) ─────────────────────────────────────────────
+  //
+  // We’ll create a subcollection called “progressPics” under each plant.
+  // In a real setup, you’d upload actual image files to Storage first, then
+  // use their download URLs here. For demonstration, we’ll use placeholder URLs.
+
+  const progressPicsCollection = db
+    .collection("plants")
+    .doc(plantId)
+    .collection("progressPics");
+
+  // Example #1: “Day 1” snapshot
+  await progressPicsCollection.add({
+    imageUrl:
+      "https://firebasestorage.googleapis.com/v0/b/your-bucket/o/progressPics%2Fd1_northern_lights.jpg?alt=media", 
     timestamp: now,
-    type: "watering",
-    description: "Gave 500ml of water",
-    updatedBy: userId,
+    caption: "Day 1 – just sprouted!",
   });
 
-  // WEATHER CACHE
-  await db.collection("plants").doc(plantId).collection("weatherCache").doc("2025-06-06").set({
-    date: "2025-06-06",
-    temperature: "23°C",
-    humidity: "60%",
-    uvIndex: 5,
-    windSpeed: "10 km/h",
-    summary: "Sunny and mild",
-    fetchedAt: now,
+  // Example #2: “Day 10” snapshot
+  await progressPicsCollection.add({
+    imageUrl:
+      "https://firebasestorage.googleapis.com/v0/b/your-bucket/o/progressPics%2Fd10_northern_lights.jpg?alt=media",
+    timestamp: now,
+    caption: "Day 10 – leaves emerging.",
   });
 
-  // NOTIFICATIONS
+  // ─── 7) NOTIFICATIONS ──────────────────────────────────────────────────────
   await db.collection("notifications").doc(userId).set({
     deviceTokens: ["abc123xyz"],
     subscribedTopics: ["watering", "growthTips"],
     lastUpdated: now,
   });
 
-  // ANALYTICS
+  // ─── 8) ANALYTICS ───────────────────────────────────────────────────────────
   await db.collection("analytics").doc(`${userId}_year_2025`).set({
     year: 2025,
     totalWaterings: 1,
@@ -109,7 +174,7 @@ async function seedFirestore() {
     totalPlantsArchived: 0,
   });
 
-  // INVITES
+  // ─── 9) INVITES ──────────────────────────────────────────────────────────────
   await db.collection("invites").doc("inviteABC").set({
     invitedBy: userId,
     invitedUserEmail: "friend@example.com",

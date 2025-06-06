@@ -42,9 +42,9 @@ export default function Step1() {
         return true;
       };
 
-      BackHandler.addEventListener('hardwareBackPress', onBack);
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBack);
 
-      return () => BackHandler.removeEventListener('hardwareBackPress', onBack);
+      return () => subscription.remove(); // ✅ Fixed line
     }, [router])
   );
 
@@ -63,87 +63,88 @@ export default function Step1() {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <ScrollView
             style={{ flex: 1 }}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, gap: 16 }}>
-          <StepIndicatorBar currentPosition={0} />
-          <ThemedText type="title" style={{ textAlign: 'center', marginTop: 8 }}>
-            🌱 Let’s start with the basics
-          </ThemedText>
-
-          <TextInput
-            label="Plant Name"
-            value={name}
-            onChangeText={(text) => setField('name', text)}
-            style={inputStyle}
-          />
-
-          <Menu
-            visible={strainMenu}
-            onDismiss={() => setStrainMenu(false)}
-            anchor={
-              <TextInput
-                label="Strain"
-                value={strain || 'Unknown'}
-                editable={false}
-                style={inputStyle}
-                right={
-                  <TextInput.Icon
-                    icon="menu-down"
-                    onPress={() => setStrainMenu(true)}
-                  />
-                }
-              />
-            }
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, gap: 16 }}
           >
+            <StepIndicatorBar currentPosition={0} />
+            <ThemedText type="title" style={{ textAlign: 'center', marginTop: 8 }}>
+              🌱 Let’s start with the basics
+            </ThemedText>
+
             <TextInput
-              placeholder="Search..."
-              value={strainSearch}
-              onChangeText={setStrainSearch}
-              style={{ margin: 8 }}
+              label="Plant Name"
+              value={name}
+              onChangeText={(text) => setField('name', text)}
+              style={inputStyle}
             />
-            {["Unknown", ...strains.filter((s) =>
-              s.toLowerCase().includes(strainSearch.toLowerCase())
-            )].map((opt) => (
-              <Menu.Item
-                key={opt}
-                onPress={() => {
-                  setField('strain', opt);
-                  setStrainMenu(false);
-                  setStrainSearch('');
-                }}
-                title={opt}
+
+            <Menu
+              visible={strainMenu}
+              onDismiss={() => setStrainMenu(false)}
+              anchor={
+                <TextInput
+                  label="Strain"
+                  value={strain || 'Unknown'}
+                  editable={false}
+                  style={inputStyle}
+                  right={
+                    <TextInput.Icon
+                      icon="menu-down"
+                      onPress={() => setStrainMenu(true)}
+                    />
+                  }
+                />
+              }
+            >
+              <TextInput
+                placeholder="Search..."
+                value={strainSearch}
+                onChangeText={setStrainSearch}
+                style={{ margin: 8 }}
               />
-            ))}
-          </Menu>
+              {["Unknown", ...strains.filter((s) =>
+                s.toLowerCase().includes(strainSearch.toLowerCase())
+              )].map((opt) => (
+                <Menu.Item
+                  key={opt}
+                  onPress={() => {
+                    setField('strain', opt);
+                    setStrainMenu(false);
+                    setStrainSearch('');
+                  }}
+                  title={opt}
+                />
+              ))}
+            </Menu>
 
-          <SegmentedButtons
-            value={growthStage}
-            onValueChange={(val) => setField('growthStage', val as any)}
-            buttons={[
-              { value: 'germination', label: 'Germination' },
-              { value: 'seedling', label: 'Seedling' },
-              { value: 'vegetative', label: 'Vegetative' },
-              { value: 'flowering', label: 'Flowering' },
-            ]}
-          />
+            <SegmentedButtons
+              value={growthStage}
+              onValueChange={(val) => setField('growthStage', val as any)}
+              buttons={[
+                { value: 'germination', label: 'Germination' },
+                { value: 'seedling', label: 'Seedling' },
+                { value: 'vegetative', label: 'Vegetative' },
+                { value: 'flowering', label: 'Flowering' },
+              ]}
+            />
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
-            <Button
-              mode="outlined"
-              onPress={() => router.replace('/(tabs)/plants')}
-            >
-              Back
-            </Button>
-            <Button
-              mode="contained"
-              disabled={!isValid}
-              onPress={() => router.push('/add-plant/step2')}
-            >
-              Next
-            </Button>
-          </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
-  </SafeAreaView>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
+              <Button
+                mode="outlined"
+                onPress={() => router.replace('/(tabs)/plants')}
+              >
+                Back
+              </Button>
+              <Button
+                mode="contained"
+                disabled={!isValid}
+                onPress={() => router.push('/add-plant/step2')}
+              >
+                Next
+              </Button>
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
