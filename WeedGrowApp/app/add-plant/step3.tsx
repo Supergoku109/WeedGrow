@@ -32,6 +32,7 @@ export default function Step3() {
   const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = React.useState(false);
+  const mapRef = React.useRef<MapView | null>(null);
 
   const inputStyle = {
     borderRadius: 8,
@@ -44,7 +45,6 @@ export default function Step3() {
       setLoading(true);
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setLoading(false);
         Alert.alert(
           'Permission Denied',
           'Location permission is required to fetch your current location. Please enable it in your device settings.',
@@ -52,29 +52,37 @@ export default function Step3() {
         );
         return;
       }
-      // Try last known first
-      const lastKnown = await Location.getLastKnownPositionAsync();
-      if (lastKnown) {
-        setField('location', {
-          lat: lastKnown.coords.latitude,
-          lng: lastKnown.coords.longitude,
-        });
-        return;
-      }
 
-      // Fallback to full GPS if nothing cached
-      const current = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-        timeout: 5000,
-      });
+      const lastKnown = await Location.getLastKnownPositionAsync();
+      const coords = lastKnown?.coords
+        ? lastKnown.coords
+        : (
+            await Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.Balanced,
+              timeout: 5000,
+            })
+          ).coords;
+
       setField('location', {
-        lat: current.coords.latitude,
-        lng: current.coords.longitude,
+        lat: coords.latitude,
+        lng: coords.longitude,
       });
-      } finally {
+
+      mapRef.current?.animateToRegion(
+        {
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        },
+        500
+      );
+    } catch (error) {
+      console.error('Location error:', error);
+    } finally {
       setLoading(false);
-      }
-      };
+    }
+  };
 
   const handleMapPress = (event: MapPressEvent) => {
     const { latitude, longitude } = event.nativeEvent.coordinate;
@@ -82,6 +90,16 @@ export default function Step3() {
       lat: latitude,
       lng: longitude,
     });
+
+    mapRef.current?.animateToRegion(
+      {
+        latitude,
+        longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      },
+      500
+    );
   };
 
   return (
@@ -115,6 +133,7 @@ export default function Step3() {
 
             <View style={{ height: 300, borderRadius: 12, overflow: 'hidden' }}>
               <MapView
+                ref={mapRef}
                 style={{ width: screen.width - 32, height: 300 }}
                 onPress={handleMapPress}
                 initialRegion={{
@@ -123,16 +142,6 @@ export default function Step3() {
                   latitudeDelta: 0.01,
                   longitudeDelta: 0.01,
                 }}
-                region={
-                  location
-                    ? {
-                        latitude: location.lat,
-                        longitude: location.lng,
-                        latitudeDelta: 0.005,
-                        longitudeDelta: 0.005,
-                      }
-                    : undefined
-                }
               >
                 {location && (
                   <Marker
