@@ -26,11 +26,15 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function Step1() {
   const router = useRouter();
-  const { name, strain, growthStage, setField } = usePlantForm();
+  const { name, strain, growthStage, ageDays, setField } = usePlantForm();
   type Theme = keyof typeof Colors;
   const theme = (useColorScheme() ?? 'dark') as Theme;
   const insets = useSafeAreaInsets();
-  const isValid = name.trim().length > 0;
+  const isValid =
+    name.trim().length > 0 &&
+    ((growthStage === 'vegetative' || growthStage === 'flowering')
+      ? ageDays.trim().length > 0
+      : true);
   const [strainMenu, setStrainMenu] = React.useState(false);
   const [strainSearch, setStrainSearch] = React.useState('');
   const strains = ['Sativa', 'Indica', 'Hybrid'];
@@ -118,7 +122,12 @@ export default function Step1() {
 
             <SegmentedButtons
               value={growthStage}
-              onValueChange={(val) => setField('growthStage', val as any)}
+              onValueChange={(val) => {
+                setField('growthStage', val as any);
+                if (val === 'germination' || val === 'seedling') {
+                  setField('ageDays', '0');
+                }
+              }}
               buttons={[
                 { value: 'germination', label: 'Germination' },
                 { value: 'seedling', label: 'Seedling' },
@@ -126,6 +135,16 @@ export default function Step1() {
                 { value: 'flowering', label: 'Flowering' },
               ]}
             />
+
+            {(growthStage === 'vegetative' || growthStage === 'flowering') && (
+              <TextInput
+                label="Age in Days"
+                value={ageDays}
+                onChangeText={(text) => setField('ageDays', text)}
+                style={inputStyle}
+                keyboardType="numeric"
+              />
+            )}
 
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
               <Button
