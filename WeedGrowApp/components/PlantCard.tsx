@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { SharedElement } from 'react-navigation-shared-element';
+import Animated from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -20,9 +20,12 @@ export function PlantCard({ plant }: PlantCardProps) {
     >
       <ThemedView style={styles.card}>
         {plant.imageUri && (
-          <SharedElement id={`plant.${plant.id}.photo`} style={styles.imageWrap}>
+          <Animated.View
+            sharedTransitionTag={`plant.${plant.id}.photo`}
+            style={styles.imageWrap}
+          >
             <Image source={{ uri: plant.imageUri }} style={styles.image} />
-          </SharedElement>
+          </Animated.View>
         )}
         <ThemedText type="subtitle">{plant.name}</ThemedText>
         <ThemedText>Strain: {plant.strain}</ThemedText>

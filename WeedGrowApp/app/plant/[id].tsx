@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { SharedElement } from 'react-navigation-shared-element';
+import Animated from 'react-native-reanimated';
 import { doc, getDoc } from 'firebase/firestore';
 import { Plant } from '@/firestoreModels';
 import { ThemedView } from '@/components/ThemedView';
@@ -49,9 +49,9 @@ export default function PlantDetailScreen() {
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>
       {plant.imageUri && (
-        <SharedElement id={`plant.${id}.photo`} style={styles.imageWrapper}>
+        <Animated.View sharedTransitionTag={`plant.${id}.photo`} style={styles.imageWrapper}>
           <Image source={{ uri: plant.imageUri }} style={styles.image} />
-        </SharedElement>
+        </Animated.View>
       )}
       <ThemedText type="title" style={styles.title}>{plant.name}</ThemedText>
       <ThemedText style={styles.strain}>{plant.strain}</ThemedText>
@@ -98,10 +98,6 @@ export default function PlantDetailScreen() {
   );
 }
 
-PlantDetailScreen.sharedElements = (route: any) => {
-  const { id } = route.params;
-  return [`plant.${id}.photo`];
-};
 
 const styles = StyleSheet.create({
   center: {
