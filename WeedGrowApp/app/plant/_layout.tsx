@@ -1,10 +1,6 @@
-import { withLayoutContext } from 'expo-router';
-import { createSharedElementStackNavigator } from 'react-navigation-shared-element';
+import { Stack } from 'expo-router';
 import React from 'react';
 
-const Stack = createSharedElementStackNavigator();
-const PlantStack = withLayoutContext(Stack.Navigator);
-
 export default function PlantLayout() {
-  return <PlantStack screenOptions={{ headerShown: false }} />;
+  return <Stack screenOptions={{ headerShown: false }} />;
 }
