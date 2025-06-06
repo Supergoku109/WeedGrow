@@ -22,7 +22,7 @@ export default function Review() {
   const save = async () => {
     try {
       const ageNum = parseInt(form.ageDays || '0', 10);
-      const createdAt = Timestamp.fromMillis(Date.now() - ageNum * 86400000);
+      const createdAt = Timestamp.fromMillis(Date.now() - ageNum * MILLISECONDS_PER_DAY);
       await addDoc(collection(db, 'plants'), {
         name: form.name,
         strain: form.strain,
