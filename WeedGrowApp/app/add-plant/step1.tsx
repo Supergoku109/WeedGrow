@@ -6,6 +6,7 @@ import {
   View,
   TouchableWithoutFeedback,
   Keyboard,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -16,7 +17,7 @@ import {
   SegmentedButtons,
 } from 'react-native-paper';
 import { ThemedText } from '@/components/ThemedText';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 
 import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
@@ -33,6 +34,19 @@ export default function Step1() {
   const [strainMenu, setStrainMenu] = React.useState(false);
   const [strainSearch, setStrainSearch] = React.useState('');
   const strains = ['Sativa', 'Indica', 'Hybrid'];
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBack = () => {
+        router.replace('/(tabs)/plants');
+        return true;
+      };
+
+      BackHandler.addEventListener('hardwareBackPress', onBack);
+
+      return () => BackHandler.removeEventListener('hardwareBackPress', onBack);
+    }, [router])
+  );
 
   const inputStyle = {
     borderRadius: 8,
