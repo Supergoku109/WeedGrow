@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
 import { Colors } from '@/constants/Colors';
+import { MILLISECONDS_PER_DAY } from '@/constants/Time';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '@/services/firebase';
