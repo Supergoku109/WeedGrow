@@ -26,8 +26,12 @@ export default function PlantsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [envFilter, setEnvFilter] = useState<string | null>(null);
+  const [plantedFilter, setPlantedFilter] = useState<string | null>(null);
+  const [trainingFilter, setTrainingFilter] = useState<string | null>(null);
   const [statusMenu, setStatusMenu] = useState(false);
   const [envMenu, setEnvMenu] = useState(false);
+  const [plantedMenu, setPlantedMenu] = useState(false);
+  const [trainingMenu, setTrainingMenu] = useState(false);
   type Theme = keyof typeof Colors;
   const theme = (useColorScheme() ?? 'dark') as Theme;
 
@@ -56,7 +60,9 @@ export default function PlantsScreen() {
     (p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
       (!statusFilter || p.status === statusFilter) &&
-      (!envFilter || p.environment === envFilter)
+      (!envFilter || p.environment === envFilter) &&
+      (!plantedFilter || p.plantedIn === plantedFilter) &&
+      (!trainingFilter || (p.trainingTags && p.trainingTags.includes(trainingFilter)))
   );
 
   return (
@@ -107,6 +113,48 @@ export default function PlantsScreen() {
                 onPress={() => {
                   setEnvFilter(opt === 'all' ? null : opt);
                   setEnvMenu(false);
+                }}
+                title={opt === 'all' ? 'All' : opt}
+              />
+            ))}
+          </Menu>
+        </View>
+        <View style={styles.filterRow}>
+          <Menu
+            visible={plantedMenu}
+            onDismiss={() => setPlantedMenu(false)}
+            anchor={
+              <Button mode="outlined" onPress={() => setPlantedMenu(true)}>
+                {plantedFilter ? plantedFilter : 'Planted In'}
+              </Button>
+            }
+          >
+            {['all', 'pot', 'ground'].map((opt) => (
+              <Menu.Item
+                key={opt}
+                onPress={() => {
+                  setPlantedFilter(opt === 'all' ? null : opt);
+                  setPlantedMenu(false);
+                }}
+                title={opt === 'all' ? 'All' : opt}
+              />
+            ))}
+          </Menu>
+          <Menu
+            visible={trainingMenu}
+            onDismiss={() => setTrainingMenu(false)}
+            anchor={
+              <Button mode="outlined" onPress={() => setTrainingMenu(true)}>
+                {trainingFilter ? trainingFilter : 'Training'}
+              </Button>
+            }
+          >
+            {['all', 'LST', 'Topping', 'SCROG'].map((opt) => (
+              <Menu.Item
+                key={opt}
+                onPress={() => {
+                  setTrainingFilter(opt === 'all' ? null : opt);
+                  setTrainingMenu(false);
                 }}
                 title={opt === 'all' ? 'All' : opt}
               />
