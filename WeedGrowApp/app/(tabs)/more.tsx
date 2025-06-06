@@ -1,9 +1,12 @@
 import React from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Collapsible } from '@/components/Collapsible';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 const SECTIONS = [
   {
@@ -50,29 +53,44 @@ const SECTIONS = [
 ];
 
 export default function MoreScreen() {
+  const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
+
   return (
-    <ThemedView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
       <ScrollView contentContainerStyle={styles.container}>
-        {SECTIONS.map((section) => (
-          <Collapsible key={section.title} title={section.title}>
-            {section.items.map((item) => (
-              <ThemedText key={item} style={styles.itemText}>
-                {'\u2022'} {item}
-              </ThemedText>
-            ))}
-          </Collapsible>
+        {SECTIONS.map((section, index) => (
+          <React.Fragment key={section.title}>
+            <Collapsible title={section.title}>
+              {section.items.map((item) => (
+                <ThemedText key={item} style={styles.itemText}>
+                  {'\u2022'} {item}
+                </ThemedText>
+              ))}
+            </Collapsible>
+            {index < SECTIONS.length - 1 && (
+              <ThemedView
+                style={[styles.divider, { backgroundColor: Colors[theme].gray }]}
+              />
+            )}
+          </React.Fragment>
         ))}
       </ScrollView>
-    </ThemedView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    gap: 12,
+    padding: 24,
+    gap: 24,
   },
   itemText: {
-    marginBottom: 4,
+    marginBottom: 8,
+    fontSize: 18,
+  },
+  divider: {
+    width: '100%',
+    height: StyleSheet.hairlineWidth,
+    marginVertical: 12,
   },
 });
