@@ -30,11 +30,14 @@ export default function Step1() {
   type Theme = keyof typeof Colors;
   const theme = (useColorScheme() ?? 'dark') as Theme;
   const insets = useSafeAreaInsets();
-  const isValid =
-    name.trim().length > 0 &&
-    ((growthStage === 'vegetative' || growthStage === 'flowering')
-      ? ageDays.trim().length > 0
-      : true);
+  const validateAgeDays = (growthStage: string, ageDays: string): boolean => {
+    if (growthStage === 'vegetative' || growthStage === 'flowering') {
+      return ageDays.trim().length > 0;
+    }
+    return true;
+  };
+
+  const isValid = name.trim().length > 0 && validateAgeDays(growthStage, ageDays);
   const [strainMenu, setStrainMenu] = React.useState(false);
   const [strainSearch, setStrainSearch] = React.useState('');
   const strains = ['Sativa', 'Indica', 'Hybrid'];
