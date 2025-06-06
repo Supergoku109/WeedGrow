@@ -38,6 +38,7 @@ It helps Codex and other AI agents understand how your app stores and interacts 
   - `name: string`
   - `strain: string`
   - `growthStage: string`  // e.g. “germination”, “seedling”, etc.
+  - `ageDays?: number`  // current age of the plant in days
   - `status: string`  // e.g. “active” or “archived”
   - `environment: string`  // “indoor” or “outdoor”
   - `plantedIn: string`  // e.g. “pot”, “ground”

@@ -73,6 +73,7 @@ async function seedFirestore() {
     strain: "Indica",
     owners: [userId],
     growthStage: "germination",
+    ageDays: 0,
     status: "active",
     environment: "outdoor",
     plantedIn: "pot",

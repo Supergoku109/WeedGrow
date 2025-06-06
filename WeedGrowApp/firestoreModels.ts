@@ -8,6 +8,7 @@ export interface Plant {
     strain: string;
     owners: string[];
     growthStage: 'germination' | 'seedling' | 'vegetative' | 'flowering';
+    ageDays?: number;
     status: 'active' | 'archived' | 'harvested' | 'dead';
     environment: 'outdoor' | 'greenhouse' | 'indoor';
     plantedIn: 'pot' | 'ground';

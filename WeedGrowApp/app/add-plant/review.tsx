@@ -9,7 +9,7 @@ import StepIndicatorBar from '@/components/StepIndicatorBar';
 import { usePlantForm } from '@/stores/usePlantForm';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 
 export default function Review() {
@@ -21,11 +21,14 @@ export default function Review() {
 
   const save = async () => {
     try {
+      const ageNum = parseInt(form.ageDays || '0', 10);
+      const createdAt = Timestamp.fromMillis(Date.now() - ageNum * MILLISECONDS_PER_DAY);
       await addDoc(collection(db, 'plants'), {
         name: form.name,
         strain: form.strain,
         owners: ['demoUser'],
         growthStage: form.growthStage,
+        ageDays: ageNum,
         status: 'active',
         environment: form.environment,
         plantedIn: form.plantedIn,
@@ -39,7 +42,7 @@ export default function Review() {
         imageUri: form.imageUri ?? null,
         location: form.location ?? null,
         locationNickname: form.locationNickname ?? null,
-        createdAt: serverTimestamp(),
+        createdAt,
         updatedAt: serverTimestamp(),
       });
       form.reset();
@@ -79,6 +82,16 @@ export default function Review() {
               <Text variant="labelLarge">Growth Stage</Text>
               <Text>{form.growthStage}</Text>
             </View>
+
+            {(form.growthStage === 'vegetative' || form.growthStage === 'flowering') && (
+              <>
+                <Divider />
+                <View>
+                  <Text variant="labelLarge">Age (days)</Text>
+                  <Text>{form.ageDays}</Text>
+                </View>
+              </>
+            )}
 
             <Divider />
             <ThemedText style={styles.sectionTitle}>Environment</ThemedText>

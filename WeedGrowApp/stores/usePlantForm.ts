@@ -8,6 +8,7 @@ export interface PlantFormState {
   name: string;
   strain: string;
   growthStage: GrowthStage;
+  ageDays: string;
   environment: Environment;
   potSize?: string;
   sunlightExposure?: string;
@@ -28,6 +29,7 @@ const initialState: Omit<PlantFormState, 'setField' | 'reset'> = {
   name: '',
   strain: '',
   growthStage: 'germination',
+  ageDays: '0',
   environment: 'outdoor',
   plantedIn: 'pot',
 };
