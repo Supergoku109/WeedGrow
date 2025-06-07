@@ -7,7 +7,7 @@ import { Plant } from '@/firestoreModels';
 import { Colors, calendarGreen } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { getPlantAdvice, PlantAdviceContext } from '@/utils/getPlantAdvice';
+import { getPlantAdvice, PlantAdviceContext } from '@/lib/weather/getPlantAdvice';
 
 export interface PlantCardProps {
   plant: Plant & { id: string };
