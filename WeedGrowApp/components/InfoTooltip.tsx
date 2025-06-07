@@ -42,8 +42,9 @@ const styles = StyleSheet.create({
   },
   tooltip: {
     position: 'absolute',
-    top: -4,
-    right: 24,
+    top: '100%',
+    left: 0,
+    marginTop: 4,
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 6,
