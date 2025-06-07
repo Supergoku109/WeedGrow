@@ -4,8 +4,7 @@ import { useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Plant } from '@/firestoreModels';
-import { Colors, calendarGreen } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { calendarGreen } from '@/constants/Colors';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getPlantAdvice, PlantAdviceContext } from '@/lib/weather/getPlantAdvice';
 
@@ -14,32 +13,10 @@ export interface PlantCardProps {
   weather?: Partial<PlantAdviceContext>;
 }
 
-const DAY_MS = 1000 * 60 * 60 * 24;
-
 export function PlantCard({ plant, weather }: PlantCardProps) {
   const router = useRouter();
-  type Theme = keyof typeof Colors;
-  const theme = (useColorScheme() ?? 'dark') as Theme;
-
-  const freq = (() => {
-    const f = plant.wateringFrequency;
-    if (!f) return 3;
-    if (typeof f === 'number') return f;
-    const match = String(f).match(/(\d+)/);
-    return match ? parseInt(match[1], 10) : 3;
-  })();
-
-  const last = plant.lastWateredAt
-    ? new Date(plant.lastWateredAt)
-    : plant.createdAt
-      ? new Date(plant.createdAt)
-      : new Date();
-
-  const daysSince = Math.floor((Date.now() - last.getTime()) / DAY_MS);
 
   const ctx: PlantAdviceContext = {
-    daysSinceWatered: daysSince,
-    frequency: freq,
     rainToday: weather?.rainToday ?? false,
     rainTomorrow: weather?.rainTomorrow ?? false,
     rainYesterday: weather?.rainYesterday ?? 0,
