@@ -1,10 +1,22 @@
+import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
+import type { WeatherCacheEntry } from '../../WeedGrowApp/firestoreModels';
 
-export async function updateFirestore(
+/**
+ * Persist parsed weather data for a plant.
+ * Each key of `parsedData` is a date (YYYY-MM-DD) with a `WeatherCacheEntry`.
+ * The document is merged with any existing data so future runs can append.
+ */
+export async function updateWeatherCache(
   plantId: string,
-  date: string,
-  data: any
+  parsedData: Record<string, WeatherCacheEntry>
 ): Promise<void> {
-  // TODO: Save parsed data per plant/date to Firestore
-  console.log('updateFirestore stub', plantId, date, data);
+  const updates = Object.entries(parsedData).map(([date, entry]) =>
+    setDoc(
+      doc(db, 'plants', plantId, 'weatherCache', date),
+      entry,
+      { merge: true }
+    )
+  );
+  await Promise.all(updates);
 }
