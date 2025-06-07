@@ -9,6 +9,8 @@ import { Colors } from '@/constants/Colors';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { PlantCard } from '@/components/PlantCard';
+import { fetchPlantWeatherContext } from '@/lib/weather/fetchPlantWeatherContext';
+import type { PlantAdviceContext } from '@/lib/weather/getPlantAdvice';
 import { collection, getDocs, query } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 import { Plant } from '@/firestoreModels';
@@ -34,6 +36,7 @@ export default function PlantsScreen() {
   const [plantedFilter, setPlantedFilter] = useState<string | null>(null);
   const [trainingFilter, setTrainingFilter] = useState<string | null>(null);
   const [filtersVisible, setFiltersVisible] = useState(false);
+  const [weatherMap, setWeatherMap] = useState<Record<string, PlantAdviceContext>>({});
   type Theme = keyof typeof Colors;
   const theme = (useColorScheme() ?? 'dark') as Theme;
 
@@ -47,6 +50,15 @@ export default function PlantsScreen() {
           ...(doc.data() as Plant),
         }));
         setPlants(items);
+
+        const weatherResults = await Promise.all(
+          items.map((p) => fetchPlantWeatherContext(p.id))
+        );
+        const map: Record<string, PlantAdviceContext> = {};
+        items.forEach((p, idx) => {
+          map[p.id] = weatherResults[idx];
+        });
+        setWeatherMap(map);
       } catch (e: any) {
         console.error('Error fetching plants:', e);
         setError(e.message || 'Unknown error');
@@ -176,7 +188,9 @@ export default function PlantsScreen() {
           <FlatList
             data={filteredPlants}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <PlantCard plant={item} />}
+            renderItem={({ item }) => (
+              <PlantCard plant={item} weather={weatherMap[item.id]} />
+            )}
           />
         )}
         {!loading && !error && filteredPlants.length === 0 && plants.length > 0 && (
