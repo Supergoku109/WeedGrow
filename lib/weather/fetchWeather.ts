@@ -1,12 +1,11 @@
-export async function fetchWeather(lat: number, lng: number): Promise<any> {
-  const env =
-    typeof import.meta !== 'undefined' && (import.meta as any).env
-      ? (import.meta as any).env
-      : process.env;
+import Constants from 'expo-constants';
 
-  const apiKey = env.VITE_OPENWEATHERMAP_API_KEY || env.OPENWEATHERMAP_API_KEY;
+export async function fetchWeather(lat: number, lng: number): Promise<any> {
+  // Get API key from app.config.js -> extra
+  const apiKey = Constants?.expoConfig?.extra?.OPENWEATHERMAP_API_KEY;
+
   if (!apiKey) {
-    throw new Error('OpenWeatherMap API key missing');
+    throw new Error('OpenWeatherMap API key is missing. Check your .env and app.config.js');
   }
 
   const baseUrl = 'https://api.openweathermap.org/data/3.0/onecall';
@@ -17,5 +16,5 @@ export async function fetchWeather(lat: number, lng: number): Promise<any> {
     throw new Error(`Failed to fetch weather data: ${response.status} ${response.statusText}`);
   }
 
-  return response.json();
+  return await response.json();
 }
