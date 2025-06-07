@@ -1,6 +1,6 @@
 import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
-import type { WeatherCacheEntry } from '../../WeedGrowApp/firestoreModels';
+import { db } from '@/services/firebase';
+import type { WeatherCacheEntry } from '@/firestoreModels';
 
 /**
  * Persist parsed weather data for a plant.

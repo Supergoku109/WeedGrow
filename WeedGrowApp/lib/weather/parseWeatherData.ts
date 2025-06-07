@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
-import type { WeatherCacheEntry } from '../../WeedGrowApp/firestoreModels';
+import type { WeatherCacheEntry } from '@/firestoreModels';
 
 /**
  * Convert the OpenWeatherMap One Call API response into a map of
