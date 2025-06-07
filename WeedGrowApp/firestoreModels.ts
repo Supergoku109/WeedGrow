@@ -54,15 +54,22 @@ export interface Plant {
   // ================================
   // 📁 Subcollection: /plants/{plantId}/weatherCache/{YYYY-MM-DD}
   // ================================
-  export interface WeatherCacheEntry {
+export interface WeatherCacheEntry {
     date: string; // 'YYYY-MM-DD'
-    temperature: string;
-    humidity: string;
-    uvIndex: number;
-    windSpeed: string;
-    summary: string;
     fetchedAt: FirebaseFirestore.Timestamp;
-  }
+    forecasted: boolean;
+    source: string;
+    temperature: number;
+    humidity: number;
+    windSpeed: number;
+    rainfall: number;
+    uvIndex: number;
+    weatherSummary: string;
+    hourlySummary?: {
+      peakTemp: number;
+      rainHours: number;
+    };
+}
   
   // ================================
   // 📁 /users/{userId}/settings

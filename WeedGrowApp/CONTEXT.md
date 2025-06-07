@@ -71,16 +71,21 @@ It helps Codex and other AI agents understand how your app stores and interacts 
   - `description: string`
   - `updatedBy: string`  // `userId` of the user who created this log
 
-### `/plants/{plantId}/weatherCache/{YYYY-MM-DD}`
-- Cached daily weather data for outdoor plants (document ID is the date).
-- Fields:
-  - `date: string`  // “YYYY-MM-DD”
-  - `temperature: string`  // e.g. “23°C”
-  - `humidity: string`  // e.g. “60%”
-  - `uvIndex: number`
-  - `windSpeed: string`  // e.g. “10 km/h”
-  - `summary: string`  // e.g. “Sunny and mild”
-  - `fetchedAt: Timestamp`
+### Weather Cache (per plant)
+Each plant has a `weatherCache` subcollection with one document per date.
+Path: `/plants/{plantId}/weatherCache/{YYYY-MM-DD}`
+Fields:
+- `date`: string ("YYYY-MM-DD")
+- `fetchedAt`: Timestamp
+- `forecasted`: boolean
+- `source`: string ("OpenWeatherMap")
+- `temperature`: number (°C)
+- `humidity`: number (percent)
+- `windSpeed`: number (km/h)
+- `rainfall`: number (mm)
+- `uvIndex`: number
+- `weatherSummary`: string
+- `hourlySummary` (optional): { peakTemp: number, rainHours: number }
 
 ### **`/plants/{plantId}/progressPics/{picId}`**  ← *NEW*
 - Subcollection for storing progress pictures of each plant.
