@@ -110,26 +110,82 @@ async function seedFirestore() {
     });
 
   // ─── 5) WEATHER CACHE ──────────────────────────────────────────────────────
-  await db
+  const weatherCollection = db
     .collection("plants")
     .doc(plantId)
-    .collection("weatherCache")
-    .doc("2025-06-06")
-    .set({
-      date: "2025-06-06",
-      temperature: "23°C",
-      humidity: "60%",
-      uvIndex: 5,
-      windSpeed: "10 km/h",
-      summary: "Sunny and mild",
-      dewPoint: "12°C",
+    .collection("weatherCache");
+
+  const fmt = (d: Date) => d.toISOString().split("T")[0];
+
+  const yesterday = new Date(Date.now() - 86400000);
+  const today = new Date();
+  const tomorrow = new Date(Date.now() + 86400000);
+
+  const weatherSamples = [
+    {
+      date: fmt(yesterday),
+      forecasted: false,
+      source: "OpenWeatherMap",
+      temperature: 20,
+      humidity: 55,
+      windSpeed: 8,
+      rainfall: 1,
+      uvIndex: 4,
+      weatherSummary: "Partly cloudy",
+      hourlySummary: { peakTemp: 21, rainHours: 1 },
+      dewPoint: 12,
+      cloudCoverage: 40,
+      windGust: 12,
+      sunrise: "06:10",
+      sunset: "18:30",
+      pop: 0.2,
+    },
+    {
+      date: fmt(today),
+      forecasted: false,
+      source: "OpenWeatherMap",
+      temperature: 22,
+      humidity: 60,
+      windSpeed: 10,
+      rainfall: 0,
+      uvIndex: 6,
+      weatherSummary: "Sunny and warm",
+      hourlySummary: { peakTemp: 23, rainHours: 0 },
+      dewPoint: 13,
       cloudCoverage: 20,
-      windGust: "15 km/h",
+      windGust: 15,
       sunrise: "06:15",
       sunset: "18:35",
       pop: 0.1,
-      fetchedAt: now,
-    });
+    },
+    {
+      date: fmt(tomorrow),
+      forecasted: true,
+      source: "OpenWeatherMap",
+      temperature: 19,
+      humidity: 70,
+      windSpeed: 15,
+      rainfall: 5,
+      uvIndex: 3,
+      weatherSummary: "Expected showers",
+      hourlySummary: { peakTemp: 20, rainHours: 3 },
+      dewPoint: 11,
+      cloudCoverage: 80,
+      windGust: 30,
+      sunrise: "06:20",
+      sunset: "18:40",
+      pop: 0.7,
+    },
+  ];
+
+  await Promise.all(
+    weatherSamples.map((entry) =>
+      weatherCollection.doc(entry.date).set({
+        ...entry,
+        fetchedAt: now,
+      })
+    )
+  );
 
   // ─── 6) PROGRESS PICTURES (NEW) ─────────────────────────────────────────────
   //
