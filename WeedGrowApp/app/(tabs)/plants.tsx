@@ -10,7 +10,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { PlantCard } from '@/components/PlantCard';
 import { collection, getDocs, query } from 'firebase/firestore';
-import { db } from '../../services/firebase';
+import { db } from '@/services/firebase';
 import { Plant } from '@/firestoreModels';
 import {
   ActivityIndicator,

@@ -10,11 +10,11 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { db } from '../../services/firebase';
+import { db } from '@/services/firebase';
 import { List } from 'react-native-paper';
-import { fetchWeather } from '../../../lib/weather/fetchWeather';
-import { parseWeatherData } from '../../../lib/weather/parseWeatherData';
-import { updateWeatherCache } from '../../../lib/weather/updateFirestore';
+import { fetchWeather } from '@/lib/weather/fetchWeather';
+import { parseWeatherData } from '@/lib/weather/parseWeatherData';
+import { updateWeatherCache } from '@/lib/weather/updateFirestore';
 
 export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
