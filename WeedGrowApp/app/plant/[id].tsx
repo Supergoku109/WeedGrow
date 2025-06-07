@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, Image, Alert } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ActivityIndicator, IconButton } from 'react-native-paper';
+import { ActivityIndicator, IconButton, Button } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated from 'react-native-reanimated';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
@@ -12,6 +12,9 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { db } from '../../services/firebase';
 import { List } from 'react-native-paper';
+import { fetchWeather } from '../../../lib/weather/fetchWeather';
+import { parseWeatherData } from '../../../lib/weather/parseWeatherData';
+import { updateWeatherCache } from '../../../lib/weather/updateFirestore';
 
 export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -44,6 +47,21 @@ export default function PlantDetailScreen() {
         },
       ],
     );
+  };
+
+  const syncWeather = async () => {
+    if (!plant || !plant.location) {
+      console.log('No location available for weather sync');
+      return;
+    }
+    try {
+      const data = await fetchWeather(plant.location.lat, plant.location.lng);
+      const parsed = parseWeatherData(data);
+      await updateWeatherCache(String(id), parsed);
+      console.log('Weather sync successful');
+    } catch (e) {
+      console.error('Weather sync failed:', e);
+    }
   };
 
   useEffect(() => {
@@ -140,6 +158,13 @@ export default function PlantDetailScreen() {
           <ThemedText>{plant.pests.join(', ')}</ThemedText>
         </View>
       ) : null}
+      <Button
+        mode="contained"
+        onPress={syncWeather}
+        style={styles.syncButton}
+      >
+        Sync Weather
+      </Button>
       </ScrollView>
     </SafeAreaView>
   );
@@ -174,6 +199,9 @@ const styles = StyleSheet.create({
   section: {
     marginTop: 16,
     gap: 4,
+  },
+  syncButton: {
+    marginTop: 20,
   },
   deleteButton: {
     position: 'absolute',
