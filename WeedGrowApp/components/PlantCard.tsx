@@ -6,7 +6,8 @@ import { ThemedText } from '@/components/ThemedText';
 import { Plant } from '@/firestoreModels';
 import { calendarGreen } from '@/constants/Colors';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { getPlantAdvice, PlantAdviceContext } from '@/lib/weather/getPlantAdvice';
+import { getPlantAdviceWithReason, PlantAdviceContext } from '@/lib/weather/getPlantAdvice';
+import { InfoTooltip } from '@/components/InfoTooltip';
 
 export interface PlantCardProps {
   plant: Plant & { id: string };
@@ -27,7 +28,7 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
     pop: weather?.pop ?? 0.2,
   };
 
-  const advice = getPlantAdvice(ctx);
+  const { advice, reason } = getPlantAdviceWithReason(ctx);
 
   const getSuggestionColor = () => {
     if (advice.includes('mildew')) return '#DC2626'; // red
@@ -52,6 +53,7 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
     greenhouse: 'greenhouse',
   }[(plant as any).environment ?? 'indoor'];
 
+
   return (
     <TouchableOpacity
       onPress={() => router.push({ pathname: '/plant/[id]', params: { id: plant.id } })}
@@ -66,8 +68,14 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
             <ThemedText>
               {(plant as any).strain} | <MaterialCommunityIcons name={envIcon} size={14} />
             </ThemedText>
-            <View style={[styles.suggestionChip, { backgroundColor: suggestionColor }]}>
-              <ThemedText style={styles.suggestionText}>{advice}</ThemedText>
+            <View style={styles.statusRow}>
+              <ThemedText>{plant.status}</ThemedText>
+            </View>
+            <View style={styles.suggestionRow}>
+              <View style={[styles.suggestionChip, { backgroundColor: suggestionColor }]}>
+                <ThemedText style={styles.suggestionText}>{advice}</ThemedText>
+              </View>
+              <InfoTooltip message={reason} />
             </View>
           </View>
         </View>
@@ -97,6 +105,16 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
     gap: 6,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  suggestionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   suggestionChip: {
     alignSelf: 'flex-start',
