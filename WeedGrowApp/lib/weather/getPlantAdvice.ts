@@ -1,8 +1,4 @@
 export interface PlantAdviceContext {
-  /** Days since the plant was last watered */
-  daysSinceWatered: number;
-  /** Desired watering frequency in days */
-  frequency: number;
   /** Will it rain today? */
   rainToday: boolean;
   /** Will it rain tomorrow? */
@@ -17,7 +13,7 @@ export interface PlantAdviceContext {
   cloudCoverage: number;
   /** Wind gust speed in km/h */
   windGust: number;
-  /** Probability of precipitation percentage */
+  /** Probability of precipitation (0-1) */
   pop: number;
 }
 
@@ -31,8 +27,6 @@ const MILDEW_CLOUD_COVERAGE_THRESHOLD = 70;
  */
 export function getPlantAdvice(ctx: PlantAdviceContext): string {
   const {
-    daysSinceWatered,
-    frequency,
     rainToday,
     rainTomorrow,
     rainYesterday = 0,
@@ -49,7 +43,7 @@ export function getPlantAdvice(ctx: PlantAdviceContext): string {
   }
 
   // 2. Rain expected tomorrow
-  if (rainTomorrow && !rainToday && daysSinceWatered < frequency) {
+  if (rainTomorrow && !rainToday) {
     return 'Rain is expected tomorrow – delay watering unless soil looks dry.';
   }
 
@@ -67,13 +61,13 @@ export function getPlantAdvice(ctx: PlantAdviceContext): string {
     return 'High mildew risk – avoid watering today.';
   }
 
-  // 4. Hot & dry conditions (with watering overdue)
-  if (daysSinceWatered >= frequency && humidity < 50 && !rainToday) {
+  // 4. Hot & dry conditions
+  if (humidity < 50 && !rainToday) {
     return 'Dry weather – water your plant today.';
   }
 
   // 5. Mildly dry, but rain might come
-  if (daysSinceWatered === frequency && pop > 40) {
+  if (pop > 0.4) {
     return 'Rain might come – water lightly if soil feels dry.';
   }
 
@@ -82,15 +76,10 @@ export function getPlantAdvice(ctx: PlantAdviceContext): string {
     return 'High winds today – check your plant is stable.';
   }
 
-  // 8. Watering overdue but weather not ideal
-  if (daysSinceWatered > frequency && (rainTomorrow || humidity > 80)) {
-    return "Watering is overdue, but conditions aren’t ideal. Water lightly or wait.";
+  // 8. Very humid but no rain
+  if (humidity > 80 && !rainToday && !rainTomorrow) {
+    return 'Very humid conditions – avoid heavy watering.';
   }
 
-  // 9. Everything is balanced
-  if (daysSinceWatered < frequency) {
-    return 'All good – no watering needed today.';
-  }
-
-  return 'No specific advice available.';
+  return 'Your plant might need water – check the soil.';
 }
