@@ -160,12 +160,14 @@ async function seedFirestore() {
     },
   ];
 
-  for (const entry of weatherSamples) {
-    await weatherCollection.doc(entry.date).set({
-      ...entry,
-      fetchedAt: now,
-    });
-  }
+  await Promise.all(
+    weatherSamples.map((entry) =>
+      weatherCollection.doc(entry.date).set({
+        ...entry,
+        fetchedAt: now,
+      })
+    )
+  );
 
   // ─── 6) PROGRESS PICTURES (NEW) ─────────────────────────────────────────────
   //
