@@ -27,14 +27,14 @@ function estimateLastWatered(createdAt: Date, freqDays: number): Date {
 }
 
 export function getWateringSuggestion(plant: Plant, weather: Weather): string {
-  const freqDays = parseFrequencyToDays((plant as any).wateringFrequency);
+  const freqDays = parseFrequencyToDays(plant.wateringFrequency);
   if (!freqDays) return 'No Water History';
 
   let lastWatered: Date | null = null;
-  if ((plant as any).lastWateredAt) {
-    lastWatered = new Date((plant as any).lastWateredAt);
+  if (plant.lastWateredAt) {
+    lastWatered = new Date(plant.lastWateredAt);
   } else if (plant.createdAt) {
-    lastWatered = estimateLastWatered(new Date(plant.createdAt as any), freqDays);
+    lastWatered = estimateLastWatered(new Date(plant.createdAt), freqDays);
   }
 
   if (!lastWatered) return 'No Water History';
