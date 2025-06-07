@@ -15,11 +15,14 @@ import { List } from 'react-native-paper';
 import { fetchWeather } from '@/lib/weather/fetchWeather';
 import { parseWeatherData } from '@/lib/weather/parseWeatherData';
 import { updateWeatherCache } from '@/lib/weather/updateFirestore';
+import WeatherBar from '@/components/WeatherBar';
+import type { WeatherCacheEntry } from '@/firestoreModels';
 
 export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [plant, setPlant] = useState<Plant | null>(null);
   const [loading, setLoading] = useState(true);
+  const [weather, setWeather] = useState<(WeatherCacheEntry | null)[]>([]);
   type Theme = keyof typeof Colors;
   const theme = (useColorScheme() ?? 'dark') as Theme;
   const router = useRouter();
@@ -80,6 +83,27 @@ export default function PlantDetailScreen() {
     fetchPlant();
   }, [id]);
 
+  useEffect(() => {
+    const fetchWeatherData = async () => {
+      if (!id) return;
+      const dates: string[] = [];
+      for (let i = -1; i < 3; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() + i);
+        dates.push(d.toISOString().split('T')[0]);
+      }
+      const entries = await Promise.all(
+        dates.map(async (d) => {
+          const ref = doc(db, 'plants', String(id), 'weatherCache', d);
+          const snap = await getDoc(ref);
+          return snap.exists() ? (snap.data() as WeatherCacheEntry) : null;
+        })
+      );
+      setWeather(entries);
+    };
+    fetchWeatherData();
+  }, [id]);
+
   if (loading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
@@ -137,6 +161,13 @@ export default function PlantDetailScreen() {
           left={props => <List.Icon {...props} icon={plant.status === 'active' ? 'check-circle-outline' : plant.status === 'archived' ? 'archive' : plant.status === 'harvested' ? 'flower' : 'skull'} />}
         />
       </View>
+
+      {weather.length === 4 && (
+        <View style={styles.section}>
+          <ThemedText type="subtitle">Weather</ThemedText>
+          <WeatherBar data={weather} />
+        </View>
+      )}
 
       {plant.notes ? (
         <View style={styles.section}>
