@@ -72,11 +72,11 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
               <ThemedText>{plant.status}</ThemedText>
             </View>
             <View style={styles.suggestionRow}>
-              <View style={[styles.suggestionChip, { backgroundColor: suggestionColor }]}>
+              <View style={[styles.suggestionChip, { backgroundColor: suggestionColor }]}> 
                 <ThemedText style={styles.suggestionText}>{advice}</ThemedText>
               </View>
-              <InfoTooltip message={reason} />
             </View>
+            <InfoTooltip message={reason} />
           </View>
         </View>
       </ThemedView>
@@ -115,7 +115,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    position: 'relative',
   },
   suggestionChip: {
     alignSelf: 'flex-start',
