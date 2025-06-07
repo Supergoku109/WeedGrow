@@ -7,18 +7,15 @@ import { Plant } from '@/firestoreModels';
 import { Colors, calendarGreen } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { getWateringSuggestion, Weather } from '@/utils/watering';
 
 export interface PlantCardProps {
   plant: Plant & { id: string };
-  weather?: {
-    rainToday: boolean;
-    rainTomorrow: boolean;
-    humidity: number;
-  };
+  weather?: Weather;
 }
 
 export function PlantCard({ plant, weather }: PlantCardProps) {
-  const defaultWeather = {
+  const defaultWeather: Weather = {
     rainToday: false,
     rainTomorrow: false,
     humidity: 50,
@@ -29,16 +26,7 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
   type Theme = keyof typeof Colors;
   const theme = (useColorScheme() ?? 'dark') as Theme;
 
-  const lastWateredAt = new Date((plant as any).lastWateredAt ?? 0);
-  const daysSinceWatered = Math.floor((Date.now() - lastWateredAt.getTime()) / (1000 * 60 * 60 * 24));
-  const frequency = (plant as any).wateringFrequency ?? 3;
-
-  const getWateringSuggestion = () => {
-    if (currentWeather.rainToday) return 'Rain Incoming';
-    if (daysSinceWatered > frequency && !currentWeather.rainTomorrow) return 'Water Today';
-    if (currentWeather.rainTomorrow || daysSinceWatered === frequency) return 'Water Lightly';
-    return 'No Water Needed';
-  };
+  const suggestion = getWateringSuggestion(plant, currentWeather);
 
   const getSuggestionColor = (suggestion: string) => {
     switch (suggestion) {
@@ -64,7 +52,6 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
     }
   };
 
-  const suggestion = getWateringSuggestion();
   const suggestionColor = getSuggestionColor(suggestion);
   const borderColor = getBorderColor(suggestion);
 
