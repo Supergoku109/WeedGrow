@@ -43,6 +43,16 @@ export function parseWeatherData(apiResponse: any): Record<string, WeatherCacheE
       rainfall: sourceData.rain ?? sourceData.rainfall ?? 0,
       uvIndex: sourceData.uvi,
       weatherSummary: sourceData.weather?.[0]?.description ?? '',
+      dewPoint: sourceData.dew_point,
+      cloudCoverage: sourceData.clouds,
+      windGust: sourceData.wind_gust,
+      sunrise: sourceData.sunrise
+        ? new Date((sourceData.sunrise + tzOffset) * 1000).toISOString()
+        : undefined,
+      sunset: sourceData.sunset
+        ? new Date((sourceData.sunset + tzOffset) * 1000).toISOString()
+        : undefined,
+      pop: sourceData.pop,
     };
 
     const hourly = hourlyMap[dateStr];

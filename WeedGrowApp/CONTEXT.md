@@ -86,6 +86,12 @@ Fields:
 - `uvIndex`: number
 - `weatherSummary`: string
 - `hourlySummary` (optional): { peakTemp: number, rainHours: number }
+- `dewPoint` (optional): number
+- `cloudCoverage` (optional): number
+- `windGust` (optional): number
+- `sunrise` (optional): string
+- `sunset` (optional): string
+- `pop` (optional): number // Probability of precipitation
 
 ### **`/plants/{plantId}/progressPics/{picId}`**  ← *NEW*
 - Subcollection for storing progress pictures of each plant.

@@ -122,6 +122,12 @@ async function seedFirestore() {
       uvIndex: 5,
       windSpeed: "10 km/h",
       summary: "Sunny and mild",
+      dewPoint: "12°C",
+      cloudCoverage: 20,
+      windGust: "15 km/h",
+      sunrise: "06:15",
+      sunset: "18:35",
+      pop: 0.1,
       fetchedAt: now,
     });
 

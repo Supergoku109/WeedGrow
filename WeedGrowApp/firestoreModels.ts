@@ -69,6 +69,12 @@ export interface WeatherCacheEntry {
       peakTemp: number;
       rainHours: number;
     };
+    dewPoint?: number;
+    cloudCoverage?: number;
+    windGust?: number;
+    sunrise?: string;
+    sunset?: string;
+    pop?: number;
 }
   
   // ================================

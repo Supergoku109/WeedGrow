@@ -133,6 +133,12 @@ async function seedFirestore() {
       uvIndex: 4,
       weatherSummary: "Partly cloudy",
       hourlySummary: { peakTemp: 21, rainHours: 1 },
+      dewPoint: 12,
+      cloudCoverage: 40,
+      windGust: 12,
+      sunrise: "06:10",
+      sunset: "18:30",
+      pop: 0.2,
     },
     {
       date: fmt(today),
@@ -145,6 +151,12 @@ async function seedFirestore() {
       uvIndex: 6,
       weatherSummary: "Sunny and warm",
       hourlySummary: { peakTemp: 23, rainHours: 0 },
+      dewPoint: 13,
+      cloudCoverage: 20,
+      windGust: 15,
+      sunrise: "06:15",
+      sunset: "18:35",
+      pop: 0.1,
     },
     {
       date: fmt(tomorrow),
@@ -157,6 +169,12 @@ async function seedFirestore() {
       uvIndex: 3,
       weatherSummary: "Expected showers",
       hourlySummary: { peakTemp: 20, rainHours: 3 },
+      dewPoint: 11,
+      cloudCoverage: 80,
+      windGust: 30,
+      sunrise: "06:20",
+      sunset: "18:40",
+      pop: 0.7,
     },
   ];
 
