@@ -119,9 +119,9 @@ const styles = StyleSheet.create({
   },
   suggestionChip: {
     alignSelf: 'flex-start',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 8,
     marginTop: 4,
   },
   suggestionText: {

@@ -15,10 +15,11 @@ export function InfoTooltip({ message }: { message: string }) {
           setVisible((v) => !v);
         }}
         accessibilityLabel="Show advice reason"
+        style={styles.iconWrapper}
       >
         <MaterialCommunityIcons
           name="information"
-          size={16}
+          size={20}
           color="#ea580c"
         />
       </TouchableOpacity>
@@ -36,10 +37,13 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     position: 'relative',
   },
+  iconWrapper: {
+    padding: 4,
+  },
   tooltip: {
     position: 'absolute',
     top: -4,
-    left: 20,
+    right: 24,
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 6,
