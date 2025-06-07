@@ -16,7 +16,11 @@ export function InfoTooltip({ message }: { message: string }) {
         }}
         accessibilityLabel="Show advice reason"
       >
-        <MaterialCommunityIcons name="information" size={16} />
+        <MaterialCommunityIcons
+          name="information"
+          size={16}
+          color="#ea580c"
+        />
       </TouchableOpacity>
       {visible && (
         <ThemedView style={styles.tooltip}>
@@ -30,15 +34,16 @@ export function InfoTooltip({ message }: { message: string }) {
 const styles = StyleSheet.create({
   container: {
     marginLeft: 4,
+    position: 'relative',
   },
   tooltip: {
     position: 'absolute',
-    top: 20,
-    right: 0,
+    top: -4,
+    left: 20,
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 6,
-    backgroundColor: '#333',
+    backgroundColor: '#ea580c',
     zIndex: 20,
     maxWidth: 200,
   },
