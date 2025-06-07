@@ -21,6 +21,11 @@ export interface PlantAdviceContext {
   pop: number;
 }
 
+// Thresholds for mildew risk checks
+const MILDEW_HUMIDITY_THRESHOLD = 85;
+const MILDEW_DEWPOINT_THRESHOLD = 16;
+const MILDEW_CLOUD_COVERAGE_THRESHOLD = 70;
+
 /**
  * Return a short piece of advice based on watering history and upcoming weather.
  */
@@ -54,7 +59,11 @@ export function getPlantAdvice(ctx: PlantAdviceContext): string {
   }
 
   // 6. High humidity + cloud cover = mildew risk
-  if (humidity > 85 && dewPoint > 16 && cloudCoverage > 70) {
+  if (
+    humidity > MILDEW_HUMIDITY_THRESHOLD &&
+    dewPoint > MILDEW_DEWPOINT_THRESHOLD &&
+    cloudCoverage > MILDEW_CLOUD_COVERAGE_THRESHOLD
+  ) {
     return 'High mildew risk – avoid watering today.';
   }
 
