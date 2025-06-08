@@ -1,21 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
-import {
-  CalendarProvider,
-  ExpandableCalendar,
-} from 'react-native-calendars';
-import { AntDesign } from '@expo/vector-icons'; // For arrows
 
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 
 export default function HomeScreen() {
-  const today = new Date().toISOString().split('T')[0];
-  const [selectedDate, setSelectedDate] = useState(today);
+  const [ready, setReady] = useState(false);
 
-  const updateDate = (dateStr: string) => {
-    setSelectedDate((current) => (current === dateStr ? current : dateStr));
-  };
+  useEffect(() => {
+    setReady(true);
+  }, []);
 
   return (
     <ParallaxScrollView
@@ -27,48 +21,7 @@ export default function HomeScreen() {
         />
       }
     >
-      <View style={styles.calendarContainer}>
-        <CalendarProvider
-          date={selectedDate}
-          onDateChanged={updateDate}
-        >
-          <ExpandableCalendar
-            key={selectedDate.slice(0, 7)} // Remount calendar on month change to avoid duplicate key error
-            initialPosition={ExpandableCalendar.positions.CLOSED}
-            firstDay={1}
-            onDayPress={(day) => updateDate(day.dateString)}
-            renderArrow={(direction) => (
-              <AntDesign
-                name={direction === 'left' ? 'left' : 'right'}
-                size={20}
-                color="green"
-              />
-            )}
-            theme={{
-              backgroundColor: 'white',
-              calendarBackground: 'white',
-              textSectionTitleColor: '#b6c1cd',
-              selectedDayBackgroundColor: 'green',
-              selectedDayTextColor: '#ffffff',
-              todayTextColor: 'green',
-              dayTextColor: '#2d4150',
-              textDisabledColor: '#d9e1e8',
-              arrowColor: 'green',
-              monthTextColor: 'green',
-              indicatorColor: 'green',
-              textDayFontFamily: 'System',
-              textMonthFontFamily: 'System',
-              textDayHeaderFontFamily: 'System',
-              textDayFontWeight: '300',
-              textMonthFontWeight: 'bold',
-              textDayHeaderFontWeight: '300',
-              textDayFontSize: 16,
-              textMonthFontSize: 18,
-              textDayHeaderFontSize: 14,
-            }}
-          />
-        </CalendarProvider>
-      </View>
+      {/* Removed calendar and related components */}
     </ParallaxScrollView>
   );
 }
@@ -80,9 +33,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     position: 'absolute',
-  },
-  calendarContainer: {
-    marginVertical: 16,
   },
   knob: {
     width: 0,
