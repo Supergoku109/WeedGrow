@@ -34,7 +34,6 @@ export default function HomeScreen() {
           onMonthChange={(date) => updateDate(date.dateString)}
         >
           <ExpandableCalendar
-            key={selectedDate}
             initialPosition={ExpandableCalendar.positions.CLOSED}
             firstDay={1}
             onDayPress={(day) => updateDate(day.dateString)}
