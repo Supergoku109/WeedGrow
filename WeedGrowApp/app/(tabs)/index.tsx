@@ -31,9 +31,9 @@ export default function HomeScreen() {
         <CalendarProvider
           date={selectedDate}
           onDateChanged={updateDate}
-          onMonthChange={(date) => updateDate(date.dateString)}
         >
           <ExpandableCalendar
+            key={selectedDate.slice(0, 7)} // Remount calendar on month change to avoid duplicate key error
             initialPosition={ExpandableCalendar.positions.CLOSED}
             firstDay={1}
             onDayPress={(day) => updateDate(day.dateString)}
