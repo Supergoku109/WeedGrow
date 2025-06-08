@@ -13,6 +13,10 @@ export default function HomeScreen() {
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(today);
 
+  const updateDate = (dateStr: string) => {
+    setSelectedDate((current) => (current === dateStr ? current : dateStr));
+  };
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -26,13 +30,14 @@ export default function HomeScreen() {
       <View style={styles.calendarContainer}>
         <CalendarProvider
           date={selectedDate}
-          onDateChanged={setSelectedDate}
-          onMonthChange={(date) => setSelectedDate(date.dateString)}
+          onDateChanged={updateDate}
+          onMonthChange={(date) => updateDate(date.dateString)}
         >
           <ExpandableCalendar
+            key={selectedDate}
             initialPosition={ExpandableCalendar.positions.CLOSED}
             firstDay={1}
-            onDayPress={(day) => setSelectedDate(day.dateString)}
+            onDayPress={(day) => updateDate(day.dateString)}
             renderArrow={(direction) => (
               <AntDesign
                 name={direction === 'left' ? 'left' : 'right'}
