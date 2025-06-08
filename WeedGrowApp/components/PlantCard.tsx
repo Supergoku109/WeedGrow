@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, Image, View } from 'react-native';
+import { IconButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -8,6 +9,7 @@ import { calendarGreen } from '@/constants/Colors';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getPlantAdviceWithReason, PlantAdviceContext } from '@/lib/weather/getPlantAdvice';
 import { InfoTooltip } from '@/components/InfoTooltip';
+import { addPlantLog } from '@/lib/logs/addPlantLog';
 
 export interface PlantCardProps {
   plant: Plant & { id: string };
@@ -55,12 +57,32 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
     greenhouse: 'greenhouse',
   }[(plant as any).environment ?? 'indoor'];
 
+  const handleWater = async (e: any) => {
+    e.stopPropagation();
+    try {
+      await addPlantLog(plant.id, {
+        type: 'watering',
+        description: 'Watered the plant',
+        updatedBy: 'demoUser',
+      });
+    } catch (err) {
+      console.error('Failed to log watering:', err);
+    }
+  };
+
 
   return (
     <TouchableOpacity
       onPress={() => router.push({ pathname: '/plant/[id]', params: { id: plant.id } })}
     >
       <ThemedView style={[styles.card, { borderLeftColor: borderColor }]}>
+        <IconButton
+          icon="water"
+          size={20}
+          style={styles.waterButton}
+          onPress={handleWater}
+          accessibilityLabel="Log watering"
+        />
         <View style={styles.row}>
           {(plant as any).imageUri && (
             <Image source={{ uri: (plant as any).imageUri }} style={styles.image} />
@@ -93,6 +115,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: calendarGreen,
     borderLeftWidth: 5,
+    position: 'relative',
   },
   row: {
     flexDirection: 'row',
@@ -129,5 +152,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: 'white',
+  },
+  waterButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    zIndex: 5,
   },
 });
