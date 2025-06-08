@@ -17,12 +17,15 @@ import { parseWeatherData } from '@/lib/weather/parseWeatherData';
 import { updateWeatherCache } from '@/lib/weather/updateFirestore';
 import WeatherBar from '@/components/WeatherBar';
 import type { WeatherCacheEntry } from '@/firestoreModels';
+import { fetchWateringHistory, DEFAULT_HISTORY_DAYS, WateringHistoryEntry } from '@/lib/logs/fetchWateringHistory';
+import WateringHistoryBar from '@/components/WateringHistoryBar';
 
 export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [plant, setPlant] = useState<Plant | null>(null);
   const [loading, setLoading] = useState(true);
   const [weather, setWeather] = useState<(WeatherCacheEntry | null)[]>([]);
+  const [history, setHistory] = useState<WateringHistoryEntry[]>([]);
   type Theme = keyof typeof Colors;
   const theme = (useColorScheme() ?? 'dark') as Theme;
   const router = useRouter();
@@ -107,6 +110,15 @@ export default function PlantDetailScreen() {
     fetchWeatherData();
   }, [id]);
 
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!id) return;
+      const h = await fetchWateringHistory(String(id), DEFAULT_HISTORY_DAYS);
+      setHistory(h);
+    };
+    fetchHistory();
+  }, [id]);
+
   if (loading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
@@ -169,6 +181,13 @@ export default function PlantDetailScreen() {
         <View style={styles.section}>
           <ThemedText type="subtitle">Weather</ThemedText>
           <WeatherBar data={weather} />
+        </View>
+      )}
+
+      {history.length === DEFAULT_HISTORY_DAYS && (
+        <View style={styles.section}>
+          <ThemedText type="subtitle">Last {DEFAULT_HISTORY_DAYS} Days</ThemedText>
+          <WateringHistoryBar history={history} />
         </View>
       )}
 
