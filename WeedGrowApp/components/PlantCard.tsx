@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, Image, View } from 'react-native';
-import { IconButton } from 'react-native-paper';
+import { IconButton, Snackbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -18,6 +18,9 @@ export interface PlantCardProps {
 
 export function PlantCard({ plant, weather }: PlantCardProps) {
   const router = useRouter();
+
+  const [snackVisible, setSnackVisible] = React.useState(false);
+  const [snackMessage, setSnackMessage] = React.useState('');
 
   const ctx: PlantAdviceContext = {
     rainToday: weather?.rainToday ?? false,
@@ -65,20 +68,30 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
         description: 'Watered the plant',
         updatedBy: 'demoUser',
       });
-    } catch (err) {
+      setSnackMessage('Watering logged');
+      setSnackVisible(true);
+    } catch (err: any) {
       console.error('Failed to log watering:', err);
+      setSnackMessage(err.message || 'Failed to log');
+      setSnackVisible(true);
     }
   };
 
 
   return (
-    <TouchableOpacity
-      onPress={() => router.push({ pathname: '/plant/[id]', params: { id: plant.id } })}
-    >
-      <ThemedView style={[styles.card, { borderLeftColor: borderColor }]}>
+    <>
+      <TouchableOpacity
+        onPress={() =>
+          router.push({ pathname: '/plant/[id]', params: { id: plant.id } })
+        }
+      >
+        <ThemedView style={[styles.card, { borderLeftColor: borderColor }]}>
         <IconButton
           icon="water"
-          size={20}
+          size={28}
+          mode="contained"
+          iconColor="white"
+          containerColor="#1e90ff"
           style={styles.waterButton}
           onPress={handleWater}
           accessibilityLabel="Log watering"
@@ -103,8 +116,16 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
             <InfoTooltip message={reason} />
           </View>
         </View>
-      </ThemedView>
-    </TouchableOpacity>
+        </ThemedView>
+      </TouchableOpacity>
+      <Snackbar
+        visible={snackVisible}
+        onDismiss={() => setSnackVisible(false)}
+        duration={3000}
+      >
+        {snackMessage}
+      </Snackbar>
+    </>
   );
 }
 
