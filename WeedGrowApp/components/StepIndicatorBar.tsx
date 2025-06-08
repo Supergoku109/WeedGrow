@@ -9,6 +9,8 @@ const labels = ['Basic Info', 'Environment', 'Location', 'Care', 'Photo'];
 export default function StepIndicatorBar({ currentPosition }: { currentPosition: number }) {
   const theme = useColorScheme() ?? 'dark';
 
+  // Styling for the step indicator component from react-native-step-indicator
+  // Colors are pulled from our theme so the bar adapts to light/dark mode.
   const customStyles = {
     stepIndicatorSize: 25,
     currentStepIndicatorSize: 30,

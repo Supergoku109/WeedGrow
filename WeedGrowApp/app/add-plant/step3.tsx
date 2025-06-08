@@ -34,6 +34,7 @@ export default function Step3() {
   const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = React.useState(false);
+  // Reference to the MapView instance so we can imperatively control it
   const mapRef = React.useRef<MapView | null>(null);
 
   const inputStyle = {
@@ -42,6 +43,9 @@ export default function Step3() {
     fontSize: 16,
   } as const;
 
+  // Request the user's current location and update the form state
+  // with the result. Falls back to the last known location if available
+  // to avoid waiting for a fresh GPS fix every time.
   const getLocation = async () => {
     try {
       setLoading(true);
@@ -55,6 +59,8 @@ export default function Step3() {
         return;
       }
 
+      // Try use a cached position first for speed, falling back to a
+      // high level request if none is available
       const lastKnown = await Location.getLastKnownPositionAsync();
       const coords = lastKnown?.coords
         ? lastKnown.coords
@@ -70,6 +76,7 @@ export default function Step3() {
         lng: coords.longitude,
       });
 
+      // Smoothly move the map so the new location is centered
       mapRef.current?.animateToRegion(
         {
           latitude: coords.latitude,
@@ -86,6 +93,8 @@ export default function Step3() {
     }
   };
 
+  // When the user taps on the map, update the form location and
+  // animate the map to center on that point.
   const handleMapPress = (event: MapPressEvent) => {
     const { latitude, longitude } = event.nativeEvent.coordinate;
     setField('location', {
@@ -100,6 +109,7 @@ export default function Step3() {
         latitudeDelta: 0.005,
         longitudeDelta: 0.005,
       },
+      // duration in ms for the map animation
       500
     );
   };

@@ -11,12 +11,14 @@ export async function fetchPlantWeatherContext(
   plantId: string
 ): Promise<PlantAdviceContext> {
   const dates: string[] = [];
+  // Build an array of date strings for yesterday, today and tomorrow
   for (let offset = -1; offset <= 1; offset++) {
     const d = new Date();
     d.setDate(d.getDate() + offset);
     dates.push(d.toISOString().split('T')[0]);
   }
 
+  // Fetch the three documents in parallel from the weatherCache subcollection
   const docs = await Promise.all(
     dates.map(async (date) => {
       const ref = doc(db, 'plants', plantId, 'weatherCache', date);
@@ -27,6 +29,7 @@ export async function fetchPlantWeatherContext(
 
   const [yesterday, today, tomorrow] = docs;
 
+  // Map the fetched documents into the simpler PlantAdviceContext structure
   return {
     rainToday: Boolean(today && today.rainfall > 0),
     rainTomorrow: Boolean(tomorrow && tomorrow.rainfall > 0),

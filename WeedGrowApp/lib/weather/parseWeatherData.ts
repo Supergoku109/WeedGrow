@@ -15,6 +15,8 @@ export function parseWeatherData(apiResponse: any): Record<string, WeatherCacheE
   const toDateStr = (unix: number) =>
     new Date((unix + tzOffset) * 1000).toISOString().split('T')[0];
 
+  // Aggregate hourly data so we can compute summaries like the peak
+  // temperature or number of hours with rain for each day.
   const hourlyMap: Record<string, { peakTemp: number; rainHours: number }> = {};
   if (Array.isArray(apiResponse.hourly)) {
     for (const hour of apiResponse.hourly) {
@@ -55,6 +57,7 @@ export function parseWeatherData(apiResponse: any): Record<string, WeatherCacheE
       pop: sourceData.pop,
     };
 
+    // Merge in the hourly summaries we computed above if available
     const hourly = hourlyMap[dateStr];
     if (hourly) {
       base.hourlySummary = {
@@ -76,7 +79,9 @@ export function parseWeatherData(apiResponse: any): Record<string, WeatherCacheE
   if (Array.isArray(apiResponse.daily)) {
     apiResponse.daily.forEach((d: any, idx: number) => {
       const dateStr = toDateStr(d.dt);
-      const forecasted = idx > 0; // index 0 overlaps with today
+      // daily[0] overlaps with the `current` object, so only entries after
+      // index 0 are considered "forecast" data
+      const forecasted = idx > 0;
       addEntry(dateStr, forecasted, d);
     });
   }
