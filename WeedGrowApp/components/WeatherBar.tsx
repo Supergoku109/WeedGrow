@@ -21,7 +21,7 @@ export default function WeatherBar({ data }: WeatherBarProps) {
   return (
     <View style={styles.container}>
       {data.map((entry, idx) => (
-        <View key={idx} style={styles.day}>
+        <View key={`${entry?.date ?? 'day'}-${idx}`} style={styles.day}>
           <MaterialCommunityIcons
             name={entry && entry.rainfall > 0 ? 'weather-rainy' : 'weather-sunny'}
             size={24}
