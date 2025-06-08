@@ -70,12 +70,11 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
       });
       setSnackMessage('Watering logged');
       setSnackVisible(true);
-    } catch (err: any) {
-      console.error('Failed to log watering:', err);
-      setSnackMessage(err.message || 'Failed to log');
-      setSnackVisible(true);
-    }
-  };
+      } catch (err: any) {
+        setSnackMessage(err.message || 'Failed to log');
+        setSnackVisible(true);
+      }
+    };
 
 
   return (
