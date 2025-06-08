@@ -15,11 +15,11 @@ export default function WateringHistoryBar({ history }: WateringHistoryBarProps)
 
   return (
     <View style={styles.container}>
-      {history.map((h) => {
+      {history.map((h, idx) => {
         const date = new Date(h.date);
         const label = date.toLocaleDateString(undefined, { weekday: 'short' });
         return (
-          <View key={h.date} style={styles.day}>
+          <View key={`${h.date}-${idx}`} style={styles.day}>
             <MaterialCommunityIcons
               name="water"
               size={24}
