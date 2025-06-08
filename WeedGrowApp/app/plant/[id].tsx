@@ -52,6 +52,8 @@ export default function PlantDetailScreen() {
     );
   };
 
+  // Fetch fresh weather data for this plant's location and store it
+  // in Firestore. This lets us keep a small weather history per plant.
   const syncWeather = async () => {
     if (!plant || !plant.location) {
       console.log('No location available for weather sync');
@@ -84,6 +86,7 @@ export default function PlantDetailScreen() {
   }, [id]);
 
   useEffect(() => {
+    // Load the cached weather entries for yesterday through two days ahead
     const fetchWeatherData = async () => {
       if (!id) return;
       const dates: string[] = [];

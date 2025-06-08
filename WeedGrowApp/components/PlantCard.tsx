@@ -30,6 +30,7 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
 
   const { advice, reason } = getPlantAdviceWithReason(ctx);
 
+  // Color-code the suggestion chip based on keywords in the advice
   const getSuggestionColor = () => {
     if (advice.includes('mildew')) return '#DC2626'; // red
     if (advice.includes('Rain')) return '#9CA3AF'; // gray
@@ -38,6 +39,7 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
     return '#4B5563'; // default
   };
 
+  // Highlight the card edge when the advice is particularly urgent
   const getBorderColor = () => {
     if (advice.includes('water your plant today')) return 'red';
     if (advice.includes('Water lightly')) return 'yellow';
