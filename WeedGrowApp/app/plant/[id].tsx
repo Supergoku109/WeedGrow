@@ -17,7 +17,7 @@ import { parseWeatherData } from '@/lib/weather/parseWeatherData';
 import { updateWeatherCache } from '@/lib/weather/updateFirestore';
 import WeatherBar from '@/components/WeatherBar';
 import type { WeatherCacheEntry } from '@/firestoreModels';
-import { fetchWateringHistory, WateringHistoryEntry } from '@/lib/logs/fetchWateringHistory';
+import { fetchWateringHistory, DEFAULT_HISTORY_DAYS, WateringHistoryEntry } from '@/lib/logs/fetchWateringHistory';
 import WateringHistoryBar from '@/components/WateringHistoryBar';
 
 export default function PlantDetailScreen() {
@@ -113,7 +113,7 @@ export default function PlantDetailScreen() {
   useEffect(() => {
     const fetchHistory = async () => {
       if (!id) return;
-      const h = await fetchWateringHistory(String(id), 5);
+      const h = await fetchWateringHistory(String(id), DEFAULT_HISTORY_DAYS);
       setHistory(h);
     };
     fetchHistory();
@@ -184,9 +184,9 @@ export default function PlantDetailScreen() {
         </View>
       )}
 
-      {history.length === 5 && (
+      {history.length === DEFAULT_HISTORY_DAYS && (
         <View style={styles.section}>
-          <ThemedText type="subtitle">Last 5 Days</ThemedText>
+          <ThemedText type="subtitle">Last {DEFAULT_HISTORY_DAYS} Days</ThemedText>
           <WateringHistoryBar history={history} />
         </View>
       )}

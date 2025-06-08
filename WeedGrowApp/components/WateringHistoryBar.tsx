@@ -24,6 +24,8 @@ export default function WateringHistoryBar({ history }: WateringHistoryBarProps)
               name="water"
               size={24}
               color={h.watered ? Colors[theme].tint : Colors[theme].gray}
+              accessibilityLabel={h.watered ? `${label} watered` : `${label} not watered`}
+              accessible
             />
             <ThemedText style={styles.label}>{label}</ThemedText>
           </View>
