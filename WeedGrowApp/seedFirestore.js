@@ -66,6 +66,23 @@ async function seedFirestore() {
       },
     });
 
+    // ─── 2.1) SENSOR PROFILES ────────────────────────────────────────────────
+const sensorId = "sensorMainTent";
+await db.collection("sensorProfiles").doc(sensorId).set({
+  name: "Main Tent",
+  environmentType: "indoor",
+  ownerId: userId,
+  isManual: true,
+  defaultTemp: 25,
+  defaultHumidity: 60,
+  lastSynced: now,
+});
+
+// Update PLANT with sensorProfileId
+await db.collection("plants").doc(plantId).update({
+  sensorProfileId: sensorId,
+});
+
   // ─── 3) PLANTS ─────────────────────────────────────────────────────────────
   const plantId = "plant123";
   await db.collection("plants").doc(plantId).set({
@@ -213,6 +230,18 @@ async function seedFirestore() {
     timestamp: now,
     caption: "Day 10 – leaves emerging.",
   });
+
+  // ─── 6.1) GROUPS ───────────────────────────────────────────────────────────
+const groupId = "groupABC";
+await db.collection("groups").doc(groupId).set({
+  name: "Indoor Veg Group",
+  environmentType: "indoor",
+  plantIds: [plantId],
+  sensorProfileId: sensorId,
+  ownerId: userId,
+  createdAt: now,
+});
+
 
   // ─── 7) NOTIFICATIONS ──────────────────────────────────────────────────────
   await db.collection("notifications").doc(userId).set({
