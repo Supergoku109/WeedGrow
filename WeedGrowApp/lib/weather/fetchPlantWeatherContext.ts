@@ -29,15 +29,36 @@ export async function fetchPlantWeatherContext(
 
   const [yesterday, today, tomorrow] = docs;
 
+  if (!today) throw new Error('No weather data found for today');
+  if (!yesterday) throw new Error('No weather data found for yesterday');
+  if (!tomorrow) throw new Error('No weather data found for tomorrow');
+
+  if (
+    today.rainfall === undefined ||
+    today.humidity === undefined ||
+    today.dewPoint === undefined ||
+    today.cloudCoverage === undefined ||
+    today.windGust === undefined ||
+    today.pop === undefined
+  ) {
+    throw new Error('Missing required weather field in today\'s data');
+  }
+  if (yesterday.rainfall === undefined) {
+    throw new Error('Missing rainfall in yesterday\'s data');
+  }
+  if (tomorrow.rainfall === undefined) {
+    throw new Error('Missing rainfall in tomorrow\'s data');
+  }
+
   // Map the fetched documents into the simpler PlantAdviceContext structure
   return {
-    rainToday: Boolean(today && today.rainfall > 0),
-    rainTomorrow: Boolean(tomorrow && tomorrow.rainfall > 0),
-    rainYesterday: yesterday?.rainfall ?? 0,
-    humidity: today?.humidity ?? 50,
-    dewPoint: today?.dewPoint ?? 10,
-    cloudCoverage: today?.cloudCoverage ?? 40,
-    windGust: today?.windGust ?? 10,
-    pop: today?.pop ?? 0.2,
+    rainToday: today.rainfall > 0,
+    rainTomorrow: tomorrow.rainfall > 0,
+    rainYesterday: yesterday.rainfall,
+    humidity: today.humidity,
+    dewPoint: today.dewPoint,
+    cloudCoverage: today.cloudCoverage,
+    windGust: today.windGust,
+    pop: today.pop,
   };
 }

@@ -22,18 +22,22 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
   const [snackVisible, setSnackVisible] = React.useState(false);
   const [snackMessage, setSnackMessage] = React.useState('');
 
-  const ctx: PlantAdviceContext = {
-    rainToday: weather?.rainToday ?? false,
-    rainTomorrow: weather?.rainTomorrow ?? false,
-    rainYesterday: weather?.rainYesterday ?? 0,
-    humidity: weather?.humidity ?? 50,
-    dewPoint: weather?.dewPoint ?? 10,
-    cloudCoverage: weather?.cloudCoverage ?? 40,
-    windGust: weather?.windGust ?? 10,
-    pop: weather?.pop ?? 0.2,
-  };
+  // If weather is missing or incomplete, show a friendly message
+  const noWeather = !weather || Object.keys(weather).length < 5;
 
-  const { advice, reason } = getPlantAdviceWithReason(ctx);
+  let advice = '';
+  let reason = '';
+  if (!noWeather) {
+    try {
+      const ctx: PlantAdviceContext = weather as PlantAdviceContext;
+      const result = getPlantAdviceWithReason(ctx);
+      advice = result.advice;
+      reason = result.reason;
+    } catch (e) {
+      advice = '';
+      reason = '';
+    }
+  }
 
   // Color-code the suggestion chip based on keywords in the advice
   const getSuggestionColor = () => {
@@ -54,11 +58,8 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
   const suggestionColor = getSuggestionColor();
   const borderColor = getBorderColor();
 
-  const envIcon = {
-    indoor: 'home',
-    outdoor: 'weather-sunny',
-    greenhouse: 'greenhouse',
-  }[(plant as any).environment ?? 'indoor'];
+  const env = (plant as any).environment ?? 'indoor';
+  const envIcon = env === 'indoor' ? 'home' : env === 'outdoor' ? 'weather-sunny' : 'greenhouse';
 
   const handleWater = async (e: any) => {
     e.stopPropagation();
@@ -70,12 +71,11 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
       });
       setSnackMessage('Watering logged');
       setSnackVisible(true);
-      } catch (err: any) {
-        setSnackMessage(err.message || 'Failed to log');
-        setSnackVisible(true);
-      }
-    };
-
+    } catch (err: any) {
+      setSnackMessage(err.message || 'Failed to log');
+      setSnackVisible(true);
+    }
+  };
 
   return (
     <>
@@ -84,37 +84,43 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
           router.push({ pathname: '/plant/[id]', params: { id: plant.id } })
         }
       >
-        <ThemedView style={[styles.card, { borderLeftColor: borderColor }]}>
-        <IconButton
-          icon="water"
-          size={28}
-          mode="contained"
-          iconColor="white"
-          containerColor="#1e90ff"
-          style={styles.waterButton}
-          onPress={handleWater}
-          accessibilityLabel="Log watering"
-        />
-        <View style={styles.row}>
-          {(plant as any).imageUri && (
-            <Image source={{ uri: (plant as any).imageUri }} style={styles.image} />
-          )}
-          <View style={styles.textContainer}>
-            <ThemedText type="subtitle">{plant.name}</ThemedText>
-            <ThemedText>
-              {(plant as any).strain} | <MaterialCommunityIcons name={envIcon} size={14} />
-            </ThemedText>
-            <View style={styles.statusRow}>
-              <ThemedText>{plant.status}</ThemedText>
-            </View>
-            <View style={styles.suggestionRow}>
-              <View style={[styles.suggestionChip, { backgroundColor: suggestionColor }]}> 
-                <ThemedText style={styles.suggestionText}>{advice}</ThemedText>
+        <ThemedView style={[styles.card, { borderLeftColor: borderColor }]}> 
+          <IconButton
+            icon="water"
+            size={28}
+            mode="contained"
+            iconColor="white"
+            containerColor="#1e90ff"
+            style={styles.waterButton}
+            onPress={handleWater}
+            accessibilityLabel="Log watering"
+          />
+          <View style={styles.row}>
+            {(plant as any).imageUri && (
+              <Image source={{ uri: (plant as any).imageUri }} style={styles.image} />
+            )}
+            <View style={styles.textContainer}>
+              <ThemedText type="subtitle">{plant.name}</ThemedText>
+              <ThemedText>
+                {(plant as any).strain} | <MaterialCommunityIcons name={envIcon} size={14} />
+              </ThemedText>
+              <View style={styles.statusRow}>
+                <ThemedText>{plant.status}</ThemedText>
               </View>
+              <View style={styles.suggestionRow}>
+                {noWeather ? (
+                  <View style={[styles.suggestionChip, { backgroundColor: '#9CA3AF' }]}> 
+                    <ThemedText style={styles.suggestionText}>No weather info available</ThemedText>
+                  </View>
+                ) : (
+                  <View style={[styles.suggestionChip, { backgroundColor: suggestionColor }]}> 
+                    <ThemedText style={styles.suggestionText}>{advice}</ThemedText>
+                  </View>
+                )}
+              </View>
+              {!noWeather && <InfoTooltip message={reason} />}
             </View>
-            <InfoTooltip message={reason} />
           </View>
-        </View>
         </ThemedView>
       </TouchableOpacity>
       <Snackbar

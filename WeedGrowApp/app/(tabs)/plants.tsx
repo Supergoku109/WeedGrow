@@ -36,7 +36,7 @@ export default function PlantsScreen() {
   const [plantedFilter, setPlantedFilter] = useState<string | null>(null);
   const [trainingFilter, setTrainingFilter] = useState<string | null>(null);
   const [filtersVisible, setFiltersVisible] = useState(false);
-  const [weatherMap, setWeatherMap] = useState<Record<string, PlantAdviceContext>>({});
+  const [weatherMap, setWeatherMap] = useState<Record<string, PlantAdviceContext | undefined>>({});
   type Theme = keyof typeof Colors;
   const theme = (useColorScheme() ?? 'dark') as Theme;
 
@@ -52,9 +52,15 @@ export default function PlantsScreen() {
         setPlants(items);
 
         const weatherResults = await Promise.all(
-          items.map((p) => fetchPlantWeatherContext(p.id))
+          items.map(async (p) => {
+            try {
+              return await fetchPlantWeatherContext(p.id);
+            } catch (e) {
+              return undefined;
+            }
+          })
         );
-        const map: Record<string, PlantAdviceContext> = {};
+        const map: Record<string, PlantAdviceContext | undefined> = {};
         items.forEach((p, idx) => {
           map[p.id] = weatherResults[idx];
         });
@@ -177,7 +183,7 @@ export default function PlantsScreen() {
           <ActivityIndicator style={styles.loading} color={Colors[theme].tint} />
         )}
         {error && (
-          <ThemedText type="error" style={[styles.errorText, { color: Colors[theme].tint }] }>
+          <ThemedText style={[styles.errorText, { color: Colors[theme].tint }] }>
             ❌ Error: {error}
           </ThemedText>
         )}
