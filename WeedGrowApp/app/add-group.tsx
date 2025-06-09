@@ -22,6 +22,7 @@ export default function AddGroupScreen() {
   const router = useRouter();
   const [plants, setPlants] = useState<PlantItem[]>([]);
   const [loadingPlants, setLoadingPlants] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [selectedPlantId, setSelectedPlantId] = useState<string | null>(null);
   const [environment, setEnvironment] = useState<'outdoor' | 'indoor' | 'greenhouse' | null>(null);
@@ -36,10 +37,14 @@ export default function AddGroupScreen() {
       try {
         const q = query(collection(db, 'plants'));
         const snap = await getDocs(q);
-        const items: PlantItem[] = snap.docs.map(d => ({ id: d.id, ...(d.data() as Plant) }));
+        const items: PlantItem[] = snap.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as Plant),
+        }));
         setPlants(items);
-      } catch (e) {
+      } catch (e: any) {
         console.error('Error fetching plants', e);
+        setError(e.message || 'Failed to load plants');
       } finally {
         setLoadingPlants(false);
       }
@@ -110,6 +115,7 @@ export default function AddGroupScreen() {
         {loadingPlants && (
           <ActivityIndicator style={{ marginTop: 8 }} color={Colors[theme].tint} />
         )}
+        {error && <ThemedText>❌ {error}</ThemedText>}
 
         <TextInput
           label="Group Name"
@@ -168,7 +174,15 @@ export default function AddGroupScreen() {
           <Button mode="outlined" onPress={() => router.back()}>
             Cancel
           </Button>
-          <Button mode="contained" onPress={create} disabled={!name.trim() || !selectedPlantId}>
+          <Button
+            mode="contained"
+            onPress={create}
+            disabled={
+              !name.trim() ||
+              !selectedPlantId ||
+              (environment === 'outdoor' && !location)
+            }
+          >
             Create
           </Button>
         </View>
