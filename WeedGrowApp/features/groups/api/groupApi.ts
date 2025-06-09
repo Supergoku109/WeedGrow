@@ -28,16 +28,17 @@ interface CreateGroupOptions {
   createdBy: string;
 }
 
-export async function createGroup(options: CreateGroupOptions): Promise<string> {
+export async function createGroup(options: CreateGroupOptions & { sensorProfileId?: string }): Promise<string> {
   const {
     name,
     plantIds,
     environment,
     location = null,
     createdBy,
+    sensorProfileId,
   } = options;
 
-  const ref = await addDoc(collection(db, 'groups'), {
+  const groupDoc: any = {
     name,
     environment,
     plantIds,
@@ -45,7 +46,10 @@ export async function createGroup(options: CreateGroupOptions): Promise<string> 
     createdBy,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  });
+  };
+  if (sensorProfileId) groupDoc.sensorProfileId = sensorProfileId;
+
+  const ref = await addDoc(collection(db, 'groups'), groupDoc);
   return ref.id;
 }
 

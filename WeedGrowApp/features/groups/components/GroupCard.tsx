@@ -67,6 +67,35 @@ export default function GroupCard({
     return () => { ignore = true; };
   }, [group.environment, group.plantIds]);
 
+  // Sensor profile readings for indoor/greenhouse
+  const [sensorReadings, setSensorReadings] = useState<{ temp?: number; humidity?: number; missing?: boolean; name?: string }>({});
+  useEffect(() => {
+    if (group.environment === 'indoor' || group.environment === 'greenhouse') {
+      let ignore = false;
+      async function fetchSensorProfile() {
+        if (group.sensorProfileId) {
+          try {
+            const snap = await getDoc(doc(db, 'sensorProfiles', group.sensorProfileId));
+            if (snap.exists()) {
+              const data = snap.data();
+              if (!ignore) setSensorReadings({ temp: data.defaultTemp, humidity: data.defaultHumidity, name: data.name });
+            } else {
+              if (!ignore) setSensorReadings({ missing: true });
+            }
+          } catch {
+            if (!ignore) setSensorReadings({ missing: true });
+          }
+        } else {
+          setSensorReadings({});
+        }
+      }
+      fetchSensorProfile();
+      return () => { ignore = true; };
+    } else {
+      setSensorReadings({});
+    }
+  }, [group.environment, group.sensorProfileId]);
+
   // Environment badge
   const envIcon =
     group.environment === 'indoor'
@@ -151,6 +180,31 @@ const handleEdit = (e: any) => {
               </>
             ) : (
               <ThemedText>No weather data</ThemedText>
+            )}
+          </View>
+        )}
+        {/* Sensor profile readings for indoor/greenhouse */}
+        {(group.environment === 'indoor' || group.environment === 'greenhouse') && (
+          <View style={styles.weatherRow}>
+            {group.sensorProfileId ? (
+              sensorReadings.missing ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
+                  <MaterialCommunityIcons name="alert-circle-outline" color="#fff" size={16} />
+                  <ThemedText style={styles.weatherStat}> No profile </ThemedText>
+                </View>
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
+                  <MaterialCommunityIcons name="thermometer" color="#fff" size={16} />
+                  <ThemedText style={styles.weatherStat}> {sensorReadings.temp ?? '--'}°C </ThemedText>
+                  <MaterialCommunityIcons name="water-percent" color="#fff" size={16} />
+                  <ThemedText style={styles.weatherStat}> {sensorReadings.humidity ?? '--'}%</ThemedText>
+                  <ThemedText style={styles.weatherStat}>
+                    Sensor: {sensorReadings.missing ? '--' : (sensorReadings.name || 'Profile')}
+                  </ThemedText>
+                </View>
+              )
+            ) : (
+              <ThemedText>No sensor profile linked</ThemedText>
             )}
           </View>
         )}

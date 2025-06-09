@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, View, Alert, Dimensions, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { TextInput, Button, ActivityIndicator } from 'react-native-paper';
+import { TextInput, Button, ActivityIndicator, Menu } from 'react-native-paper';
 import * as Location from 'expo-location';
 import { collection, getDocs, query } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
@@ -12,6 +12,7 @@ import { db } from '@/services/firebase';
 import { Plant } from '@/firestoreModels';
 import { ThemedText } from '@/ui/ThemedText';
 import { createGroup } from '@/features/groups/api/groupApi';
+import { arrayIntersection } from '@/lib/arrayIntersection';
 
 interface PlantItem extends Plant {
   id: string;
@@ -26,6 +27,11 @@ export default function AddGroupScreen() {
   const [selectedPlantIds, setSelectedPlantIds] = useState<string[]>([]);
   const [groupLocationPlantId, setGroupLocationPlantId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [sensorProfiles, setSensorProfiles] = useState<any[]>([]);
+  const [sensorMenu, setSensorMenu] = useState(false);
+  const [loadingProfiles, setLoadingProfiles] = useState(false);
+  const [groupSensorProfileId, setGroupSensorProfileId] = useState<string | null>(null);
+  const [availableGroupProfiles, setAvailableGroupProfiles] = useState<any[]>([]);
   const screen = Dimensions.get('window');
   type Theme = keyof typeof Colors;
   const theme = (useColorScheme() ?? 'dark') as Theme;
@@ -50,6 +56,33 @@ export default function AddGroupScreen() {
     fetchPlants();
   }, []);
 
+  const selectedPlants = plants.filter(p => selectedPlantIds.includes(p.id));
+  const selectableLocationPlants = selectedPlants.filter(p => p.location);
+
+  // Fetch all sensor profiles if needed
+  useEffect(() => {
+    if (selectedPlantIds.length > 0 && selectedPlants.every(p => p.environment === 'indoor' || p.environment === 'greenhouse')) {
+      setLoadingProfiles(true);
+      getDocs(collection(db, 'sensorProfiles')).then(snap => {
+        const allProfiles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setSensorProfiles(allProfiles);
+        // Find intersection of sensorProfileIds
+        const allIds = selectedPlants.map(p => p.sensorProfileId).filter(Boolean);
+        const sharedIds = arrayIntersection(selectedPlants.map(p => p.sensorProfileId ? [p.sensorProfileId] : []));
+        const sharedProfiles = allProfiles.filter(p => sharedIds.includes(p.id));
+        setAvailableGroupProfiles(sharedProfiles);
+        // If only one, select it by default
+        if (sharedProfiles.length === 1) setGroupSensorProfileId(sharedProfiles[0].id);
+        else setGroupSensorProfileId(null);
+        setLoadingProfiles(false);
+      }).catch(() => setLoadingProfiles(false));
+    } else {
+      setSensorProfiles([]);
+      setAvailableGroupProfiles([]);
+      setGroupSensorProfileId(null);
+    }
+  }, [selectedPlantIds.join(','), selectedPlants.map(p => p.sensorProfileId).join(',')]);
+
   const handleTogglePlant = (id: string) => {
     setSelectedPlantIds((prev) =>
       prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]
@@ -58,31 +91,37 @@ export default function AddGroupScreen() {
     setGroupLocationPlantId((curr) => (curr === id ? null : curr));
   };
 
-  const selectedPlants = plants.filter(p => selectedPlantIds.includes(p.id));
-  const selectableLocationPlants = selectedPlants.filter(p => p.location);
-
   const create = async () => {
     if (saving) return;
     setSaving(true);
-    if (!name.trim() || selectedPlantIds.length === 0 || !groupLocationPlantId) {
+    if (!name.trim() || selectedPlantIds.length === 0 || (
+      selectedPlants.length > 0 && selectedPlants.every(p => p.environment === 'indoor' || p.environment === 'greenhouse')
+        ? !groupSensorProfileId
+        : !groupLocationPlantId
+    )) {
       setSaving(false);
       return;
     }
-    const groupLocationPlant = plants.find(p => p.id === groupLocationPlantId);
-    if (!groupLocationPlant || !groupLocationPlant.location) {
-      setSaving(false);
-      return;
+    let groupData: any = {
+      name: name.trim(),
+      plantIds: selectedPlantIds,
+      createdBy: 'demoUser',
+    };
+    if (selectedPlants.length > 0 && selectedPlants.every(p => p.environment === 'indoor' || p.environment === 'greenhouse')) {
+      groupData.environment = selectedPlants[0].environment;
+      groupData.sensorProfileId = groupSensorProfileId;
+      groupData.location = null;
+    } else {
+      const groupLocationPlant = plants.find(p => p.id === groupLocationPlantId);
+      if (!groupLocationPlant || !groupLocationPlant.location) {
+        setSaving(false);
+        return;
+      }
+      groupData.environment = groupLocationPlant.environment;
+      groupData.location = groupLocationPlant.location;
     }
-    // Use the environment of the first selected plant (or let user pick if you want)
-    const environment = groupLocationPlant.environment;
     try {
-      await createGroup({
-        name: name.trim(),
-        plantIds: selectedPlantIds,
-        environment,
-        location: groupLocationPlant.location,
-        createdBy: 'demoUser',
-      });
+      await createGroup(groupData);
       router.back();
     } catch (e: any) {
       Alert.alert('Error', e.message || 'Failed to create group');
@@ -163,7 +202,7 @@ export default function AddGroupScreen() {
           })}
         </View>
 
-        {selectedPlantIds.length > 0 && (
+        {selectedPlantIds.length > 0 && selectedPlants.some(p => p.environment === 'outdoor') && (
           <>
             <ThemedText style={[styles.sectionLabel, { fontWeight: 'bold', fontSize: 17, paddingTop: 24 }]}>📍 Choose Location for Weather</ThemedText>
             {selectableLocationPlants.length === 0 ? (
@@ -190,6 +229,48 @@ export default function AddGroupScreen() {
           </>
         )}
 
+        {selectedPlantIds.length > 0 && selectedPlants.every(p => p.environment === 'indoor' || p.environment === 'greenhouse') && (
+          <>
+            <ThemedText style={[styles.sectionLabel, { fontWeight: 'bold', fontSize: 17, paddingTop: 24 }]}>🌡️ Select Sensor Profile for Group</ThemedText>
+            <Menu
+              visible={sensorMenu}
+              onDismiss={() => setSensorMenu(false)}
+              anchor={
+                <TextInput
+                  label={loadingProfiles ? 'Loading Sensor Profiles...' : 'Sensor Profile'}
+                  value={availableGroupProfiles.find(p => p.id === groupSensorProfileId)?.name || ''}
+                  style={styles.input}
+                  editable={false}
+                  right={<TextInput.Icon icon="menu-down" onPress={() => setSensorMenu(true)} />}
+                  placeholder={availableGroupProfiles.length === 0 ? 'No shared profiles' : 'Select a profile'}
+                />
+              }
+            >
+              {availableGroupProfiles.map((profile) => (
+                <Menu.Item
+                  key={profile.id}
+                  onPress={() => {
+                    setGroupSensorProfileId(profile.id);
+                    setSensorMenu(false);
+                  }}
+                  title={profile.name}
+                />
+              ))}
+              <Menu.Item
+                key="add-new"
+                onPress={() => {
+                  setSensorMenu(false);
+                  router.push('/add-sensor-profile');
+                }}
+                title="+ Create New Profile"
+              />
+            </Menu>
+            {availableGroupProfiles.length === 0 && (
+              <ThemedText style={{ color: '#888', marginTop: 8 }}>No shared sensor profiles among selected plants. Create one to continue.</ThemedText>
+            )}
+          </>
+        )}
+
         <View style={styles.actionRow}>
           <Button mode="outlined" onPress={() => router.back()}>
             Cancel
@@ -201,8 +282,13 @@ export default function AddGroupScreen() {
               saving ||
               !name.trim() ||
               selectedPlantIds.length === 0 ||
-              selectableLocationPlants.length === 0 ||
-              !groupLocationPlantId
+              (
+                // If all selected are indoor/greenhouse, require sensor profile
+                selectedPlants.length > 0 &&
+                selectedPlants.every(p => p.environment === 'indoor' || p.environment === 'greenhouse')
+                  ? !groupSensorProfileId
+                  : (selectableLocationPlants.length === 0 || !groupLocationPlantId)
+              )
             }
             loading={saving}
           >

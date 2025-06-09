@@ -21,7 +21,7 @@ export default function AddSensorProfileScreen() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await addDoc(collection(db, 'sensorProfiles'), {
+      const docRef = await addDoc(collection(db, 'sensorProfiles'), {
         name: name.trim(),
         environmentType,
         isManual: entryType === 'manual',
@@ -29,7 +29,8 @@ export default function AddSensorProfileScreen() {
         defaultHumidity: entryType === 'manual' && defaultHumidity ? Number(defaultHumidity) : undefined,
         createdAt: new Date(),
       });
-      router.back();
+      // Instead of router.back(), go to step2 and pass newSensorProfileId
+      router.replace({ pathname: '/add-plant/step2', params: { newSensorProfileId: docRef.id } });
     } catch (e) {
       // handle error
     } finally {

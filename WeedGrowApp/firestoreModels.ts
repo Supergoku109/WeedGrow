@@ -28,6 +28,9 @@ export interface Plant {
       lng: number;
     };
     locationNickname?: string;
+
+    // Link to sensor profile (optional)
+    sensorProfileId?: string;
   
     reminderSchedule?: {
       type: 'interval' | 'custom' | 'none';
@@ -142,5 +145,6 @@ export interface Group {
   createdBy: string;
   createdAt: FirebaseFirestore.Timestamp;
   updatedAt: FirebaseFirestore.Timestamp;
+  /** Optional: sensor profile for indoor/greenhouse groups */
+  sensorProfileId?: string;
 }
-  

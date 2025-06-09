@@ -21,6 +21,7 @@ export interface PlantFormState {
   trainingTags?: string[];
   notes?: string;
   imageUri?: string;
+  sensorProfileId?: string;
   setField: (key: keyof Omit<PlantFormState, 'setField' | 'reset'>, value: any) => void;
   reset: () => void;
 }
@@ -32,6 +33,7 @@ const initialState: Omit<PlantFormState, 'setField' | 'reset'> = {
   ageDays: '0',
   environment: 'outdoor',
   plantedIn: 'pot',
+  sensorProfileId: undefined,
 };
 
 export const usePlantForm = create<PlantFormState>((set) => ({

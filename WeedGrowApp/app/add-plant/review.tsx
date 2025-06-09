@@ -48,6 +48,7 @@ export default function Review() {
         imageUri: form.imageUri ?? null,
         location: form.location ?? null,
         locationNickname: form.locationNickname ?? null,
+        sensorProfileId: form.sensorProfileId ?? null,
         createdAt,
         updatedAt: serverTimestamp(),
       });
@@ -161,6 +162,15 @@ export default function Review() {
                 <View>
                   <Text variant="labelLarge">Location Nickname</Text>
                   <Text>{form.locationNickname}</Text>
+                </View>
+              </>
+            )}
+            {form.sensorProfileId && (
+              <>
+                <Divider />
+                <View>
+                  <Text variant="labelLarge">Sensor Profile</Text>
+                  <Text>{form.sensorProfileId}</Text>
                 </View>
               </>
             )}
