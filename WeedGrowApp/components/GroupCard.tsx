@@ -42,22 +42,29 @@ export default function GroupCard({
       : group.environment === 'outdoor'
       ? 'weather-sunny'
       : 'greenhouse';
+
+  const handlePress = () =>
+    router.push({ pathname: '/group/[id]', params: { id: group.id } });
+
+  const handleWaterAll = (e: any) => {
+    e.stopPropagation();
+    onWaterAll?.();
+  };
+
+  const handleEdit = (e: any) => {
+    e.stopPropagation();
+    onEdit?.();
+  };
+
   return (
-    <TouchableOpacity
-      onPress={() =>
-        router.push({ pathname: '/group/[id]', params: { id: group.id } })
-      }
-    >
+    <TouchableOpacity onPress={handlePress}>
       <ThemedView style={styles.card}>
         {onWaterAll && (
           <IconButton
             icon="water"
             size={24}
             mode="contained"
-            onPress={(e) => {
-              e.stopPropagation();
-              onWaterAll();
-            }}
+            onPress={handleWaterAll}
             style={styles.waterButton}
             accessibilityLabel="Water all plants"
           />
@@ -77,10 +84,7 @@ export default function GroupCard({
               icon="pencil"
               size={20}
               mode="contained"
-              onPress={(e) => {
-                e.stopPropagation();
-                onEdit();
-              }}
+              onPress={handleEdit}
               accessibilityLabel="Edit group"
             />
           )}
@@ -94,6 +98,7 @@ export default function GroupCard({
                   key={p.id}
                   source={{ uri: p.imageUri }}
                   style={styles.plantImage}
+                  accessibilityLabel={`${p.name} image`}
                 />
               ) : (
                 <View key={p.id} style={styles.plantPlaceholder}>
