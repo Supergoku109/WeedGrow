@@ -20,6 +20,10 @@ import {
   IconButton,
   Chip,
 } from 'react-native-paper';
+import { fetchWeather } from '@/lib/weather/fetchWeather';
+import { parseWeatherData } from '@/lib/weather/parseWeatherData';
+import { updateWeatherCache } from '@/lib/weather/updateFirestore';
+import { shouldUpdateWeather } from '@/lib/weather/shouldUpdateWeather';
 
 interface PlantItem extends Plant {
   id: string;
@@ -51,6 +55,25 @@ export default function PlantsScreen() {
         }));
         setPlants(items);
 
+        // Efficient weather update: only update if missing or stale
+        await Promise.all(
+          items.map(async (p) => {
+            if (p.location && p.location.lat && p.location.lng) {
+              try {
+                const needsUpdate = await shouldUpdateWeather(p.id);
+                if (needsUpdate) {
+                  const weatherApiData = await fetchWeather(p.location.lat, p.location.lng);
+                  const parsed = parseWeatherData(weatherApiData);
+                  await updateWeatherCache(p.id, parsed);
+                }
+              } catch (err) {
+                // Ignore errors, will fallback to showing no weather info
+                console.warn('Weather update failed for plant', p.id, err);
+              }
+            }
+          })
+        );
+
         const weatherResults = await Promise.all(
           items.map(async (p) => {
             try {
@@ -76,6 +99,7 @@ export default function PlantsScreen() {
     fetchPlants();
   }, []);
 
+  // Restore filteredPlants declaration
   const filteredPlants = plants.filter(
     (p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) &&

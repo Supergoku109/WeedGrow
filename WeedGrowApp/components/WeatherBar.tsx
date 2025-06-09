@@ -22,12 +22,22 @@ export default function WeatherBar({ data }: WeatherBarProps) {
     <View style={styles.container}>
       {data.map((entry, idx) => (
         <View key={`${entry?.date ?? 'day'}-${idx}`} style={styles.day}>
-          <MaterialCommunityIcons
-            name={entry && entry.rainfall > 0 ? 'weather-rainy' : 'weather-sunny'}
-            size={24}
-            color={Colors[theme].tint}
-          />
-          <ThemedText style={styles.label}>{labels[idx]}</ThemedText>
+          {entry ? (
+            <MaterialCommunityIcons
+              name={entry.rainfall > 0 ? 'weather-rainy' : 'weather-sunny'}
+              size={24}
+              color={Colors[theme].tint}
+            />
+          ) : (
+            <MaterialCommunityIcons
+              name="cloud-question"
+              size={24}
+              color={Colors[theme].gray}
+            />
+          )}
+          <ThemedText style={styles.label}>
+            {entry ? labels[idx] : 'No data'}
+          </ThemedText>
         </View>
       ))}
     </View>

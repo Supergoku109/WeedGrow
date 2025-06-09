@@ -12,6 +12,9 @@ import { MILLISECONDS_PER_DAY } from '@/constants/Time';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '@/services/firebase';
+import { fetchWeather } from '@/lib/weather/fetchWeather';
+import { parseWeatherData } from '@/lib/weather/parseWeatherData';
+import { updateWeatherCache } from '@/lib/weather/updateFirestore';
 
 export default function Review() {
   const router = useRouter();
@@ -24,7 +27,7 @@ export default function Review() {
     try {
       const ageNum = parseInt(form.ageDays || '0', 10);
       const createdAt = Timestamp.fromMillis(Date.now() - ageNum * MILLISECONDS_PER_DAY);
-      await addDoc(collection(db, 'plants'), {
+      const plantRef = await addDoc(collection(db, 'plants'), {
         name: form.name,
         strain: form.strain,
         owners: ['demoUser'],
@@ -46,6 +49,16 @@ export default function Review() {
         createdAt,
         updatedAt: serverTimestamp(),
       });
+      // Automatically fetch and store weatherCache if location is present
+      if (form.location && form.location.lat && form.location.lng) {
+        try {
+          const weatherApiData = await fetchWeather(form.location.lat, form.location.lng);
+          const parsed = parseWeatherData(weatherApiData);
+          await updateWeatherCache(plantRef.id, parsed);
+        } catch (err) {
+          console.warn('Could not fetch weather for new plant:', err);
+        }
+      }
       form.reset();
       router.replace('/unknown');
     } catch (e) {

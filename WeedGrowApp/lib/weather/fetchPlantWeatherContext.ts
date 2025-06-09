@@ -30,9 +30,6 @@ export async function fetchPlantWeatherContext(
   const [yesterday, today, tomorrow] = docs;
 
   if (!today) throw new Error('No weather data found for today');
-  if (!yesterday) throw new Error('No weather data found for yesterday');
-  if (!tomorrow) throw new Error('No weather data found for tomorrow');
-
   if (
     today.rainfall === undefined ||
     today.humidity === undefined ||
@@ -43,18 +40,19 @@ export async function fetchPlantWeatherContext(
   ) {
     throw new Error('Missing required weather field in today\'s data');
   }
-  if (yesterday.rainfall === undefined) {
-    throw new Error('Missing rainfall in yesterday\'s data');
-  }
-  if (tomorrow.rainfall === undefined) {
-    throw new Error('Missing rainfall in tomorrow\'s data');
-  }
 
-  // Map the fetched documents into the simpler PlantAdviceContext structure
+  // Do not default rainYesterday, just set undefined if missing
+  const rainYesterday =
+    yesterday && yesterday.rainfall !== undefined
+      ? yesterday.rainfall
+      : undefined;
+  const rainTomorrow =
+    tomorrow && tomorrow.rainfall !== undefined ? tomorrow.rainfall > 0 : false;
+
   return {
     rainToday: today.rainfall > 0,
-    rainTomorrow: tomorrow.rainfall > 0,
-    rainYesterday: yesterday.rainfall,
+    rainTomorrow,
+    rainYesterday,
     humidity: today.humidity,
     dewPoint: today.dewPoint,
     cloudCoverage: today.cloudCoverage,

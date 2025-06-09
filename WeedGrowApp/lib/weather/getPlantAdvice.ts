@@ -35,7 +35,7 @@ export function getPlantAdviceWithReason(ctx: PlantAdviceContext): PlantAdviceRe
   const {
     rainToday,
     rainTomorrow,
-    rainYesterday = 0,
+    rainYesterday,
     humidity,
     dewPoint,
     cloudCoverage,
@@ -59,8 +59,8 @@ export function getPlantAdviceWithReason(ctx: PlantAdviceContext): PlantAdviceRe
     };
   }
 
-  // 3. It rained yesterday
-  if (rainYesterday > 2) {
+  // 3. It rained yesterday (only if rainYesterday is defined)
+  if (typeof rainYesterday === 'number' && rainYesterday > 2) {
     return {
       advice: 'Recent rain – soil may still be moist.',
       reason: 'There was significant rain yesterday which likely left the soil damp.',

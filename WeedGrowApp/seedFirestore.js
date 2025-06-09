@@ -115,7 +115,7 @@ async function seedFirestore() {
     .doc(plantId)
     .collection("weatherCache");
 
-  const fmt = (d: Date) => d.toISOString().split("T")[0];
+  const fmt = (d) => d.toISOString().split("T")[0];
 
   const yesterday = new Date(Date.now() - 86400000);
   const today = new Date();
