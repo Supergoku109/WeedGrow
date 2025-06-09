@@ -73,8 +73,13 @@ export default function HomeScreen() {
   };
 
   return (
-    // Replace ParallaxScrollView with a View to avoid nested scrolls
     <View style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: insets.top }}>
+      <View style={styles.homeHeader}>
+        <ThemedText type="title" style={styles.homeTitle}>Plant Groups</ThemedText>
+        <ThemedText style={styles.homeWelcome}>
+          Your grow spaces at a glance. Tap + to add a group.
+        </ThemedText>
+      </View>
       <FlatList
         // ListHeaderComponent removed to eliminate blue background and default React logo
         data={groups}
@@ -96,7 +101,7 @@ export default function HomeScreen() {
             onEdit={() => setEditGroup(item)}
           />
         )}
-        contentContainerStyle={{ padding: 32, gap: 16, flexGrow: 1 }}
+        contentContainerStyle={{ padding: 32, gap: 4, flexGrow: 1 }}
       />
       <Snackbar
         visible={snackVisible}
@@ -146,5 +151,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 5,
+  },
+  homeHeader: {
+    alignItems: 'center',
+    marginBottom: 4, // was 18, reduce to tighten gap below header
+    marginTop: 8,
+  },
+  homeTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#4caf50',
+    textAlign: 'center',
+    marginTop: 12,
+    marginBottom: 0, // was 6, reduce to tighten gap between title and subtitle
+  },
+  homeWelcome: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 8, // was 18, reduce to tighten gap below subtitle
+    marginHorizontal: 8,
   },
 });

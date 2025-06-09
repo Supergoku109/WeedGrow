@@ -94,7 +94,9 @@ export default function ManageSensorProfilesScreen({ emptyMessage }: { emptyMess
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.heading}>Manage Sensor Profiles</Text>
-        <Text style={styles.subheading}>View, edit, or delete your sensor profiles. Set a default for new plants.</Text>
+        <Text style={styles.topInfo}>
+          Create, edit, or delete sensor profiles for your grow spaces.
+        </Text>
         {loading && <ActivityIndicator style={{ marginTop: 24 }} animating size="large" color={Colors[theme].tint} />}
         {!loading && profiles.length === 0 && <Text style={styles.empty}>{emptyMessage || 'No sensor profiles found. Add one using the + button.'}</Text>}
         {!loading && profiles.map(profile => (
@@ -245,11 +247,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textAlign: 'center',
   },
-  subheading: {
+  topInfo: {
+    color: '#6a9',
     fontSize: 15,
-    color: '#aaa',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
+    marginHorizontal: 8,
   },
   empty: {
     textAlign: 'center',
