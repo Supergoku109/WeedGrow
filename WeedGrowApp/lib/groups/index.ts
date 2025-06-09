@@ -72,3 +72,23 @@ export async function addWaterLogsToGroupPlants(groupId: string): Promise<void> 
     )
   );
 }
+
+/** Water all plants in the group using the provided userId. */
+export async function waterAllPlantsInGroup(
+  groupId: string,
+  userId: string,
+): Promise<void> {
+  const snap = await getDoc(doc(db, 'groups', groupId));
+  if (!snap.exists()) return;
+  const group = snap.data() as Group;
+  await Promise.all(
+    group.plantIds.map((pid) =>
+      addDoc(collection(db, 'plants', pid, 'logs'), {
+        type: 'watering',
+        timestamp: serverTimestamp(),
+        description: 'Group watering',
+        updatedBy: userId,
+      }),
+    ),
+  );
+}

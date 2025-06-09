@@ -3,12 +3,12 @@ import { StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator } from 'react-native-paper';
+import { ActivityIndicator, Snackbar } from 'react-native-paper';
 
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import GroupCard from '@/components/GroupCard';
-import { getUserGroups } from '@/lib/groups';
+import { getUserGroups, waterAllPlantsInGroup } from '@/lib/groups';
 import type { Group } from '@/firestoreModels';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -17,6 +17,9 @@ export default function HomeScreen() {
   const [groups, setGroups] = useState<(Group & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [wateringId, setWateringId] = useState<string | null>(null);
+  const [snackVisible, setSnackVisible] = useState(false);
+  const [snackMessage, setSnackMessage] = useState('');
   const router = useRouter();
   type Theme = keyof typeof Colors;
   const theme = (useColorScheme() ?? 'dark') as Theme;
@@ -35,6 +38,19 @@ export default function HomeScreen() {
     };
     fetch();
   }, []);
+
+  const handleWaterAll = async (groupId: string) => {
+    setWateringId(groupId);
+    try {
+      await waterAllPlantsInGroup(groupId, 'demoUser');
+      setSnackMessage('All plants watered');
+    } catch (err: any) {
+      setSnackMessage(err.message || 'Failed to log');
+    } finally {
+      setWateringId(null);
+      setSnackVisible(true);
+    }
+  };
 
   return (
     <ParallaxScrollView
@@ -57,9 +73,22 @@ export default function HomeScreen() {
         <FlatList
           data={groups}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <GroupCard group={item} />}
+          renderItem={({ item }) => (
+            <GroupCard
+              group={item}
+              onWaterAll={() => handleWaterAll(item.id)}
+              waterDisabled={wateringId === item.id}
+            />
+          )}
         />
       )}
+      <Snackbar
+        visible={snackVisible}
+        onDismiss={() => setSnackVisible(false)}
+        duration={3000}
+      >
+        {snackMessage}
+      </Snackbar>
       <TouchableOpacity
         accessibilityLabel="Add Group"
         onPress={() => router.push('/add-group')}

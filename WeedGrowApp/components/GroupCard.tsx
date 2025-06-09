@@ -24,6 +24,7 @@ export interface GroupCardProps {
   /** Optional label like "2 days ago" */
   lastWatered?: string;
   onWaterAll?: () => void;
+  waterDisabled?: boolean;
   onEdit?: () => void;
 }
 
@@ -33,6 +34,7 @@ export default function GroupCard({
   weatherData,
   lastWatered,
   onWaterAll,
+  waterDisabled = false,
   onEdit,
 }: GroupCardProps) {
   const router = useRouter();
@@ -65,6 +67,7 @@ export default function GroupCard({
             size={24}
             mode="contained"
             onPress={handleWaterAll}
+            disabled={waterDisabled}
             style={styles.waterButton}
             accessibilityLabel="Water all plants"
           />
