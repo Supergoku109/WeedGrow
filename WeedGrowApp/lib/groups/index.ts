@@ -25,7 +25,7 @@ interface CreateGroupOptions {
   firstPlantId: string;
   environment: 'outdoor' | 'indoor' | 'greenhouse';
   location?: { lat: number; lng: number } | null;
-  createdBy?: string;
+  createdBy: string;
 }
 
 export async function createGroup(options: CreateGroupOptions): Promise<string> {
@@ -34,7 +34,7 @@ export async function createGroup(options: CreateGroupOptions): Promise<string> 
     firstPlantId,
     environment,
     location = null,
-    createdBy = 'demoUser',
+    createdBy,
   } = options;
 
   const ref = await addDoc(collection(db, 'groups'), {
@@ -63,7 +63,7 @@ export async function addWaterLogsToGroupPlants(groupId: string): Promise<void> 
   if (!snap.exists()) return;
   const group = snap.data() as Group;
   await Promise.all(
-    (group.plantIds || []).map((pid) =>
+    group.plantIds.map((pid) =>
       addPlantLog(pid, {
         type: 'watering',
         description: `Watered via group ${group.name}`,
