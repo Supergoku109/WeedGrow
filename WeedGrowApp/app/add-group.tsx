@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { ScrollView, View, Alert, Dimensions } from 'react-native';
+import { ScrollView, View, Alert, Dimensions, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TextInput, Button, RadioButton, ActivityIndicator } from 'react-native-paper';
 import MapView, { Marker, MapPressEvent } from 'react-native-maps';
@@ -106,14 +106,14 @@ export default function AddGroupScreen() {
   const screen = Dimensions.get('window');
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: 8 }}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, gap: 16 }}>
-        <ThemedText type="title" style={{ textAlign: 'center' }}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: Colors[theme].background }]}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.contentContainer}>
+        <ThemedText type="title" style={styles.title}>
           Create Group
         </ThemedText>
 
         {loadingPlants && (
-          <ActivityIndicator style={{ marginTop: 8 }} color={Colors[theme].tint} />
+          <ActivityIndicator style={styles.loading} color={Colors[theme].tint} />
         )}
         {error && <ThemedText>❌ {error}</ThemedText>}
 
@@ -121,10 +121,10 @@ export default function AddGroupScreen() {
           label="Group Name"
           value={name}
           onChangeText={setName}
-          style={{ borderRadius: 8, padding: 12, fontSize: 16 }}
+          style={styles.input}
         />
 
-        <ThemedText style={{ marginBottom: 8 }}>Choose the first plant</ThemedText>
+        <ThemedText style={styles.sectionLabel}>Choose the first plant</ThemedText>
         <RadioButton.Group
           onValueChange={id => {
             const plant = plants.find(p => p.id === id);
@@ -146,13 +146,13 @@ export default function AddGroupScreen() {
 
         {environment === 'outdoor' && (
           <>
-            <Button icon="crosshairs-gps" loading={locLoading} onPress={getLocation} style={{ marginTop: 8 }}>
+            <Button icon="crosshairs-gps" loading={locLoading} onPress={getLocation} style={styles.locationButton}>
               \u{1F4CD} Use My Location
             </Button>
-            <View style={{ height: 300, borderRadius: 12, overflow: 'hidden' }}>
+            <View style={styles.mapContainer}>
               <MapView
                 ref={mapRef}
-                style={{ width: screen.width - 32, height: 300 }}
+                style={[styles.map, { width: screen.width - 32 }]}
                 onPress={handleMapPress}
                 initialRegion={{
                   latitude: location?.lat ?? -33.9249,
@@ -164,13 +164,13 @@ export default function AddGroupScreen() {
                 {location && <Marker coordinate={{ latitude: location.lat, longitude: location.lng }} pinColor="green" />}
               </MapView>
             </View>
-            <ThemedText style={{ textAlign: 'center', marginTop: 8 }}>
+            <ThemedText style={styles.mapHint}>
               Tap the map to adjust your location
             </ThemedText>
           </>
         )}
 
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
+        <View style={styles.actionRow}>
           <Button mode="outlined" onPress={() => router.back()}>
             Cancel
           </Button>
@@ -190,4 +190,53 @@ export default function AddGroupScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    paddingTop: 8,
+  },
+  scroll: {
+    flex: 1,
+  },
+  contentContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    gap: 16,
+  },
+  title: {
+    textAlign: 'center',
+  },
+  loading: {
+    marginTop: 8,
+  },
+  input: {
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+  },
+  sectionLabel: {
+    marginBottom: 8,
+  },
+  locationButton: {
+    marginTop: 8,
+  },
+  mapContainer: {
+    height: 300,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  map: {
+    height: 300,
+  },
+  mapHint: {
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 24,
+  },
+});
 
