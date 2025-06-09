@@ -16,11 +16,11 @@ import { TextInput, Button } from 'react-native-paper';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 
-import StepIndicatorBar from '@/components/StepIndicatorBar';
-import { usePlantForm } from '@/stores/usePlantForm';
+import StepIndicatorBar from '@/ui/StepIndicatorBar';
+import { usePlantForm } from '@/features/plants/hooks/usePlantForm';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/ui/ThemedText';
 
 const screen = Dimensions.get('window');
 
@@ -67,7 +67,6 @@ export default function Step3() {
         : (
             await Location.getCurrentPositionAsync({
               accuracy: Location.Accuracy.Balanced,
-              timeout: 5000,
             })
           ).coords;
 

@@ -2,11 +2,11 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
 
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
+import { IconSymbol } from '@/ui/IconSymbol';
+import TabBarBackground, { useBottomTabOverflow } from '@/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { HapticTab } from '@/ui/HapticTab';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -14,25 +14,14 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: Colors[(colorScheme ?? 'light') as 'light' | 'dark'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
         tabBarStyle: {
-          backgroundColor: Colors[colorScheme ?? 'light'].background,
+          backgroundColor: Colors[(colorScheme ?? 'light') as 'light' | 'dark'].background,
           borderTopWidth: 0,
-          ...(Platform.OS === 'ios' ? { position: 'absolute' } : {}),
         },
       }}>
-      <Tabs.Screen
-        name="unknown"
-        options={{
-          title: 'Unknown',
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="questionmark.circle" color={color} />
-          ),
-        }}
-      />
       <Tabs.Screen
         name="plants"
         options={{
@@ -48,15 +37,6 @@ export default function TabLayout() {
           title: 'Home',
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="house.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="learn"
-        options={{
-          title: 'Learn',
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="book.fill" color={color} />
           ),
         }}
       />

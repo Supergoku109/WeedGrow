@@ -6,8 +6,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated from 'react-native-reanimated';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { Plant } from '@/firestoreModels';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/ui/ThemedView';
+import { ThemedText } from '@/ui/ThemedText';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { db } from '@/services/firebase';
@@ -15,10 +15,10 @@ import { List } from 'react-native-paper';
 import { fetchWeather } from '@/lib/weather/fetchWeather';
 import { parseWeatherData } from '@/lib/weather/parseWeatherData';
 import { updateWeatherCache } from '@/lib/weather/updateFirestore';
-import WeatherBar from '@/components/WeatherBar';
+import WeatherBar from '@/ui/WeatherBar';
+import WateringHistoryBar from '@/ui/WateringHistoryBar';
 import type { WeatherCacheEntry } from '@/firestoreModels';
 import { fetchWateringHistory, DEFAULT_HISTORY_DAYS, WateringHistoryEntry } from '@/lib/logs/fetchWateringHistory';
-import WateringHistoryBar from '@/components/WateringHistoryBar';
 
 export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -163,7 +163,7 @@ export default function PlantDetailScreen() {
       {weather.length === 4 && (
         <View style={styles.section}>
           <ThemedText type="subtitle">Weather</ThemedText>
-          <WeatherBar data={weather} />
+          <WeatherBar data={weather.filter((w): w is WeatherCacheEntry => w !== null)} />
         </View>
       )}
 

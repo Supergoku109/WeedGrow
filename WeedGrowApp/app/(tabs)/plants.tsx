@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, FlatList, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { PlantCard } from '@/components/PlantCard';
+import { ThemedView } from '@/ui/ThemedView';
+import { ThemedText } from '@/ui/ThemedText';
+import { PlantCard } from '@/features/plants/components/PlantCard';
 import { fetchPlantWeatherContext } from '@/lib/weather/fetchPlantWeatherContext';
 import type { PlantAdviceContext } from '@/lib/weather/getPlantAdvice';
 import { collection, getDocs, query } from 'firebase/firestore';
@@ -43,6 +43,7 @@ export default function PlantsScreen() {
   const [weatherMap, setWeatherMap] = useState<Record<string, PlantAdviceContext | undefined>>({});
   type Theme = keyof typeof Colors;
   const theme = (useColorScheme() ?? 'dark') as Theme;
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const fetchPlants = async () => {
@@ -110,7 +111,10 @@ export default function PlantsScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: Colors[theme].background }]}>
+    <View style={[
+      styles.safeArea,
+      { backgroundColor: Colors[theme].background, flex: 1, paddingTop: insets.top }
+    ]}>
       <ThemedView style={styles.container}>
         <ThemedText type="title" style={styles.title}>
           My Plants
@@ -234,7 +238,7 @@ export default function PlantsScreen() {
           <MaterialCommunityIcons name="plus" size={28} color={Colors[theme].white} />
         </TouchableOpacity>
       </ThemedView>
-    </SafeAreaView>
+    </View>
   );
 }
 

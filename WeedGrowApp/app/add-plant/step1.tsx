@@ -16,11 +16,11 @@ import {
   Menu,
   SegmentedButtons,
 } from 'react-native-paper';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/ui/ThemedText';
+import StepIndicatorBar from '@/ui/StepIndicatorBar';
 import { useRouter, useFocusEffect } from 'expo-router';
 
-import StepIndicatorBar from '@/components/StepIndicatorBar';
-import { usePlantForm } from '@/stores/usePlantForm';
+import { usePlantForm } from '@/features/plants/hooks/usePlantForm';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 

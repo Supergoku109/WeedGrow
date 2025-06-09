@@ -16,8 +16,8 @@ import {
 } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 
-import StepIndicatorBar from '@/components/StepIndicatorBar';
-import { usePlantForm } from '@/stores/usePlantForm';
+import StepIndicatorBar from '@/ui/StepIndicatorBar';
+import { usePlantForm } from '@/features/plants/hooks/usePlantForm';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 

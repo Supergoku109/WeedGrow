@@ -123,11 +123,24 @@ export interface WeatherCacheEntry {
   // ================================
   // 📁 /invites/{inviteId}
   // ================================
-  export interface Invite {
+export interface Invite {
     invitedBy: string; // userId
     invitedUserEmail: string;
     plantId: string;
     status: 'pending' | 'accepted' | 'declined';
     createdAt: FirebaseFirestore.Timestamp;
-  }
+}
+
+// ================================
+// 📁 Top-level: /groups/{groupId}
+// ================================
+export interface Group {
+  name: string;
+  environment: 'outdoor' | 'indoor' | 'greenhouse';
+  plantIds: string[];
+  location: { lat: number; lng: number } | null;
+  createdBy: string;
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+}
   

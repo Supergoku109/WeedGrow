@@ -13,8 +13,9 @@ import { TextInput, Button, Snackbar } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 
-import StepIndicatorBar from '@/components/StepIndicatorBar';
-import { usePlantForm } from '@/stores/usePlantForm';
+import { ThemedText } from '@/ui/ThemedText';
+import StepIndicatorBar from '@/ui/StepIndicatorBar';
+import { usePlantForm } from '@/features/plants/hooks/usePlantForm';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -22,7 +23,7 @@ export default function Step5() {
   const router = useRouter();
   const { notes, imageUri, setField } = usePlantForm();
   const [snackVisible, setSnackVisible] = React.useState(false);
-  const theme = useColorScheme() ?? 'dark';
+  const theme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
   const insets = useSafeAreaInsets();
 
   const inputStyle = {

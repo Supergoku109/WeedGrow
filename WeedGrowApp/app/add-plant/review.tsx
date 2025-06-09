@@ -2,11 +2,11 @@ import React from 'react';
 import { ScrollView, View, Image, StyleSheet } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Card, Text, Divider } from 'react-native-paper';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/ui/ThemedText';
 import { useRouter } from 'expo-router';
 
-import StepIndicatorBar from '@/components/StepIndicatorBar';
-import { usePlantForm } from '@/stores/usePlantForm';
+import StepIndicatorBar from '@/ui/StepIndicatorBar';
+import { usePlantForm } from '@/features/plants/hooks/usePlantForm';
 import { Colors } from '@/constants/Colors';
 import { MILLISECONDS_PER_DAY } from '@/constants/Time';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -19,11 +19,13 @@ import { updateWeatherCache } from '@/lib/weather/updateFirestore';
 export default function Review() {
   const router = useRouter();
   const form = usePlantForm();
-  type Theme = keyof typeof Colors;
-  const theme = (useColorScheme() ?? 'dark') as Theme;
+  const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
   const insets = useSafeAreaInsets();
+  const [saving, setSaving] = React.useState(false);
 
   const save = async () => {
+    if (saving) return;
+    setSaving(true);
     try {
       const ageNum = parseInt(form.ageDays || '0', 10);
       const createdAt = Timestamp.fromMillis(Date.now() - ageNum * MILLISECONDS_PER_DAY);
@@ -60,9 +62,11 @@ export default function Review() {
         }
       }
       form.reset();
-      router.replace('/unknown');
+      router.replace('/'); // Go to Home tab after saving plant
     } catch (e) {
       console.error('Error saving plant:', e);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -71,7 +75,7 @@ export default function Review() {
   });
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: 8 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme as 'light' | 'dark'].background, paddingTop: 8 }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, gap: 16 }}>
@@ -222,7 +226,7 @@ export default function Review() {
         <Button mode="outlined" onPress={() => router.back()}>
           Back
         </Button>
-        <Button mode="contained" onPress={save}>
+        <Button mode="contained" onPress={save} disabled={saving} loading={saving}>
           Save Plant
         </Button>
       </View>
