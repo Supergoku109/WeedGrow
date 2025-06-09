@@ -150,19 +150,29 @@ export default function AddGroupScreen() {
               \u{1F4CD} Use My Location
             </Button>
             <View style={styles.mapContainer}>
-              <MapView
-                ref={mapRef}
-                style={[styles.map, { width: screen.width - 32 }]}
-                onPress={handleMapPress}
-                initialRegion={{
-                  latitude: location?.lat ?? -33.9249,
-                  longitude: location?.lng ?? 18.4241,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                }}
-              >
-                {location && <Marker coordinate={{ latitude: location.lat, longitude: location.lng }} pinColor="green" />}
-              </MapView>
+              {location ? (
+                <MapView
+                  ref={mapRef}
+                  style={[styles.map, { width: screen.width - 32 }]}
+                  onPress={handleMapPress}
+                  initialRegion={{
+                    latitude: location.lat,
+                    longitude: location.lng,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
+                  }}
+                >
+                  <Marker
+                    coordinate={{ latitude: location.lat, longitude: location.lng }}
+                    pinColor="green"
+                  />
+                </MapView>
+              ) : (
+                <View style={[styles.mapPlaceholder, { width: screen.width - 32 }]}
+                >
+                  <ThemedText>No location selected</ThemedText>
+                </View>
+              )}
             </View>
             <ThemedText style={styles.mapHint}>
               Tap the map to adjust your location
@@ -228,6 +238,12 @@ const styles = StyleSheet.create({
   },
   map: {
     height: 300,
+  },
+  mapPlaceholder: {
+    height: 300,
+    backgroundColor: '#ccc',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   mapHint: {
     textAlign: 'center',
