@@ -223,76 +223,77 @@ export default function PlantDetailScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
-      <IconButton
-        icon="delete"
-        mode="contained"
-        iconColor={Colors[theme].white}
-        containerColor={Colors[theme].tint}
-        onPress={confirmDelete}
-        style={[styles.deleteButton, { top: insets.top + 4 }]}
-        accessibilityLabel="Delete Plant"
-      />
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
-      {/* Weekly calendar for outdoor plants - moved to top */}
-      {plant.environment === 'outdoor' && weekData.length === 7 && (
-        <View style={styles.section}>
-          <ThemedText type="subtitle">This Week</ThemedText>
-          <WeeklyPlantCalendarBar weekData={weekData} onLogWater={handleLogWater} />
+      {/* Place delete button in the header, top right, floating over the image */}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 0 }}>
+        {/* Plant image as a header with overlay */}
+        {plant.imageUri && (
+          <View style={styles.headerImageWrapper}>
+            <Animated.View sharedTransitionTag={`plant.${id}.photo`}>
+              <Image source={{ uri: plant.imageUri }} style={styles.headerImage} />
+              <View style={styles.headerOverlay} />
+              <ThemedText type="title" style={styles.headerTitle}>{plant.name}</ThemedText>
+              <ThemedText style={styles.headerStrain}>{plant.strain}</ThemedText>
+              <IconButton
+                icon="delete"
+                mode="contained"
+                iconColor={Colors[theme].white}
+                containerColor={Colors[theme].tint}
+                onPress={confirmDelete}
+                style={styles.headerDelete}
+                accessibilityLabel="Delete Plant"
+              />
+            </Animated.View>
+          </View>
+        )}
+        {/* Weather bar section */}
+        {plant.environment === 'outdoor' && weekData.length === 7 && (
+          <View style={styles.sectionWeather}>
+            <ThemedText type="subtitle" style={styles.weatherTitle}>This Week</ThemedText>
+            <WeeklyPlantCalendarBar weekData={weekData} onLogWater={handleLogWater} />
+          </View>
+        )}
+        {/* Plant info cards */}
+        <View style={styles.sectionCards}>
+          <List.Item
+            title="Growth Stage"
+            description={plant.growthStage}
+            left={props => <List.Icon {...props} icon="sprout" />}
+            style={styles.infoCard}
+          />
+          <List.Item
+            title="Environment"
+            description={plant.environment}
+            left={props => <List.Icon {...props} icon={plant.environment === 'indoor' ? 'home' : plant.environment === 'greenhouse' ? 'greenhouse' : 'tree'} />}
+            style={styles.infoCard}
+          />
+          <List.Item
+            title="Status"
+            description={plant.status}
+            left={props => <List.Icon {...props} icon={plant.status === 'active' ? 'check-circle-outline' : plant.status === 'archived' ? 'archive' : plant.status === 'harvested' ? 'flower' : 'skull'} />}
+            style={styles.infoCard}
+          />
         </View>
-      )}
-      {plant.imageUri && (
-        <Animated.View sharedTransitionTag={`plant.${id}.photo`} style={styles.imageWrapper}>
-          <Image source={{ uri: plant.imageUri }} style={styles.image} />
-        </Animated.View>
-      )}
-      <ThemedText type="title" style={styles.title}>{plant.name}</ThemedText>
-      <ThemedText style={styles.strain}>{plant.strain}</ThemedText>
-
-      <View style={styles.section}>
-        <List.Item
-          title="Growth Stage"
-          description={plant.growthStage}
-          left={props => <List.Icon {...props} icon="sprout" />}
-        />
-        <List.Item
-          title="Environment"
-          description={plant.environment}
-          left={props => <List.Icon {...props} icon={plant.environment === 'indoor' ? 'home' : plant.environment === 'greenhouse' ? 'greenhouse' : 'tree'} />}
-        />
-        <List.Item
-          title="Status"
-          description={plant.status}
-          left={props => <List.Icon {...props} icon={plant.status === 'active' ? 'check-circle-outline' : plant.status === 'archived' ? 'archive' : plant.status === 'harvested' ? 'flower' : 'skull'} />}
-        />
-      </View>
-
-      {(plant.environment === 'indoor' || plant.environment === 'greenhouse') && plant.sensorProfileId && (
-        <View style={styles.section}>
-          <ThemedText type="subtitle">Sensor Data</ThemedText>
-          {/* SensorProfileBar is not imported; add import or remove if not needed */}
-        </View>
-      )}
-
-      {plant.notes ? (
-        <View style={styles.section}>
-          <ThemedText type="subtitle">Notes</ThemedText>
-          <ThemedText>{plant.notes}</ThemedText>
-        </View>
-      ) : null}
-
-      {plant.fertilizer ? (
-        <View style={styles.section}>
-          <ThemedText type="subtitle">Fertilization</ThemedText>
-          <ThemedText>{plant.fertilizer}</ThemedText>
-        </View>
-      ) : null}
-
-      {plant.pests && plant.pests.length > 0 ? (
-        <View style={styles.section}>
-          <ThemedText type="subtitle">Pests</ThemedText>
-          <ThemedText>{plant.pests.join(', ')}</ThemedText>
-        </View>
-      ) : null}
+        {/* Notes, Fertilizer, Pests */}
+        {plant.notes ? (
+          <View style={styles.section}>
+            <ThemedText type="subtitle">Notes</ThemedText>
+            <ThemedText>{plant.notes}</ThemedText>
+          </View>
+        ) : null}
+        {plant.fertilizer ? (
+          <View style={styles.section}>
+            <ThemedText type="subtitle">Fertilization</ThemedText>
+            <ThemedText>{plant.fertilizer}</ThemedText>
+          </View>
+        ) : null}
+        {plant.pests && plant.pests.length > 0 ? (
+          <View style={styles.section}>
+            <ThemedText type="subtitle">Pests</ThemedText>
+            <ThemedText>{plant.pests.join(', ')}</ThemedText>
+          </View>
+        ) : null}
+        {/* Spacer for visual balance */}
+        <View style={{ height: 32 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -324,13 +325,98 @@ const styles = StyleSheet.create({
     width: 200,
     borderRadius: 8,
   },
-  section: {
-    marginTop: 16,
-    gap: 4,
+  sectionWeather: {
+    marginTop: 0,
+    marginBottom: 8,
+    paddingHorizontal: 12,
+    paddingTop: 12,
   },
-  deleteButton: {
+  weatherTitle: {
+    marginBottom: 2,
+    marginLeft: 2,
+    fontWeight: 'bold',
+    color: '#2563eb',
+  },
+  headerImageWrapper: {
+    width: '100%',
+    height: 220,
+    position: 'relative',
+    marginBottom: 0,
+  },
+  headerImage: {
+    width: '100%',
+    height: 220,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  headerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  headerTitle: {
     position: 'absolute',
-    left: 16,
+    bottom: 38,
+    left: 20,
+    color: '#fff',
+    fontSize: 26,
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
+  headerStrain: {
+    position: 'absolute',
+    bottom: 18,
+    left: 20,
+    color: '#e0e7ff',
+    fontSize: 16,
+    textShadowColor: 'rgba(0,0,0,0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  sectionCards: {
+    marginTop: 8,
+    marginBottom: 8,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: '#f8fafc',
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  infoCard: {
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    marginVertical: 2,
+    paddingVertical: 0,
+  },
+  headerDelete: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
     zIndex: 10,
+    elevation: 8,
+    backgroundColor: '#ef4444',
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  section: {
+    marginTop: 12,
+    marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#f8fafc',
+    borderRadius: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
 });
