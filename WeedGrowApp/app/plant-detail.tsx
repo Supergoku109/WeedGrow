@@ -1,6 +1,6 @@
 import React from 'react';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/ui/ThemedView';
+import { ThemedText } from '@/ui/ThemedText';
 
 export default function PlantDetailScreen() {
   return (

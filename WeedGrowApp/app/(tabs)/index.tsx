@@ -1,75 +1,175 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, FlatList, TouchableOpacity, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { ActivityIndicator, Snackbar } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/ui/ThemedText';
+import GroupCard from '@/features/groups/components/GroupCard';
+import EditGroupModal from '@/features/groups/components/EditGroupModal';
+import { getUserGroups, waterAllPlantsInGroup } from '@/features/groups/api/groupApi';
+import type { Group } from '@/firestoreModels';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { collection, getDocs, query } from 'firebase/firestore';
+import { db } from '@/services/firebase';
+import type { Plant } from '@/firestoreModels';
 
 export default function HomeScreen() {
+  const [groups, setGroups] = useState<(Group & { id: string })[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [wateringId, setWateringId] = useState<string | null>(null);
+  const [snackVisible, setSnackVisible] = useState(false);
+  const [snackMessage, setSnackMessage] = useState('');
+  const [editGroup, setEditGroup] = useState<Group & { id: string } | null>(null);
+  const [allPlants, setAllPlants] = useState<(Plant & { id: string })[]>([]);
+  const router = useRouter();
+  type Theme = keyof typeof Colors;
+  const theme = (useColorScheme() ?? 'dark') as Theme;
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const data = await getUserGroups('demoUser');
+        setGroups(data);
+      } catch (e: any) {
+        console.error('Error fetching groups', e);
+        setError(e.message || 'Failed to load groups');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetch();
+  }, []);
+
+  useEffect(() => {
+    // Fetch all plants for edit modal
+    const fetchPlants = async () => {
+      try {
+        const q = query(collection(db, 'plants'));
+        const snap = await getDocs(q);
+        setAllPlants(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Plant) })));
+      } catch (e) {
+        // ignore
+      }
+    };
+    fetchPlants();
+  }, []);
+
+  const handleWaterAll = async (groupId: string) => {
+    setWateringId(groupId);
+    try {
+      await waterAllPlantsInGroup(groupId, 'demoUser');
+      setSnackMessage('All plants watered');
+    } catch (err: any) {
+      setSnackMessage(err.message || 'Failed to log');
+    } finally {
+      setWateringId(null);
+      setSnackVisible(true);
+    }
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <View style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: insets.top }}>
+      <View style={styles.homeHeader}>
+        <ThemedText type="title" style={styles.homeTitle}>Plant Groups</ThemedText>
+        <ThemedText style={styles.homeWelcome}>
+          Your grow spaces at a glance. Tap + to add a group.
+        </ThemedText>
+      </View>
+      <FlatList
+        // ListHeaderComponent removed to eliminate blue background and default React logo
+        data={groups}
+        keyExtractor={(item) => item.id}
+        ListEmptyComponent={
+          loading ? (
+            <ActivityIndicator style={styles.loading} color={Colors[theme].tint} />
+          ) : error ? (
+            <ThemedText>❌ {error}</ThemedText>
+          ) : (
+            <ThemedText>No groups found.</ThemedText>
+          )
+        }
+        renderItem={({ item }) => (
+          <GroupCard
+            group={item}
+            onWaterAll={() => handleWaterAll(item.id)}
+            waterDisabled={wateringId === item.id}
+            onEdit={() => setEditGroup(item)}
+          />
+        )}
+        contentContainerStyle={{ padding: 32, gap: 4, flexGrow: 1 }}
+      />
+      <Snackbar
+        visible={snackVisible}
+        onDismiss={() => setSnackVisible(false)}
+        duration={3000}
+      >
+        {snackMessage}
+      </Snackbar>
+      <TouchableOpacity
+        accessibilityLabel="Add Group"
+        onPress={() => router.push('/add-group')}
+        style={[styles.fab, { backgroundColor: Colors[theme].tint }]}
+      >
+        <MaterialCommunityIcons
+          name="plus"
+          size={28}
+          color={Colors[theme].white}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      </TouchableOpacity>
+      <EditGroupModal
+        visible={!!editGroup}
+        group={editGroup as any}
+        allPlants={allPlants}
+        onClose={() => setEditGroup(null)}
+        onSave={async () => {
+          setLoading(true);
+          const data = await getUserGroups('demoUser');
+          setGroups(data);
+          setLoading(false);
+        }}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  loading: {
+    marginTop: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  fab: {
     position: 'absolute',
+    right: 20,
+    bottom: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+  },
+  homeHeader: {
+    alignItems: 'center',
+    marginBottom: 4, // was 18, reduce to tighten gap below header
+    marginTop: 8,
+  },
+  homeTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#4caf50',
+    textAlign: 'center',
+    marginTop: 12,
+    marginBottom: 0, // was 6, reduce to tighten gap between title and subtitle
+  },
+  homeWelcome: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 8, // was 18, reduce to tighten gap below subtitle
+    marginHorizontal: 8,
   },
 });
