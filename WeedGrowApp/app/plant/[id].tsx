@@ -19,6 +19,7 @@ import WeatherBar from '@/ui/WeatherBar';
 import WateringHistoryBar from '@/ui/WateringHistoryBar';
 import type { WeatherCacheEntry } from '@/firestoreModels';
 import { fetchWateringHistory, DEFAULT_HISTORY_DAYS, WateringHistoryEntry } from '@/lib/logs/fetchWateringHistory';
+import SensorProfileBar from '@/ui/SensorProfileBar';
 
 export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -160,10 +161,17 @@ export default function PlantDetailScreen() {
         />
       </View>
 
-      {weather.length === 4 && (
+      {weather.length === 4 && plant.environment === 'outdoor' && (
         <View style={styles.section}>
           <ThemedText type="subtitle">Weather</ThemedText>
           <WeatherBar data={weather.filter((w): w is WeatherCacheEntry => w !== null)} />
+        </View>
+      )}
+
+      {(plant.environment === 'indoor' || plant.environment === 'greenhouse') && plant.sensorProfileId && (
+        <View style={styles.section}>
+          <ThemedText type="subtitle">Sensor Data</ThemedText>
+          <SensorProfileBar sensorProfileId={plant.sensorProfileId} />
         </View>
       )}
 
