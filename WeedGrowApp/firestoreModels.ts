@@ -78,6 +78,14 @@ export interface WeatherCacheEntry {
     sunrise?: string;
     sunset?: string;
     pop?: number;
+    detailedTemps?: {
+      morn: number | null;
+      day: number | null;
+      eve: number | null;
+      night: number | null;
+      min: number | null;
+      max: number | null;
+    };
 }
   
   // ================================

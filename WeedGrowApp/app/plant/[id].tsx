@@ -4,7 +4,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ActivityIndicator, IconButton } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated from 'react-native-reanimated';
-import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
 import { Plant } from '@/firestoreModels';
 import { ThemedView } from '@/ui/ThemedView';
 import { ThemedText } from '@/ui/ThemedText';
@@ -15,11 +15,9 @@ import { List } from 'react-native-paper';
 import { fetchWeather } from '@/lib/weather/fetchWeather';
 import { parseWeatherData } from '@/lib/weather/parseWeatherData';
 import { updateWeatherCache } from '@/lib/weather/updateFirestore';
-import WeatherBar from '@/ui/WeatherBar';
-import WateringHistoryBar from '@/ui/WateringHistoryBar';
 import type { WeatherCacheEntry } from '@/firestoreModels';
 import { fetchWateringHistory, DEFAULT_HISTORY_DAYS, WateringHistoryEntry } from '@/lib/logs/fetchWateringHistory';
-import SensorProfileBar from '@/ui/SensorProfileBar';
+import WeeklyPlantCalendarBar, { WeeklyDayData } from '@/ui/WeeklyPlantCalendarBar';
 
 export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -27,6 +25,7 @@ export default function PlantDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [weather, setWeather] = useState<(WeatherCacheEntry | null)[]>([]);
   const [history, setHistory] = useState<WateringHistoryEntry[]>([]);
+  const [weekData, setWeekData] = useState<WeeklyDayData[]>([]);
   type Theme = keyof typeof Colors;
   const theme = (useColorScheme() ?? 'dark') as Theme;
   const router = useRouter();
@@ -44,7 +43,24 @@ export default function PlantDetailScreen() {
           onPress: async () => {
             try {
               if (id) {
-                await deleteDoc(doc(db, 'plants', String(id)));
+                // Recursively delete plant and all subcollections using Firestore Admin SDK via a callable cloud function
+                // or REST endpoint. For now, attempt client-side recursive delete for emulator/dev only:
+                // (This will only work if you have a backend or emulator with recursive delete enabled)
+                // If not, fallback to manual subcollection deletion:
+                const plantRef = doc(db, 'plants', String(id));
+                // Delete all subcollections: logs, weatherCache, progressPics, etc.
+                const deleteSubcollection = async (sub: string) => {
+                  const subSnap = await getDocs(collection(db, 'plants', String(id), sub));
+                  const batch = writeBatch(db);
+                  subSnap.forEach(doc => batch.delete(doc.ref));
+                  await batch.commit();
+                };
+                await Promise.all([
+                  deleteSubcollection('logs'),
+                  deleteSubcollection('weatherCache'),
+                  deleteSubcollection('progressPics'),
+                ]);
+                await deleteDoc(plantRef);
               }
               router.replace('/(tabs)/plants');
             } catch (e) {
@@ -103,6 +119,88 @@ export default function PlantDetailScreen() {
     fetchHistory();
   }, [id]);
 
+  useEffect(() => {
+    if (!plant || plant.environment !== 'outdoor') return;
+    if (!plant.location) return;
+    const fetchWeekData = async () => {
+      const today = new Date();
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay()); // Sunday
+      const days: WeeklyDayData[] = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(weekStart);
+        d.setDate(weekStart.getDate() + i);
+        days.push({
+          date: d.toISOString().split('T')[0],
+          day: d.toLocaleDateString('en-US', { weekday: 'short' }),
+          dayNum: d.getDate(),
+          minTemp: null,
+          maxTemp: null,
+          rain: null,
+          humidity: null,
+          watered: false,
+          isToday: d.toDateString() === today.toDateString(),
+        });
+      }
+      // Fetch weatherCache for each day
+      const weatherEntries = await Promise.all(
+        days.map(async (day) => {
+          const ref = doc(db, 'plants', String(id), 'weatherCache', day.date);
+          const snap = await getDoc(ref);
+          return snap.exists() ? snap.data() as WeatherCacheEntry : null;
+        })
+      );
+      // Merge weather data
+      days.forEach((day, i) => {
+        const w = weatherEntries[i];
+        if (w) {
+          // Use detailedTemps if available
+          if (w.detailedTemps) {
+            day.minTemp = typeof w.detailedTemps.min === 'number' ? w.detailedTemps.min : null;
+            day.maxTemp = typeof w.detailedTemps.max === 'number' ? w.detailedTemps.max : null;
+            // Pass all detailedTemps for UI
+            day.detailedTemps = {
+              morn: typeof w.detailedTemps.morn === 'number' ? w.detailedTemps.morn : null,
+              day: typeof w.detailedTemps.day === 'number' ? w.detailedTemps.day : null,
+              eve: typeof w.detailedTemps.eve === 'number' ? w.detailedTemps.eve : null,
+              night: typeof w.detailedTemps.night === 'number' ? w.detailedTemps.night : null,
+              min: typeof w.detailedTemps.min === 'number' ? w.detailedTemps.min : null,
+              max: typeof w.detailedTemps.max === 'number' ? w.detailedTemps.max : null,
+            };
+          } else {
+            const temps = [
+              typeof w.temperature === 'number' ? w.temperature : null,
+              w.hourlySummary && typeof w.hourlySummary.peakTemp === 'number' ? w.hourlySummary.peakTemp : null
+            ].filter((v): v is number => v !== null && !isNaN(v));
+            if (temps.length === 2) {
+              day.minTemp = Math.min(temps[0], temps[1]);
+              day.maxTemp = Math.max(temps[0], temps[1]);
+            } else if (temps.length === 1) {
+              day.minTemp = day.maxTemp = temps[0];
+            } else {
+              day.minTemp = day.maxTemp = null;
+            }
+          }
+          day.rain = typeof w.rainfall === 'number' ? w.rainfall : null;
+          day.humidity = typeof w.humidity === 'number' ? w.humidity : null;
+        }
+      });
+      // Merge watering logs
+      days.forEach((day) => {
+        const hist = history.find(h => h.date === day.date);
+        day.watered = !!hist && hist.watered;
+      });
+      setWeekData(days);
+    };
+    fetchWeekData();
+  }, [plant, history, id]);
+
+  const handleLogWater = (date: string) => {
+    // TODO: Implement log water for the given date
+    // e.g. open modal or directly log
+    alert(`Log watering for ${date}`);
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
@@ -135,6 +233,13 @@ export default function PlantDetailScreen() {
         accessibilityLabel="Delete Plant"
       />
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
+      {/* Weekly calendar for outdoor plants - moved to top */}
+      {plant.environment === 'outdoor' && weekData.length === 7 && (
+        <View style={styles.section}>
+          <ThemedText type="subtitle">This Week</ThemedText>
+          <WeeklyPlantCalendarBar weekData={weekData} onLogWater={handleLogWater} />
+        </View>
+      )}
       {plant.imageUri && (
         <Animated.View sharedTransitionTag={`plant.${id}.photo`} style={styles.imageWrapper}>
           <Image source={{ uri: plant.imageUri }} style={styles.image} />
@@ -161,24 +266,10 @@ export default function PlantDetailScreen() {
         />
       </View>
 
-      {weather.length === 4 && plant.environment === 'outdoor' && (
-        <View style={styles.section}>
-          <ThemedText type="subtitle">Weather</ThemedText>
-          <WeatherBar data={weather.filter((w): w is WeatherCacheEntry => w !== null)} />
-        </View>
-      )}
-
       {(plant.environment === 'indoor' || plant.environment === 'greenhouse') && plant.sensorProfileId && (
         <View style={styles.section}>
           <ThemedText type="subtitle">Sensor Data</ThemedText>
-          <SensorProfileBar sensorProfileId={plant.sensorProfileId} />
-        </View>
-      )}
-
-      {history.length === DEFAULT_HISTORY_DAYS && (
-        <View style={styles.section}>
-          <ThemedText type="subtitle">Last {DEFAULT_HISTORY_DAYS} Days</ThemedText>
-          <WateringHistoryBar history={history} />
+          {/* SensorProfileBar is not imported; add import or remove if not needed */}
         </View>
       )}
 

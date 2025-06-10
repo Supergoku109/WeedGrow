@@ -57,6 +57,18 @@ export function parseWeatherData(apiResponse: any): Record<string, WeatherCacheE
       pop: sourceData.pop,
     };
 
+    // Add detailed temperature segments if available
+    if (sourceData.temp && typeof sourceData.temp === 'object') {
+      base.detailedTemps = {
+        morn: sourceData.temp.morn ?? null,
+        day: sourceData.temp.day ?? null,
+        eve: sourceData.temp.eve ?? null,
+        night: sourceData.temp.night ?? null,
+        min: sourceData.temp.min ?? null,
+        max: sourceData.temp.max ?? null,
+      };
+    }
+
     // Merge in the hourly summaries we computed above if available
     const hourly = hourlyMap[dateStr];
     if (hourly) {

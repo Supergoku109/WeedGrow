@@ -156,6 +156,14 @@ await db.collection("plants").doc(plantId).update({
       sunrise: "06:10",
       sunset: "18:30",
       pop: 0.2,
+      detailedTemps: {
+        morn: 16.4,
+        day: 18.5,
+        eve: 18.0,
+        night: 17.1,
+        min: 15.2,
+        max: 22.8,
+      },
     },
     {
       date: fmt(today),
@@ -174,6 +182,7 @@ await db.collection("plants").doc(plantId).update({
       sunrise: "06:15",
       sunset: "18:35",
       pop: 0.1,
+      // No detailedTemps for today (test optional)
     },
     {
       date: fmt(tomorrow),
@@ -192,6 +201,14 @@ await db.collection("plants").doc(plantId).update({
       sunrise: "06:20",
       sunset: "18:40",
       pop: 0.7,
+      detailedTemps: {
+        morn: 15.0,
+        day: 17.2,
+        eve: 16.5,
+        night: 14.8,
+        min: 13.9,
+        max: 19.7,
+      },
     },
   ];
 

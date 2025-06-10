@@ -92,6 +92,14 @@ Fields:
 - `sunrise` (optional): string
 - `sunset` (optional): string
 - `pop` (optional): number // Probability of precipitation
+- `detailedTemps` (optional): {
+    morn: number;
+    day: number;
+    eve: number;
+    night: number;
+    min: number;
+    max: number;
+  }
 
 ### **`/plants/{plantId}/progressPics/{picId}`**  ← *NEW*
 - Subcollection for storing progress pictures of each plant.
