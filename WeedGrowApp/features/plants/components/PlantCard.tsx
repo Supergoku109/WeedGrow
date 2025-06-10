@@ -10,6 +10,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getPlantAdviceWithReason, PlantAdviceContext } from '@/lib/weather/getPlantAdvice';
 import InfoTooltip from '@/ui/InfoTooltip';
 import { addPlantLog } from '@/lib/logs/addPlantLog';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export interface PlantCardProps {
   plant: Plant & { id: string };
@@ -85,6 +86,13 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
         }
       >
         <ThemedView style={[styles.card, { borderLeftColor: borderColor }]}> 
+          {/* Gradient background for card */}
+          <LinearGradient
+            colors={["#00c853", "#151718"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.gradientBg}
+          />
           <IconButton
             icon="water"
             size={28}
@@ -136,12 +144,25 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 16,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: calendarGreen,
+    marginBottom: 20,
+    padding: 16,
+    borderRadius: 16,
+    // Use a green-to-black vertical gradient background
+    backgroundColor: 'transparent',
     borderLeftWidth: 5,
+    borderLeftColor: '#00c853',
     position: 'relative',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  gradientBg: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 16,
+    zIndex: 0,
   },
   row: {
     flexDirection: 'row',
@@ -150,8 +171,9 @@ const styles = StyleSheet.create({
   image: {
     height: 80,
     width: 80,
-    borderRadius: 8,
-    marginRight: 12,
+    borderRadius: 12,
+    marginRight: 14,
+    backgroundColor: '#222',
   },
   textContainer: {
     flex: 1,
@@ -169,21 +191,25 @@ const styles = StyleSheet.create({
   },
   suggestionChip: {
     alignSelf: 'flex-start',
-    paddingVertical: 2,
-    paddingHorizontal: 6,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
     borderRadius: 8,
     marginTop: 4,
+    minHeight: 24,
+    justifyContent: 'center',
+    backgroundColor: '#00c853', // green tint
   },
   suggestionText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
-    color: 'white',
+    color: '#fff', // white text
   },
   waterButton: {
     position: 'absolute',
-    top: 0,
-    right: 0,
+    top: 10,
+    right: 10,
     zIndex: 5,
+    elevation: 2,
   },
 });
 
