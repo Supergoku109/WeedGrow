@@ -18,6 +18,7 @@ import { updateWeatherCache } from '@/lib/weather/updateFirestore';
 import type { WeatherCacheEntry } from '@/firestoreModels';
 import { fetchWateringHistory, DEFAULT_HISTORY_DAYS, WateringHistoryEntry } from '@/lib/logs/fetchWateringHistory';
 import WeeklyPlantCalendarBar, { WeeklyDayData } from '@/ui/WeeklyPlantCalendarBar';
+import { addPlantLog } from '@/lib/logs/addPlantLog';
 
 export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -195,10 +196,21 @@ export default function PlantDetailScreen() {
     fetchWeekData();
   }, [plant, history, id]);
 
-  const handleLogWater = (date: string) => {
-    // TODO: Implement log water for the given date
-    // e.g. open modal or directly log
-    alert(`Log watering for ${date}`);
+  const handleLogWater = async (date: string) => {
+    if (!plant || !id) return;
+    try {
+      await addPlantLog(String(id), {
+        type: 'watering',
+        description: 'Watered the plant',
+        updatedBy: 'demoUser',
+      }, date);
+      // Refresh watering history and weekData
+      const h = await fetchWateringHistory(String(id), DEFAULT_HISTORY_DAYS);
+      setHistory(h);
+      // weekData will auto-refresh via useEffect on history
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to log watering');
+    }
   };
 
   if (loading) {
