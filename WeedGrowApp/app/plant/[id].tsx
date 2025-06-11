@@ -236,7 +236,7 @@ export default function PlantDetailScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
       {/* Place delete button in the header, top right, floating over the image */}
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 0 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 10 }}>
         {/* Plant image as a header with overlay */}
         {plant.imageUri && (
           <View style={styles.headerImageWrapper}>

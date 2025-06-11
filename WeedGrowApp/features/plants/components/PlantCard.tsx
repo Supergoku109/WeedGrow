@@ -178,7 +178,7 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
 const styles = StyleSheet.create({
   card: {
     marginBottom: 20,
-    padding: 16,
+    padding: 10,
     borderRadius: 16,
     // Use a green-to-black vertical gradient background
     backgroundColor: 'transparent',
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   cardContentRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 16,
+    gap: 13,
   },
   imageTallWrapper: {
     height: 120,

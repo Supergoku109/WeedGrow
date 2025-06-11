@@ -101,7 +101,13 @@ export default function HomeScreen() {
             onEdit={() => setEditGroup(item)}
           />
         )}
-        contentContainerStyle={{ padding: 32, gap: 4, flexGrow: 1 }}
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+        paddingTop: insets.top + 16,
+        paddingBottom: 32,
+        gap: 12,
+        flexGrow: 1,
+      }}
       />
       <Snackbar
         visible={snackVisible}

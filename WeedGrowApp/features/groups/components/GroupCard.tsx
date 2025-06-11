@@ -4,11 +4,13 @@ import {
   TouchableOpacity,
   View,
   Image,
+  Animated,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { IconButton, Button } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { ThemedView } from '@/ui/ThemedView';
 import { ThemedText } from '@/ui/ThemedText';
@@ -133,115 +135,144 @@ const handleEdit = (e: any) => {
     onEdit?.();
   };
 
+  // Mount animation (same as PlantCard)
+  const scaleAnim = React.useRef(new Animated.Value(0.92)).current;
+  const opacityAnim = React.useRef(new Animated.Value(0)).current;
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        friction: 7,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
   return (
     <TouchableOpacity onPress={handlePress} onLongPress={handleLongPress}>
-      <ThemedView style={styles.card}>
-        <View style={styles.headerRow}>
-          <MaterialCommunityIcons
-            name={envIcon}
-            size={22}
-            color="#fff"
-            style={styles.envIcon}
+      <Animated.View style={{
+        transform: [{ scale: scaleAnim }],
+        opacity: opacityAnim,
+      }}>
+        <ThemedView style={styles.card}>
+          <LinearGradient
+            colors={["#00c853", "#151718"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[StyleSheet.absoluteFillObject, { borderRadius: 16 }]}
           />
-          <ThemedText style={styles.envBadge}>{envLabel}</ThemedText>
-          {/* Water all button in top right */}
-          {onWaterAll && (
-            <Button
-              icon="water"
-              mode="contained"
-              onPress={onWaterAll}
-              disabled={waterDisabled}
-              style={styles.waterButtonTopRight}
-              labelStyle={{ color: '#fff', fontSize: 16 }} // ensure readable text
-            >
-              Water All
-            </Button>
-          )}
-        </View>
-        <ThemedText type="title" style={styles.groupName}>
-          {group.name}
-        </ThemedText>
-        {/* Weather info (outdoor only) */}
-        {group.environment === 'outdoor' && (
-          <View style={styles.weatherRow}>
-            {weatherLoading ? (
-              <ThemedText>Loading weather...</ThemedText>
-            ) : weather ? (
-              <>
-                <ThemedText style={styles.weatherStat}>
-                  🌡️ {weather.temperature}°C
-                </ThemedText>
-                <ThemedText style={styles.weatherStat}>
-                  💧 {weather.humidity}%
-                </ThemedText>
-                <ThemedText style={styles.weatherStat}>
-                  ☔ {Math.round((weather.pop ?? 0) * 100)}%
-                </ThemedText>
-              </>
-            ) : (
-              <ThemedText>No weather data</ThemedText>
+          <View style={styles.headerRow}>
+            <MaterialCommunityIcons
+              name={envIcon}
+              size={22}
+              color="#fff"
+              style={styles.envIcon}
+            />
+            <ThemedText style={styles.envBadge}>{envLabel}</ThemedText>
+            {/* Water all button in top right */}
+            {onWaterAll && (
+              <Button
+                icon="water"
+                mode="contained"
+                onPress={onWaterAll}
+                disabled={waterDisabled}
+                style={styles.waterButtonTopRight}
+                labelStyle={{ color: '#fff', fontSize: 16 }} // ensure readable text
+              >
+                Water All
+              </Button>
             )}
           </View>
-        )}
-        {/* Sensor profile readings for indoor/greenhouse */}
-        {(group.environment === 'indoor' || group.environment === 'greenhouse') && (
-          <View style={styles.weatherRow}>
-            {group.sensorProfileId ? (
-              sensorReadings.missing ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
-                  <MaterialCommunityIcons name="alert-circle-outline" color="#fff" size={16} />
-                  <ThemedText style={styles.weatherStat}> No profile </ThemedText>
-                </View>
-              ) : (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
-                  <MaterialCommunityIcons name="thermometer" color="#fff" size={16} />
-                  <ThemedText style={styles.weatherStat}> {sensorReadings.temp ?? '--'}°C </ThemedText>
-                  <MaterialCommunityIcons name="water-percent" color="#fff" size={16} />
-                  <ThemedText style={styles.weatherStat}> {sensorReadings.humidity ?? '--'}%</ThemedText>
+          <ThemedText type="title" style={styles.groupName}>
+            {group.name}
+          </ThemedText>
+          {/* Weather info (outdoor only) */}
+          {group.environment === 'outdoor' && (
+            <View style={styles.weatherRow}>
+              {weatherLoading ? (
+                <ThemedText>Loading weather...</ThemedText>
+              ) : weather ? (
+                <>
                   <ThemedText style={styles.weatherStat}>
-                    Sensor: {sensorReadings.missing ? '--' : (sensorReadings.name || 'Profile')}
+                    🌡️ {weather.temperature}°C
                   </ThemedText>
+                  <ThemedText style={styles.weatherStat}>
+                    💧 {weather.humidity}%
+                  </ThemedText>
+                  <ThemedText style={styles.weatherStat}>
+                    ☔ {Math.round((weather.pop ?? 0) * 100)}%
+                  </ThemedText>
+                </>
+              ) : (
+                <ThemedText>No weather data</ThemedText>
+              )}
+            </View>
+          )}
+          {/* Sensor profile readings for indoor/greenhouse */}
+          {(group.environment === 'indoor' || group.environment === 'greenhouse') && (
+            <View style={styles.weatherRow}>
+              {group.sensorProfileId ? (
+                sensorReadings.missing ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
+                    <MaterialCommunityIcons name="alert-circle-outline" color="#fff" size={16} />
+                    <ThemedText style={styles.weatherStat}> No profile </ThemedText>
+                  </View>
+                ) : (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
+                    <MaterialCommunityIcons name="thermometer" color="#fff" size={16} />
+                    <ThemedText style={styles.weatherStat}> {sensorReadings.temp ?? '--'}°C </ThemedText>
+                    <MaterialCommunityIcons name="water-percent" color="#fff" size={16} />
+                    <ThemedText style={styles.weatherStat}> {sensorReadings.humidity ?? '--'}%</ThemedText>
+                    <ThemedText style={styles.weatherStat}>
+                      Sensor: {sensorReadings.missing ? '--' : (sensorReadings.name || 'Profile')}
+                    </ThemedText>
+                  </View>
+                )
+              ) : (
+                <ThemedText>No sensor profile linked</ThemedText>
+              )}
+            </View>
+          )}
+          {/* Plant preview */}
+          <View style={styles.plantsRow}>
+            {previewPlants.map((p) =>
+              p.imageUri ? (
+                <Image
+                  key={p.id}
+                  source={{ uri: p.imageUri }}
+                  style={styles.plantImage}
+                  accessibilityLabel={`${p.name} image`}
+                />
+              ) : (
+                <View key={p.id} style={styles.plantPlaceholder}>
+                  <ThemedText style={styles.plantPlaceholderText}>{p.name}</ThemedText>
                 </View>
               )
-            ) : (
-              <ThemedText>No sensor profile linked</ThemedText>
+            )}
+            {moreCount > 0 && (
+              <ThemedText style={styles.moreText}>+{moreCount}</ThemedText>
             )}
           </View>
-        )}
-        {/* Plant preview */}
-        <View style={styles.plantsRow}>
-          {previewPlants.map((p) =>
-            p.imageUri ? (
-              <Image
-                key={p.id}
-                source={{ uri: p.imageUri }}
-                style={styles.plantImage}
-                accessibilityLabel={`${p.name} image`}
-              />
-            ) : (
-              <View key={p.id} style={styles.plantPlaceholder}>
-                <ThemedText style={styles.plantPlaceholderText}>{p.name}</ThemedText>
-              </View>
-            )
+          {/* Last watered info */}
+          {lastWatered && (
+            <ThemedText style={styles.lastWatered}>Last watered: {lastWatered}</ThemedText>
           )}
-          {moreCount > 0 && (
-            <ThemedText style={styles.moreText}>+{moreCount}</ThemedText>
-          )}
-        </View>
-        {/* Last watered info */}
-        {lastWatered && (
-          <ThemedText style={styles.lastWatered}>Last watered: {lastWatered}</ThemedText>
-        )}
-      </ThemedView>
+        </ThemedView>
+      </Animated.View>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 16,
+    marginBottom: 20, // match PlantCard
     padding: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     backgroundColor: calendarGreen,
     position: 'relative',
     elevation: 2,
