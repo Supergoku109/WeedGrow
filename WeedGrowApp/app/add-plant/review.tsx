@@ -1,7 +1,7 @@
 import React from 'react';
 import { ScrollView, View, Image, StyleSheet } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Card, Text, Divider } from 'react-native-paper';
+import { Button, Divider } from 'react-native-paper';
 import { ThemedText } from '@/ui/ThemedText';
 import { useRouter } from 'expo-router';
 
@@ -79,168 +79,209 @@ export default function Review() {
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme as 'light' | 'dark'].background, paddingTop: 8 }}>
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, gap: 16 }}>
-      <StepIndicatorBar currentPosition={4} />
-
-      <Card>
-        <Card.Title title="Review Plant" />
-        <Card.Content>
-          <View style={{ gap: 8 }}>
-            <ThemedText style={styles.sectionTitle}>Growth Info</ThemedText>
-            <View>
-              <Text variant="labelLarge">Name</Text>
-              <Text>{form.name}</Text>
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32, gap: 0, flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <StepIndicatorBar currentPosition={4} />
+        <View
+          style={{
+            backgroundColor: theme === 'dark' ? '#1a2e22' : '#f3f4f6',
+            borderRadius: 20,
+            paddingVertical: 28,
+            paddingHorizontal: 18,
+            marginTop: 16,
+            marginBottom: 24,
+            shadowColor: '#000',
+            shadowOpacity: 0.16,
+            shadowRadius: 18,
+            shadowOffset: { width: 0, height: 8 },
+            elevation: 6,
+            borderWidth: 1,
+            borderColor: theme === 'dark' ? '#223c2b' : '#e0e0e0',
+            alignItems: 'center',
+            width: '100%',
+            alignSelf: 'center',
+            maxWidth: 480,
+          }}
+        >
+          <ThemedText type="title" style={{ textAlign: 'center', marginBottom: 10, fontSize: 22, color: Colors[theme].tint }}>
+            🌱 Review Your Plant
+          </ThemedText>
+          <ThemedText style={{ textAlign: 'center', color: Colors[theme].label, marginBottom: 22, fontSize: 15 }}>
+            Double-check your details before saving!
+          </ThemedText>
+          {form.imageUri && (
+            <Image
+              source={{ uri: form.imageUri }}
+              style={{
+                height: 180,
+                width: '100%',
+                maxWidth: 320,
+                borderRadius: 16,
+                marginBottom: 18,
+                borderWidth: 2,
+                borderColor: Colors[theme].tint,
+                alignSelf: 'center',
+              }}
+              resizeMode="cover"
+            />
+          )}
+          <View style={{ width: '100%', gap: 0 }}>
+            <ThemedText style={{ fontWeight: 'bold', marginTop: 0, marginBottom: 8, fontSize: 16, color: Colors[theme].tint }}>
+              Growth Info
+            </ThemedText>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+              <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Name</ThemedText>
+              <ThemedText>{form.name}</ThemedText>
             </View>
-            <Divider />
-            <View>
-              <Text variant="labelLarge">Strain</Text>
-              <Text>{form.strain}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+              <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Strain</ThemedText>
+              <ThemedText>{form.strain}</ThemedText>
             </View>
-            <Divider />
-            <View>
-              <Text variant="labelLarge">Growth Stage</Text>
-              <Text>{form.growthStage}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+              <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Growth Stage</ThemedText>
+              <ThemedText>{form.growthStage}</ThemedText>
             </View>
-
             {(form.growthStage === 'vegetative' || form.growthStage === 'flowering') && (
-              <>
-                <Divider />
-                <View>
-                  <Text variant="labelLarge">Age (days)</Text>
-                  <Text>{form.ageDays}</Text>
-                </View>
-              </>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Age (days)</ThemedText>
+                <ThemedText>{form.ageDays}</ThemedText>
+              </View>
             )}
-
-            <Divider />
-            <ThemedText style={styles.sectionTitle}>Environment</ThemedText>
-            <View>
-              <Text variant="labelLarge">Environment</Text>
-              <Text>{form.environment}</Text>
+            <View style={{ height: 1, backgroundColor: theme === 'dark' ? '#223c2b' : '#e0e0e0', marginVertical: 10, opacity: 0.2 }} />
+            <ThemedText style={{ fontWeight: 'bold', marginTop: 0, marginBottom: 8, fontSize: 16, color: Colors[theme].tint }}>
+              Environment
+            </ThemedText>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+              <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Environment</ThemedText>
+              <ThemedText>{form.environment}</ThemedText>
             </View>
             {form.plantedIn && (
-              <>
-                <Divider />
-                <View>
-                  <Text variant="labelLarge">Planted In</Text>
-                  <Text>{form.plantedIn}</Text>
-                </View>
-              </>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Planted In</ThemedText>
+                <ThemedText>{form.plantedIn}</ThemedText>
+              </View>
             )}
             {form.potSize && (
-              <>
-                <Divider />
-                <View>
-                  <Text variant="labelLarge">Pot Size</Text>
-                  <Text>{form.potSize}</Text>
-                </View>
-              </>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Pot Size</ThemedText>
+                <ThemedText>{form.potSize}</ThemedText>
+              </View>
             )}
             {form.sunlightExposure && (
-              <>
-                <Divider />
-                <View>
-                  <Text variant="labelLarge">Sunlight</Text>
-                  <Text>{form.sunlightExposure}</Text>
-                </View>
-              </>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Sunlight</ThemedText>
+                <ThemedText>{form.sunlightExposure}</ThemedText>
+              </View>
             )}
-            {form.location && (
-              <>
-                <Divider />
-                <View>
-                  <Text variant="labelLarge">Location</Text>
-                  <Text>
-                    {form.location.lat}, {form.location.lng}
-                  </Text>
-                </View>
-              </>
+            {form.locationNickname ? (
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Location</ThemedText>
+                <ThemedText>{form.locationNickname}</ThemedText>
+              </View>
+            ) : (
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Location</ThemedText>
+                <ThemedText>not defined</ThemedText>
+              </View>
             )}
-            {form.locationNickname && (
-              <>
-                <Divider />
-                <View>
-                  <Text variant="labelLarge">Location Nickname</Text>
-                  <Text>{form.locationNickname}</Text>
+            {(form.environment === 'indoor' || form.environment === 'greenhouse') ? (
+              form.sensorProfileId ? (
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Sensor Profile</ThemedText>
+                  <ThemedText>{form.sensorProfileId}</ThemedText>
                 </View>
-              </>
-            )}
-            {form.sensorProfileId && (
-              <>
-                <Divider />
-                <View>
-                  <Text variant="labelLarge">Sensor Profile</Text>
-                  <Text>{form.sensorProfileId}</Text>
+              ) : (
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Sensor Profile</ThemedText>
+                  <ThemedText>not defined</ThemedText>
                 </View>
-              </>
+              )
+            ) : null}
+            <View style={{ height: 1, backgroundColor: theme === 'dark' ? '#223c2b' : '#e0e0e0', marginVertical: 10, opacity: 0.2 }} />
+            <ThemedText style={{ fontWeight: 'bold', marginTop: 0, marginBottom: 8, fontSize: 16, color: Colors[theme].tint }}>
+              Care
+            </ThemedText>
+            {form.wateringFrequency ? (
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Watering</ThemedText>
+                <ThemedText>{form.wateringFrequency}</ThemedText>
+              </View>
+            ) : (
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Watering</ThemedText>
+                <ThemedText>not defined</ThemedText>
+              </View>
             )}
-
-            <Divider />
-            <ThemedText style={styles.sectionTitle}>Care</ThemedText>
-            {form.wateringFrequency && (
-              <>
-                <View>
-                  <Text variant="labelLarge">Watering</Text>
-                  <Text>{form.wateringFrequency}</Text>
-                </View>
-                <Divider />
-              </>
+            {form.fertilizer ? (
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Fertilizer</ThemedText>
+                <ThemedText>{form.fertilizer}</ThemedText>
+              </View>
+            ) : (
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Fertilizer</ThemedText>
+                <ThemedText>not defined</ThemedText>
+              </View>
             )}
-            {form.fertilizer && (
-              <>
-                <View>
-                  <Text variant="labelLarge">Fertilizer</Text>
-                  <Text>{form.fertilizer}</Text>
-                </View>
-                <Divider />
-              </>
+            {form.pests && form.pests.length > 0 ? (
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Pests</ThemedText>
+                <ThemedText>{form.pests.join(', ')}</ThemedText>
+              </View>
+            ) : (
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Pests</ThemedText>
+                <ThemedText>not defined</ThemedText>
+              </View>
             )}
-            {form.pests && form.pests.length > 0 && (
-              <>
-                <View>
-                  <Text variant="labelLarge">Pests</Text>
-                  <Text>{form.pests.join(', ')}</Text>
-                </View>
-                <Divider />
-              </>
+            {form.trainingTags && form.trainingTags.length > 0 ? (
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Training</ThemedText>
+                <ThemedText>{form.trainingTags.join(', ')}</ThemedText>
+              </View>
+            ) : (
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Training</ThemedText>
+                <ThemedText>not defined</ThemedText>
+              </View>
             )}
-            {form.trainingTags && form.trainingTags.length > 0 && (
-              <>
-                <View>
-                  <Text variant="labelLarge">Training</Text>
-                  <Text>{form.trainingTags.join(', ')}</Text>
-                </View>
-                <Divider />
-              </>
-            )}
-            {form.notes && (
-              <>
-                <View>
-                  <Text variant="labelLarge">Notes</Text>
-                  <Text>{form.notes}</Text>
-                </View>
-                <Divider />
-              </>
-            )}
-            {form.imageUri && (
-              <>
-                <Divider />
-                <Image source={{ uri: form.imageUri }} style={{ height: 200, borderRadius: 8 }} />
-              </>
+            {form.notes ? (
+              <View style={{ marginBottom: 6 }}>
+                <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Notes</ThemedText>
+                <ThemedText>{form.notes}</ThemedText>
+              </View>
+            ) : (
+              <View style={{ marginBottom: 6 }}>
+                <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Notes</ThemedText>
+                <ThemedText>not defined</ThemedText>
+              </View>
             )}
           </View>
-        </Card.Content>
-      </Card>
-
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
-        <Button mode="outlined" onPress={() => router.back()}>
-          Back
-        </Button>
-        <Button mode="contained" onPress={save} disabled={saving} loading={saving}>
-          Save Plant
-        </Button>
-      </View>
-    </ScrollView>
-  </SafeAreaView>
+          <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 32, gap: 16, width: '100%' }}>
+            <Button
+              mode="outlined"
+              onPress={() => router.back()}
+              style={{ borderRadius: 8, minWidth: 120, borderColor: Colors[theme].tint, borderWidth: 1, flex: 1, marginRight: 4 }}
+              labelStyle={{ fontWeight: '600' }}
+              contentStyle={{ height: 48 }}
+            >
+              Back
+            </Button>
+            <Button
+              mode="contained"
+              onPress={save}
+              disabled={saving}
+              loading={saving}
+              style={{ borderRadius: 8, minWidth: 120, backgroundColor: Colors[theme].tint, elevation: 2, flex: 1, marginLeft: 4 }}
+              labelStyle={{ fontWeight: '700', letterSpacing: 1 }}
+              contentStyle={{ height: 48 }}
+            >
+              Save Plant
+            </Button>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
