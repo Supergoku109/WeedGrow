@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, Image, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, Image, View, Animated } from 'react-native';
 import { IconButton, Snackbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { ThemedView } from '@/ui/ThemedView';
@@ -22,6 +22,24 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
 
   const [snackVisible, setSnackVisible] = React.useState(false);
   const [snackMessage, setSnackMessage] = React.useState('');
+
+  // Animation for card mount
+  const scaleAnim = React.useRef(new Animated.Value(0.92)).current;
+  const opacityAnim = React.useRef(new Animated.Value(0)).current;
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        friction: 7,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   // If weather is missing or incomplete, show a friendly message
   const noWeather = !weather || Object.keys(weather).length < 5;
@@ -85,51 +103,66 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
           router.push({ pathname: '/plant/[id]', params: { id: plant.id } })
         }
       >
-        <ThemedView style={[styles.card, { borderLeftColor: borderColor }]}> 
-          {/* Gradient background for card */}
-          <LinearGradient
-            colors={["#00c853", "#151718"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.gradientBg}
-          />
-          <IconButton
-            icon="water"
-            size={28}
-            mode="contained"
-            iconColor="white"
-            containerColor="#1e90ff"
-            style={styles.waterButton}
-            onPress={handleWater}
-            accessibilityLabel="Log watering"
-          />
-          <View style={styles.row}>
-            {(plant as any).imageUri && (
-              <Image source={{ uri: (plant as any).imageUri }} style={styles.image} />
-            )}
-            <View style={styles.textContainer}>
-              <ThemedText type="subtitle">{plant.name}</ThemedText>
-              <ThemedText>
-                {(plant as any).strain} | <MaterialCommunityIcons name={envIcon} size={14} />
-              </ThemedText>
-              <View style={styles.statusRow}>
-                <ThemedText>{plant.status}</ThemedText>
+        <Animated.View style={{
+          transform: [{ scale: scaleAnim }],
+          opacity: opacityAnim,
+        }}>
+          <ThemedView style={[styles.card, { borderLeftColor: borderColor }]}> 
+            <LinearGradient
+              colors={["#00c853", "#151718"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.gradientBg}
+            />
+            <View style={styles.topRow}>
+              <View style={styles.envBadgeTopLeftSmall}>
+                <MaterialCommunityIcons name={envIcon} size={12} color="#fff" />
+                <ThemedText style={styles.envBadgeTextSmall}>{env.charAt(0).toUpperCase() + env.slice(1)}</ThemedText>
               </View>
-              <View style={styles.suggestionRow}>
-                {noWeather ? (
-                  <View style={[styles.suggestionChip, { backgroundColor: '#9CA3AF' }]}> 
-                    <ThemedText style={styles.suggestionText}>No weather info available</ThemedText>
-                  </View>
-                ) : (
-                  <View style={[styles.suggestionChip, { backgroundColor: suggestionColor }]}> 
-                    <ThemedText style={styles.suggestionText}>{advice}</ThemedText>
-                  </View>
-                )}
-              </View>
-              {!noWeather && <InfoTooltip message={reason} />}
+              <ThemedText style={styles.plantNameTopTight}>{plant.name}</ThemedText>
+              <IconButton
+                icon="water"
+                size={26} // restore original size
+                mode="contained"
+                iconColor="#fff"
+                containerColor="#1e90ff"
+                style={styles.waterButtonTopCorner}
+                onPress={handleWater}
+                accessibilityLabel="Log watering"
+              />
             </View>
-          </View>
-        </ThemedView>
+            <View style={styles.cardContentRow}>
+              {(plant as any).imageUri ? (
+                <View style={styles.imageTallWrapper}>
+                  <Image source={{ uri: (plant as any).imageUri }} style={styles.imageTall} />
+                </View>
+              ) : (
+                <View style={styles.imageTallWrapper}>
+                  <MaterialCommunityIcons name="leaf" size={54} color="#00c853" />
+                </View>
+              )}
+              <View style={styles.infoColRight}>
+                <ThemedText style={styles.strainText}>{(plant as any).strain}</ThemedText>
+                <View style={styles.statusRow}>
+                  <MaterialCommunityIcons name="progress-clock" size={15} color="#a3e635" style={{ marginRight: 2 }} />
+                  <ThemedText style={styles.statusText}>{plant.status}</ThemedText>
+                </View>
+                <View style={styles.suggestionRow}>
+                  {noWeather ? (
+                    <View style={[styles.suggestionChip, { backgroundColor: '#9CA3AF' }]}> 
+                      <ThemedText style={styles.suggestionText}>No weather info available</ThemedText>
+                    </View>
+                  ) : (
+                    <View style={[styles.suggestionChip, { backgroundColor: suggestionColor }]}> 
+                      <ThemedText style={styles.suggestionText}>{advice}</ThemedText>
+                    </View>
+                  )}
+                  {!noWeather && <InfoTooltip message={reason} />}
+                </View>
+              </View>
+            </View>
+          </ThemedView>
+        </Animated.View>
       </TouchableOpacity>
       <Snackbar
         visible={snackVisible}
@@ -164,52 +197,119 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     zIndex: 0,
   },
-  row: {
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    marginBottom: 4,
+    minHeight: 32,
+    position: 'relative',
+  },
+  envBadgeTopLeftSmall: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#00c853',
+    borderRadius: 7,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    marginRight: 8,
+    position: 'absolute',
+    top: 0, // move higher
+    left: 2, // move more left
+    zIndex: 2,
   },
-  image: {
-    height: 80,
-    width: 80,
-    borderRadius: 12,
-    marginRight: 14,
-    backgroundColor: '#222',
+  envBadgeTextSmall: {
+    color: '#fff',
+    fontSize: 11,
+    marginLeft: 3,
+    fontWeight: '600',
   },
-  textContainer: {
+  plantNameTopTight: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#fff',
     flex: 1,
-    gap: 6,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  waterButtonTopCorner: {
+    position: 'absolute',
+    top: -10, // move higher
+    right: -10, // move more right
+    elevation: 2,
+  },
+  cardContentRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 16,
+  },
+  imageTallWrapper: {
+    height: 120,
+    width: 120,
+    borderRadius: 20,
+    backgroundColor: '#222',
+    overflow: 'hidden',
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#00c853',
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  imageTall: {
+    height: '100%',
+    width: '100%',
+    borderRadius: 20,
+    resizeMode: 'cover',
+  },
+  infoColRight: {
+    flex: 1,
+    flexDirection: 'column',
+    gap: 4,
+    minWidth: 0,
+  },
+  strainText: {
+    color: '#a3e635',
+    fontSize: 14,
+    marginBottom: 2,
   },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    marginBottom: 2,
+  },
+  statusText: {
+    color: '#e0e7ef',
+    fontSize: 13,
+    fontWeight: '600',
   },
   suggestionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
+    marginTop: 2,
   },
   suggestionChip: {
     alignSelf: 'flex-start',
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    marginTop: 4,
-    minHeight: 24,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    minHeight: 26,
     justifyContent: 'center',
-    backgroundColor: '#00c853', // green tint
+    backgroundColor: '#00c853',
+    shadowColor: '#00c853',
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
   },
   suggestionText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#fff', // white text
-  },
-  waterButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    zIndex: 5,
-    elevation: 2,
+    color: '#fff',
   },
 });
 
