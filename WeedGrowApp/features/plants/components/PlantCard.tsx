@@ -11,6 +11,7 @@ import { getPlantAdviceWithReason, PlantAdviceContext } from '@/lib/weather/getP
 import InfoTooltip from '@/ui/InfoTooltip';
 import { addPlantLog } from '@/lib/logs/addPlantLog';
 import { LinearGradient } from 'expo-linear-gradient';
+import { WeedGrowEnvBadge } from '@/ui/WeedGrowEnvBadge';
 
 export interface PlantCardProps {
   plant: Plant & { id: string };
@@ -116,8 +117,9 @@ export function PlantCard({ plant, weather }: PlantCardProps) {
             />
             <View style={styles.topRow}>
               <View style={styles.envBadgeTopLeftSmall}>
-                <MaterialCommunityIcons name={envIcon} size={12} color="#fff" />
-                <ThemedText style={styles.envBadgeTextSmall}>{env.charAt(0).toUpperCase() + env.slice(1)}</ThemedText>
+                {/* <MaterialCommunityIcons name={envIcon} size={12} color="#fff" />
+                <ThemedText style={styles.envBadgeTextSmall}>{env.charAt(0).toUpperCase() + env.slice(1)}</ThemedText> */}
+                <WeedGrowEnvBadge environment={env} size={12} textStyle={styles.envBadgeTextSmall} style={{ marginRight: 0, backgroundColor: 'transparent', paddingHorizontal: 0, paddingVertical: 0 }} />
               </View>
               <ThemedText style={styles.plantNameTopTight}>{plant.name}</ThemedText>
               <IconButton
@@ -208,7 +210,6 @@ const styles = StyleSheet.create({
   envBadgeTopLeftSmall: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#00c853',
     borderRadius: 7,
     paddingHorizontal: 6,
     paddingVertical: 1,

@@ -6,17 +6,18 @@ import {
   Image,
   Animated,
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { IconButton, Button } from 'react-native-paper';
+import { Button } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
 import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { ThemedView } from '@/ui/ThemedView';
 import { ThemedText } from '@/ui/ThemedText';
 import { calendarGreen } from '@/constants/Colors';
 import { db } from '@/services/firebase';
 import type { Group, Plant } from '@/firestoreModels';
+import { WeedGrowEnvBadge } from '@/ui/WeedGrowEnvBadge';
 
 export interface GroupCardProps {
   group: Group & { id: string };
@@ -167,14 +168,7 @@ const handleEdit = (e: any) => {
             style={[StyleSheet.absoluteFillObject, { borderRadius: 16 }]}
           />
           <View style={styles.headerRow}>
-            <MaterialCommunityIcons
-              name={envIcon}
-              size={22}
-              color="#fff"
-              style={styles.envIcon}
-            />
-            <ThemedText style={styles.envBadge}>{envLabel}</ThemedText>
-            {/* Water all button in top right */}
+            <WeedGrowEnvBadge environment={group.environment} size={16} style={{ marginRight: 10 }} />
             {onWaterAll && (
               <Button
                 icon="water"
@@ -182,15 +176,13 @@ const handleEdit = (e: any) => {
                 onPress={onWaterAll}
                 disabled={waterDisabled}
                 style={styles.waterButtonTopRight}
-                labelStyle={{ color: '#fff', fontSize: 16 }} // ensure readable text
+                labelStyle={{ color: '#fff', fontSize: 16 }}
               >
                 Water All
               </Button>
             )}
           </View>
-          <ThemedText type="title" style={styles.groupName}>
-            {group.name}
-          </ThemedText>
+          <ThemedText style={styles.groupName}>{group.name}</ThemedText>
           {/* Weather info (outdoor only) */}
           {group.environment === 'outdoor' && (
             <View style={styles.weatherRow}>
@@ -282,18 +274,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 4,
     justifyContent: 'flex-start',
-  },
-  envIcon: {
-    marginRight: 6,
-  },
-  envBadge: {
-    backgroundColor: '#1e293b',
-    color: '#fff',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    fontSize: 13,
-    overflow: 'hidden',
   },
   groupName: {
     fontSize: 20,
