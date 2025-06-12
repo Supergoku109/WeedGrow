@@ -23,6 +23,8 @@ import { WeedGrowTextInput } from '@/ui/WeedGrowTextInput';
 import { useWeedGrowInputStyle } from '@/ui/WeedGrowInputStyle';
 import { WeedGrowCard } from '@/ui/WeedGrowCard';
 import { WeedGrowDivider } from '@/ui/WeedGrowDivider';
+import { WeedGrowButtonRow } from '@/ui/WeedGrowButtonRow';
+import { WeedGrowFormSection } from '@/ui/WeedGrowFormSection';
 
 export default function Step5() {
   const router = useRouter();
@@ -54,9 +56,6 @@ export default function Step5() {
             style={{ flex: 1 }}
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, gap: 0 }}>
             <StepIndicatorBar currentPosition={4} />
-            <ThemedText style={{ alignSelf: 'center', color: Colors[theme].tint, fontWeight: '600', marginBottom: 2, letterSpacing: 1, fontSize: 13 }}>
-              Step 5 of 5
-            </ThemedText>
             <WeedGrowCard
               entering={FadeIn.duration(500)}
               style={{
@@ -74,9 +73,9 @@ export default function Step5() {
                 borderWidth: 1,
                 borderColor: theme === 'dark' ? '#223c2b' : '#e0e0e0',
                 alignItems: 'center',
-                width: '100%', // Ensure card takes full width of ScrollView
+                width: '100%',
                 alignSelf: 'center',
-                maxWidth: 480, // Prevent card from being too wide on tablets
+                maxWidth: 480,
               }}
             >
               <ThemedText type="title" style={{ textAlign: 'center', marginBottom: 10, fontSize: 22, color: Colors[theme].tint }}>
@@ -85,46 +84,53 @@ export default function Step5() {
               <ThemedText style={{ textAlign: 'center', color: Colors[theme].label, marginBottom: 22, fontSize: 15 }}>
                 Add a photo and any final notes for your plant.
               </ThemedText>
-              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 18, justifyContent: 'center', width: '100%' }}>
-                <Button mode="outlined" icon="camera" onPress={() => pickImage(true)} style={{ flex: 1, borderRadius: 8, borderColor: Colors[theme].tint, borderWidth: 1 }}>
-                  Take Photo
-                </Button>
-                <Button mode="outlined" icon="image" onPress={() => pickImage(false)} style={{ flex: 1, borderRadius: 8, borderColor: Colors[theme].tint, borderWidth: 1 }}>
-                  Choose from Gallery
-                </Button>
-              </View>
-              {imageUri ? (
-                <Image
-                  source={{ uri: imageUri }}
-                  style={{ height: 200, width: '100%', maxWidth: 320, borderRadius: 16, marginBottom: 18, borderWidth: 2, borderColor: Colors[theme].tint, alignSelf: 'center' }}
-                  resizeMode="cover"
+
+              <WeedGrowFormSection label="Photo" style={{ width: '100%' }}>
+                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 18, justifyContent: 'center', width: '100%' }}>
+                  <Button mode="outlined" icon="camera" onPress={() => pickImage(true)} style={{ flex: 1, borderRadius: 8, borderColor: Colors[theme].tint, borderWidth: 1 }}>
+                    Take Photo
+                  </Button>
+                  <Button mode="outlined" icon="image" onPress={() => pickImage(false)} style={{ flex: 1, borderRadius: 8, borderColor: Colors[theme].tint, borderWidth: 1 }}>
+                    Choose from Gallery
+                  </Button>
+                </View>
+                {imageUri ? (
+                  <Image
+                    source={{ uri: imageUri }}
+                    style={{ height: 200, width: '100%', maxWidth: 320, borderRadius: 16, marginBottom: 18, borderWidth: 2, borderColor: Colors[theme].tint, alignSelf: 'center' }}
+                    resizeMode="cover"
+                  />
+                ) : null}
+              </WeedGrowFormSection>
+
+              <WeedGrowFormSection label="Notes" style={{ width: '100%', marginTop: 12 }}>
+                <WeedGrowTextInput
+                  label="Observations (optional)"
+                  value={notes}
+                  onChangeText={(text: string) => setField('notes', text)}
+                  multiline
+                  placeholder="Add any observations here..."
+                  icon="note-text"
+                  style={[
+                    inputStyle,
+                    {
+                      minHeight: 100,
+                      maxHeight: 160,
+                      marginBottom: 8,
+                      width: '100%',
+                      borderRadius: 12,
+                      paddingTop: 16,
+                      paddingBottom: 16,
+                    },
+                  ]}
+                  textAlignVertical="top"
                 />
-              ) : null}
-              <WeedGrowTextInput
-                label="Observations (optional)"
-                value={notes}
-                onChangeText={(text: string) => setField('notes', text)}
-                multiline
-                placeholder="Add any observations here..."
-                icon="note-text"
-                style={[
-                  inputStyle,
-                  {
-                    minHeight: 100,
-                    maxHeight: 160,
-                    marginBottom: 8,
-                    width: '100%',
-                    borderRadius: 12,
-                    paddingTop: 16,
-                    paddingBottom: 16,
-                  },
-                ]}
-                textAlignVertical="top"
-              />
+              </WeedGrowFormSection>
+
               <Snackbar visible={snackVisible} onDismiss={() => setSnackVisible(false)}>
                 Photo selected
               </Snackbar>
-              <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 32, gap: 16, width: '100%' }}>
+              <WeedGrowButtonRow>
                 <Button
                   mode="outlined"
                   onPress={() => router.back()}
@@ -143,7 +149,7 @@ export default function Step5() {
                 >
                   Next
                 </Button>
-              </View>
+              </WeedGrowButtonRow>
             </WeedGrowCard>
           </ScrollView>
         </TouchableWithoutFeedback>

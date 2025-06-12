@@ -18,6 +18,8 @@ import { parseWeatherData } from '@/lib/weather/parseWeatherData';
 import { updateWeatherCache } from '@/lib/weather/updateFirestore';
 import { WeedGrowCard } from '@/ui/WeedGrowCard';
 import { WeedGrowDivider } from '@/ui/WeedGrowDivider';
+import { WeedGrowButtonRow } from '@/ui/WeedGrowButtonRow';
+import { WeedGrowFormSection } from '@/ui/WeedGrowFormSection';
 
 export default function Review() {
   const router = useRouter();
@@ -109,10 +111,8 @@ export default function Review() {
               resizeMode="cover"
             />
           )}
-          <View style={{ width: '100%', gap: 0 }}>
-            <ThemedText style={{ fontWeight: 'bold', marginTop: 0, marginBottom: 8, fontSize: 16, color: Colors[theme].tint }}>
-              Growth Info
-            </ThemedText>
+
+          <WeedGrowFormSection label="Growth Info" divider>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
               <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Name</ThemedText>
               <ThemedText>{form.name}</ThemedText>
@@ -131,10 +131,9 @@ export default function Review() {
                 <ThemedText>{form.ageDays}</ThemedText>
               </View>
             )}
-            <WeedGrowDivider />
-            <ThemedText style={{ fontWeight: 'bold', marginTop: 0, marginBottom: 8, fontSize: 16, color: Colors[theme].tint }}>
-              Environment
-            </ThemedText>
+          </WeedGrowFormSection>
+
+          <WeedGrowFormSection label="Environment" divider style={{ marginTop: 10 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
               <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Environment</ThemedText>
               <ThemedText>{form.environment}</ThemedText>
@@ -181,10 +180,9 @@ export default function Review() {
                 </View>
               )
             ) : null}
-            <WeedGrowDivider />
-            <ThemedText style={{ fontWeight: 'bold', marginTop: 0, marginBottom: 8, fontSize: 16, color: Colors[theme].tint }}>
-              Care
-            </ThemedText>
+          </WeedGrowFormSection>
+
+          <WeedGrowFormSection label="Care" divider style={{ marginTop: 10 }}>
             {form.wateringFrequency ? (
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
                 <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Watering</ThemedText>
@@ -229,6 +227,9 @@ export default function Review() {
                 <ThemedText>not defined</ThemedText>
               </View>
             )}
+          </WeedGrowFormSection>
+
+          <WeedGrowFormSection label="Notes" style={{ marginTop: 10 }}>
             {form.notes ? (
               <View style={{ marginBottom: 6 }}>
                 <ThemedText style={{ fontWeight: '600', color: Colors[theme].label }}>Notes</ThemedText>
@@ -240,8 +241,9 @@ export default function Review() {
                 <ThemedText>not defined</ThemedText>
               </View>
             )}
-          </View>
-          <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 32, gap: 16, width: '100%' }}>
+          </WeedGrowFormSection>
+
+          <WeedGrowButtonRow>
             <Button
               mode="outlined"
               onPress={() => router.back()}
@@ -262,7 +264,7 @@ export default function Review() {
             >
               Save Plant
             </Button>
-          </View>
+          </WeedGrowButtonRow>
         </WeedGrowCard>
       </ScrollView>
     </SafeAreaView>

@@ -28,6 +28,8 @@ import { useWeedGrowInputStyle } from '@/ui/WeedGrowInputStyle';
 import { WeedGrowTextInput } from '@/ui/WeedGrowTextInput';
 import { WeedGrowDropdownInput } from '@/ui/WeedGrowDropdownInput';
 import { WeedGrowCard } from '@/ui/WeedGrowCard';
+import { WeedGrowButtonRow } from '@/ui/WeedGrowButtonRow';
+import { WeedGrowFormSection } from '@/ui/WeedGrowFormSection';
 
 export default function Step2() {
   const router = useRouter();
@@ -101,98 +103,105 @@ export default function Step2() {
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, gap: 16 }}
           >
             <StepIndicatorBar currentPosition={1} />
-            <ThemedText type="title" style={{ textAlign: 'center', marginBottom: 8, fontSize: 24 }}>
-              🌿 Where is your plant growing?
-            </ThemedText>
-            <ThemedText style={{ textAlign: 'center', color: Colors[theme].tint, marginBottom: 18, fontSize: 15 }}>
-              Select the environment, pot/ground, and any relevant sensor or sunlight details.
-            </ThemedText>
             <WeedGrowCard entering={FadeIn.duration(500)} style={{ alignItems: 'stretch', marginTop: 8 }}>
-              <SegmentedButtons
-                value={environment}
-                onValueChange={(val) => setField('environment', val as any)}
-                buttons={[
-                  { value: 'outdoor', label: 'Outdoor', icon: 'weather-sunny' },
-                  { value: 'greenhouse', label: 'Greenhouse', icon: 'greenhouse' },
-                  { value: 'indoor', label: 'Indoor', icon: 'home' },
-                ]}
-                style={{ borderRadius: 10, backgroundColor: Colors[theme].background, borderWidth: 0, marginBottom: 14 }}
-              />
-
-              {/* Sensor Profile Dropdown for indoor/greenhouse */}
-              {(environment === 'indoor' || environment === 'greenhouse') && (
-                <WeedGrowDropdownInput
-                  icon="chip"
-                  label={loadingProfiles ? 'Loading Sensor Profiles...' : 'Sensor Profile'}
-                  value={sensorProfiles.find(p => p.id === sensorProfileId)?.name || ''}
-                  options={sensorProfileOptions}
-                  onSelect={(val) => setField('sensorProfileId', val)}
-                  menuVisible={sensorMenu}
-                  setMenuVisible={setSensorMenu}
-                  placeholder={sensorProfiles.length === 0 ? 'No profiles found' : 'Select a profile'}
+              <ThemedText type="title" style={{ textAlign: 'center', marginBottom: 8, fontSize: 24 }}>
+                🌿 Where is your plant growing?
+              </ThemedText>
+              <ThemedText style={{ textAlign: 'center', color: Colors[theme].tint, marginBottom: 18, fontSize: 15 }}>
+                Select the environment, pot/ground, and any relevant sensor or sunlight details.
+              </ThemedText>
+              <WeedGrowFormSection label="Environment">
+                <SegmentedButtons
+                  value={environment}
+                  onValueChange={(val) => setField('environment', val as any)}
+                  buttons={[
+                    { value: 'outdoor', label: 'Outdoor', icon: 'weather-sunny' },
+                    { value: 'greenhouse', label: 'Greenhouse', icon: 'greenhouse' },
+                    { value: 'indoor', label: 'Indoor', icon: 'home' },
+                  ]}
+                  style={{ borderRadius: 10, backgroundColor: Colors[theme].background, borderWidth: 0, marginBottom: 0 }}
                 />
+              </WeedGrowFormSection>
+
+              {(environment === 'indoor' || environment === 'greenhouse') && (
+                <WeedGrowFormSection label="Sensor Profile" style={{ marginTop: 12 }}>
+                  <WeedGrowDropdownInput
+                    icon="chip"
+                    label={loadingProfiles ? 'Loading Sensor Profiles...' : 'Sensor Profile'}
+                    value={sensorProfiles.find(p => p.id === sensorProfileId)?.name || ''}
+                    options={sensorProfileOptions}
+                    onSelect={(val) => setField('sensorProfileId', val)}
+                    menuVisible={sensorMenu}
+                    setMenuVisible={setSensorMenu}
+                    placeholder={sensorProfiles.length === 0 ? 'No profiles found' : 'Select a profile'}
+                  />
+                </WeedGrowFormSection>
               )}
 
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14, justifyContent: 'center' }}>
-                {['pot', 'ground'].map((opt) => (
-                  <Button
-                    key={opt}
-                    mode={plantedIn === opt ? 'contained' : 'outlined'}
-                    onPress={() => setField('plantedIn', opt as any)}
-                    style={{ borderRadius: 8, minWidth: 100, marginHorizontal: 4, marginBottom: 4, backgroundColor: plantedIn === opt ? Colors[theme].tint : undefined, borderColor: Colors[theme].tint, borderWidth: 1 }}
-                    labelStyle={{ fontWeight: '600', color: plantedIn === opt ? Colors[theme].background : Colors[theme].tint }}
-                  >
-                    {opt === 'pot' ? 'Pot' : 'Ground'}
-                  </Button>
-                ))}
-              </View>
+              <WeedGrowFormSection label="Planted In" style={{ marginTop: 12 }}>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+                  {['pot', 'ground'].map((opt) => (
+                    <Button
+                      key={opt}
+                      mode={plantedIn === opt ? 'contained' : 'outlined'}
+                      onPress={() => setField('plantedIn', opt as any)}
+                      style={{ borderRadius: 8, minWidth: 100, marginHorizontal: 4, marginBottom: 4, backgroundColor: plantedIn === opt ? Colors[theme].tint : undefined, borderColor: Colors[theme].tint, borderWidth: 1 }}
+                      labelStyle={{ fontWeight: '600', color: plantedIn === opt ? Colors[theme].background : Colors[theme].tint }}
+                    >
+                      {opt === 'pot' ? 'Pot' : 'Ground'}
+                    </Button>
+                  ))}
+                </View>
+              </WeedGrowFormSection>
 
               {plantedIn === 'pot' && (
-                <WeedGrowDropdownInput
-                  icon="flower-pot"
-                  label="Pot Size"
-                  value={potSize || ''}
-                  options={potSizeOptions}
-                  onSelect={(val) => setField('potSize', val)}
-                  menuVisible={potMenu}
-                  setMenuVisible={setPotMenu}
-                  placeholder="Select pot size"
-                />
+                <WeedGrowFormSection label="Pot Size" style={{ marginTop: 12 }}>
+                  <WeedGrowDropdownInput
+                    icon="flower-pot"
+                    label="Pot Size"
+                    value={potSize || ''}
+                    options={potSizeOptions}
+                    onSelect={(val) => setField('potSize', val)}
+                    menuVisible={potMenu}
+                    setMenuVisible={setPotMenu}
+                    placeholder="Select pot size"
+                  />
+                </WeedGrowFormSection>
               )}
 
-              {/* Only show Sunlight Exposure for outdoor/greenhouse */}
               {(environment === 'outdoor' || environment === 'greenhouse') && (
-                <WeedGrowDropdownInput
-                  icon="white-balance-sunny"
-                  label="Sunlight Exposure"
-                  value={sunlightExposure || ''}
-                  options={sunlightOptions}
-                  onSelect={(val) => setField('sunlightExposure', val)}
-                  menuVisible={sunMenu}
-                  setMenuVisible={setSunMenu}
-                  placeholder="Select sunlight exposure"
-                />
+                <WeedGrowFormSection label="Sunlight Exposure" style={{ marginTop: 12 }}>
+                  <WeedGrowDropdownInput
+                    icon="white-balance-sunny"
+                    label="Sunlight Exposure"
+                    value={sunlightExposure || ''}
+                    options={sunlightOptions}
+                    onSelect={(val) => setField('sunlightExposure', val)}
+                    menuVisible={sunMenu}
+                    setMenuVisible={setSunMenu}
+                    placeholder="Select sunlight exposure"
+                  />
+                </WeedGrowFormSection>
               )}
 
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 22 }}>
+              <WeedGrowButtonRow style={{ marginTop: 22 }}>
                 <Button
                   mode="outlined"
                   onPress={() => router.back()}
-                  style={{ borderRadius: 8, minWidth: 100, borderColor: Colors[theme].tint, borderWidth: 1 }}
-                  labelStyle={{ fontWeight: '600' }}
+                  style={{ flex: 1, borderRadius: 8, borderColor: Colors[theme].tint }}
+                  labelStyle={{ fontWeight: '600', color: Colors[theme].tint }}
                 >
                   Back
                 </Button>
                 <Button
                   mode="contained"
                   onPress={() => router.push('/add-plant/step3')}
-                  style={{ borderRadius: 8, minWidth: 100, backgroundColor: Colors[theme].tint, elevation: 2 }}
-                  labelStyle={{ fontWeight: '700', letterSpacing: 1 }}
-                  contentStyle={{ height: 48 }}
+                  style={{ flex: 1, borderRadius: 8, backgroundColor: Colors[theme].tint }}
+                  labelStyle={{ fontWeight: '600', color: Colors[theme].background }}
                 >
                   Next
                 </Button>
-              </View>
+              </WeedGrowButtonRow>
             </WeedGrowCard>
           </ScrollView>
         </TouchableWithoutFeedback>

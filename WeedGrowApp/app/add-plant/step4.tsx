@@ -28,6 +28,8 @@ import { WeedGrowTextInput } from '@/ui/WeedGrowTextInput';
 import { WeedGrowDropdownInput } from '@/ui/WeedGrowDropdownInput';
 import { useWeedGrowInputStyle } from '@/ui/WeedGrowInputStyle';
 import { WeedGrowCard } from '@/ui/WeedGrowCard';
+import { WeedGrowButtonRow } from '@/ui/WeedGrowButtonRow';
+import { WeedGrowFormSection } from '@/ui/WeedGrowFormSection';
 
 export default function Step4() {
   const router = useRouter();
@@ -67,9 +69,6 @@ export default function Step4() {
             }}
           >
             <StepIndicatorBar currentPosition={3} />
-            <ThemedText style={{ alignSelf: 'center', color: Colors[theme].tint, fontWeight: '600', marginBottom: 2, letterSpacing: 1, fontSize: 13 }}>
-              Step 4 of 5
-            </ThemedText>
             <WeedGrowCard entering={FadeIn.duration(500)} style={{ alignItems: 'stretch', marginTop: 8 }}>
               <ThemedText type="title" style={{ textAlign: 'center', marginBottom: 8, fontSize: 22, color: Colors[theme].tint }}>
                 💧 Care Details
@@ -77,85 +76,90 @@ export default function Step4() {
               <ThemedText style={{ textAlign: 'center', color: Colors[theme].label, marginBottom: 18, fontSize: 15 }}>
                 Set your plant's watering, fertilizer, pest, and training details.
               </ThemedText>
-              <WeedGrowDropdownInput
-                icon="water"
-                label="Watering Frequency"
-                value={wateringFrequency || ''}
-                options={['Every day', 'Every 2 days', 'Every 3 days', 'Weekly'].map((opt) => ({ label: opt, value: opt }))}
-                onSelect={(val) => setField('wateringFrequency', val)}
-                menuVisible={waterMenu}
-                setMenuVisible={setWaterMenu}
-                placeholder="Select frequency"
-              />
-              <WeedGrowTextInput
-                label="Fertilizer"
-                value={fertilizer}
-                onChangeText={(text: string) => setField('fertilizer', text)}
-                icon="leaf"
-              />
-              <ThemedText style={{ fontWeight: 'bold', marginTop: 16, marginBottom: 8, fontSize: 16, color: Colors[theme].label }}>
-                Pest History
-              </ThemedText>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                {pestOptions.map((p) => (
-                  <Chip
-                    key={p}
-                    selected={pests?.includes(p)}
-                    onPress={() => {
-                      const arr = pests || [];
-                      setField(
-                        'pests',
-                        arr.includes(p) ? arr.filter((x) => x !== p) : [...arr, p]
-                      );
-                    }}
-                    style={{ backgroundColor: pests?.includes(p) ? Colors[theme].tint : '#223c2b', borderRadius: 8 }}
-                    textStyle={{ color: pests?.includes(p) ? '#fff' : Colors[theme].text, fontWeight: '600' }}
-                  >
-                    {p}
-                  </Chip>
-                ))}
-              </View>
-              <ThemedText style={{ fontWeight: 'bold', marginTop: 16, marginBottom: 8, fontSize: 16, color: Colors[theme].label }}>
-                Training Techniques
-              </ThemedText>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                {trainingOptions.map((t) => (
-                  <Chip
-                    key={t}
-                    selected={trainingTags?.includes(t)}
-                    onPress={() => {
-                      const arr = trainingTags || [];
-                      setField(
-                        'trainingTags',
-                        arr.includes(t) ? arr.filter((x) => x !== t) : [...arr, t]
-                      );
-                    }}
-                    style={{ backgroundColor: trainingTags?.includes(t) ? Colors[theme].tint : '#223c2b', borderRadius: 8 }}
-                    textStyle={{ color: trainingTags?.includes(t) ? '#fff' : Colors[theme].text, fontWeight: '600' }}
-                  >
-                    {t}
-                  </Chip>
-                ))}
-              </View>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
+
+              <WeedGrowFormSection label="Watering & Fertilizer">
+                <WeedGrowDropdownInput
+                  icon="water"
+                  label="Watering Frequency"
+                  value={wateringFrequency || ''}
+                  options={['Every day', 'Every 2 days', 'Every 3 days', 'Weekly'].map((opt) => ({ label: opt, value: opt }))}
+                  onSelect={(val) => setField('wateringFrequency', val)}
+                  menuVisible={waterMenu}
+                  setMenuVisible={setWaterMenu}
+                  placeholder="Select frequency"
+                />
+                <WeedGrowTextInput
+                  label="Fertilizer"
+                  value={fertilizer}
+                  onChangeText={(text: string) => setField('fertilizer', text)}
+                  icon="leaf"
+                />
+              </WeedGrowFormSection>
+
+              <WeedGrowFormSection label="Pest History" style={{ marginTop: 12 }}>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                  {pestOptions.map((p) => (
+                    <Chip
+                      key={p}
+                      selected={pests?.includes(p)}
+                      onPress={() => {
+                        const arr = pests || [];
+                        setField(
+                          'pests',
+                          arr.includes(p) ? arr.filter((x) => x !== p) : [...arr, p]
+                        );
+                      }}
+                      style={{ backgroundColor: pests?.includes(p) ? Colors[theme].tint : '#223c2b', borderRadius: 8 }}
+                      textStyle={{ color: pests?.includes(p) ? '#fff' : Colors[theme].text, fontWeight: '600' }}
+                    >
+                      {p}
+                    </Chip>
+                  ))}
+                </View>
+              </WeedGrowFormSection>
+
+              <WeedGrowFormSection label="Training Techniques" style={{ marginTop: 12 }}>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                  {trainingOptions.map((t) => (
+                    <Chip
+                      key={t}
+                      selected={trainingTags?.includes(t)}
+                      onPress={() => {
+                        const arr = trainingTags || [];
+                        setField(
+                          'trainingTags',
+                          arr.includes(t) ? arr.filter((x) => x !== t) : [...arr, t]
+                        );
+                      }}
+                      style={{ backgroundColor: trainingTags?.includes(t) ? Colors[theme].tint : '#223c2b', borderRadius: 8 }}
+                      textStyle={{ color: trainingTags?.includes(t) ? '#fff' : Colors[theme].text, fontWeight: '600' }}
+                    >
+                      {t}
+                    </Chip>
+                  ))}
+                </View>
+              </WeedGrowFormSection>
+
+              <WeedGrowButtonRow>
                 <Button
                   mode="outlined"
                   onPress={() => router.back()}
-                  style={{ borderRadius: 8, minWidth: 100, borderColor: Colors[theme].tint, borderWidth: 1 }}
+                  style={{ borderRadius: 8, minWidth: 100, borderColor: Colors[theme].tint, borderWidth: 1, flex: 1, marginRight: 4 }}
                   labelStyle={{ fontWeight: '600' }}
+                  contentStyle={{ height: 48 }}
                 >
                   Back
                 </Button>
                 <Button
                   mode="contained"
                   onPress={() => router.push('/add-plant/step5')}
-                  style={{ borderRadius: 8, minWidth: 100, backgroundColor: Colors[theme].tint, elevation: 2 }}
+                  style={{ borderRadius: 8, minWidth: 100, backgroundColor: Colors[theme].tint, elevation: 2, flex: 1, marginLeft: 4 }}
                   labelStyle={{ fontWeight: '700', letterSpacing: 1 }}
                   contentStyle={{ height: 48 }}
                 >
                   Next
                 </Button>
-              </View>
+              </WeedGrowButtonRow>
             </WeedGrowCard>
           </ScrollView>
         </TouchableWithoutFeedback>

@@ -27,6 +27,8 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { useWeedGrowInputStyle } from '@/ui/WeedGrowInputStyle';
 import { WeedGrowTextInput } from '@/ui/WeedGrowTextInput';
 import { WeedGrowCard } from '@/ui/WeedGrowCard';
+import { WeedGrowButtonRow } from '@/ui/WeedGrowButtonRow';
+import { WeedGrowFormSection } from '@/ui/WeedGrowFormSection';
 
 export default function Step1() {
   const router = useRouter();
@@ -73,9 +75,6 @@ export default function Step1() {
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, gap: 16 }}
           >
             <StepIndicatorBar currentPosition={0} />
-            <Text style={{ alignSelf: 'center', color: Colors[theme].tint, fontWeight: '600', marginBottom: 2, letterSpacing: 1, fontSize: 13 }}>
-              Step 1 of 3
-            </Text>
             <WeedGrowCard entering={FadeIn.duration(500)} style={{ alignItems: 'stretch', marginTop: 8 }}>
               <ThemedText type="title" style={{ textAlign: 'center', marginBottom: 8, fontSize: 24 }}>
                 🌱 Let’s start with the basics
@@ -84,48 +83,49 @@ export default function Step1() {
                 Give your plant a name, pick a strain, and select its current growth stage.
               </ThemedText>
 
-              <WeedGrowTextInput
-                label="Plant Name"
-                value={name}
-                onChangeText={(text: string) => setField('name', text)}
-                icon="sprout"
-              />
-
-              <Menu
-                visible={strainMenu}
-                onDismiss={() => setStrainMenu(false)}
-                anchor={
-                  <WeedGrowTextInput
-                    label="Strain"
-                    value={strain || 'Unknown'}
-                    editable={false}
-                    right={<TextInput.Icon icon="menu-down" size={24} onPress={() => setStrainMenu(true)} style={iconStyle} />}
-                    icon="dna"
-                  />
-                }
-              >
-                <TextInput
-                  placeholder="Search..."
-                  value={strainSearch}
-                  onChangeText={(text: string) => setStrainSearch(text)}
-                  style={{ margin: 8 }}
+              <WeedGrowFormSection label="Plant Details">
+                <WeedGrowTextInput
+                  label="Plant Name"
+                  value={name}
+                  onChangeText={(text: string) => setField('name', text)}
+                  icon="sprout"
                 />
-                {['Unknown', ...strains.filter((s) =>
-                  s.toLowerCase().includes(strainSearch.toLowerCase())
-                )].map((opt) => (
-                  <Menu.Item
-                    key={opt}
-                    onPress={() => {
-                      setField('strain', opt);
-                      setStrainMenu(false);
-                      setStrainSearch('');
-                    }}
-                    title={opt}
+                <Menu
+                  visible={strainMenu}
+                  onDismiss={() => setStrainMenu(false)}
+                  anchor={
+                    <WeedGrowTextInput
+                      label="Strain"
+                      value={strain || 'Unknown'}
+                      editable={false}
+                      right={<TextInput.Icon icon="menu-down" size={24} onPress={() => setStrainMenu(true)} style={iconStyle} />}
+                      icon="dna"
+                    />
+                  }
+                >
+                  <TextInput
+                    placeholder="Search..."
+                    value={strainSearch}
+                    onChangeText={(text: string) => setStrainSearch(text)}
+                    style={{ margin: 8 }}
                   />
-                ))}
-              </Menu>
+                  {['Unknown', ...strains.filter((s) =>
+                    s.toLowerCase().includes(strainSearch.toLowerCase())
+                  )].map((opt) => (
+                    <Menu.Item
+                      key={opt}
+                      onPress={() => {
+                        setField('strain', opt);
+                        setStrainMenu(false);
+                        setStrainSearch('');
+                      }}
+                      title={opt}
+                    />
+                  ))}
+                </Menu>
+              </WeedGrowFormSection>
 
-              <View style={{ marginBottom: 14 }}>
+              <WeedGrowFormSection label="Growth Stage" style={{ marginTop: 12 }}>
                 <SegmentedButtons
                   value={growthStage}
                   onValueChange={(val) => {
@@ -142,24 +142,27 @@ export default function Step1() {
                   ]}
                   style={{ borderRadius: 10, backgroundColor: Colors[theme].background, borderWidth: 0 }}
                 />
-              </View>
+              </WeedGrowFormSection>
 
               {(growthStage === 'vegetative' || growthStage === 'flowering') && (
-                <WeedGrowTextInput
-                  label="Age in Days"
-                  value={ageDays}
-                  onChangeText={(text: string) => setField('ageDays', text)}
-                  keyboardType="numeric"
-                  icon="calendar"
-                />
+                <WeedGrowFormSection label="Age" style={{ marginTop: 12 }}>
+                  <WeedGrowTextInput
+                    label="Age in Days"
+                    value={ageDays}
+                    onChangeText={(text: string) => setField('ageDays', text)}
+                    keyboardType="numeric"
+                    icon="calendar"
+                  />
+                </WeedGrowFormSection>
               )}
 
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 22 }}>
+              <WeedGrowButtonRow>
                 <Button
                   mode="outlined"
                   onPress={() => router.replace('/(tabs)/plants')}
-                  style={{ borderRadius: 8, minWidth: 100, borderColor: Colors[theme].tint, borderWidth: 1 }}
+                  style={{ borderRadius: 8, minWidth: 100, borderColor: Colors[theme].tint, borderWidth: 1, flex: 1, marginRight: 4 }}
                   labelStyle={{ fontWeight: '600' }}
+                  contentStyle={{ height: 48 }}
                 >
                   Back
                 </Button>
@@ -167,13 +170,13 @@ export default function Step1() {
                   mode="contained"
                   disabled={!isValid}
                   onPress={() => router.push('/add-plant/step2')}
-                  style={{ borderRadius: 8, minWidth: 100, backgroundColor: isValid ? Colors[theme].tint : '#3a4d3f', elevation: 2 }}
+                  style={{ borderRadius: 8, minWidth: 100, backgroundColor: isValid ? Colors[theme].tint : '#3a4d3f', elevation: 2, flex: 1, marginLeft: 4 }}
                   labelStyle={{ fontWeight: '700', letterSpacing: 1 }}
                   contentStyle={{ height: 48 }}
                 >
                   Next
                 </Button>
-              </View>
+              </WeedGrowButtonRow>
             </WeedGrowCard>
           </ScrollView>
         </TouchableWithoutFeedback>
