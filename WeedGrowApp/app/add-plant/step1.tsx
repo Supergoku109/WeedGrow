@@ -3,10 +3,10 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  View,
   TouchableWithoutFeedback,
   Keyboard,
   BackHandler,
+  View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -26,6 +26,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useWeedGrowInputStyle } from '@/ui/WeedGrowInputStyle';
 import { WeedGrowTextInput } from '@/ui/WeedGrowTextInput';
+import { WeedGrowCard } from '@/ui/WeedGrowCard';
 
 export default function Step1() {
   const router = useRouter();
@@ -75,22 +76,7 @@ export default function Step1() {
             <Text style={{ alignSelf: 'center', color: Colors[theme].tint, fontWeight: '600', marginBottom: 2, letterSpacing: 1, fontSize: 13 }}>
               Step 1 of 3
             </Text>
-            <Animated.View
-              entering={FadeIn.duration(500)}
-              style={{
-                backgroundColor: theme === 'dark' ? '#1a2e22' : '#f3f4f6',
-                borderRadius: 20,
-                padding: 22,
-                marginTop: 8,
-                shadowColor: '#000',
-                shadowOpacity: 0.16,
-                shadowRadius: 18,
-                shadowOffset: { width: 0, height: 8 },
-                elevation: 6,
-                borderWidth: 1,
-                borderColor: theme === 'dark' ? '#223c2b' : '#e0e0e0',
-              }}
-            >
+            <WeedGrowCard entering={FadeIn.duration(500)} style={{ alignItems: 'stretch', marginTop: 8 }}>
               <ThemedText type="title" style={{ textAlign: 'center', marginBottom: 8, fontSize: 24 }}>
                 🌱 Let’s start with the basics
               </ThemedText>
@@ -188,7 +174,7 @@ export default function Step1() {
                   Next
                 </Button>
               </View>
-            </Animated.View>
+            </WeedGrowCard>
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>

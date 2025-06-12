@@ -12,6 +12,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { TextInput, Button, Snackbar } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
+import { FadeIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@/ui/ThemedText';
 import StepIndicatorBar from '@/ui/StepIndicatorBar';
@@ -20,6 +21,8 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { WeedGrowTextInput } from '@/ui/WeedGrowTextInput';
 import { useWeedGrowInputStyle } from '@/ui/WeedGrowInputStyle';
+import { WeedGrowCard } from '@/ui/WeedGrowCard';
+import { WeedGrowDivider } from '@/ui/WeedGrowDivider';
 
 export default function Step5() {
   const router = useRouter();
@@ -54,7 +57,8 @@ export default function Step5() {
             <ThemedText style={{ alignSelf: 'center', color: Colors[theme].tint, fontWeight: '600', marginBottom: 2, letterSpacing: 1, fontSize: 13 }}>
               Step 5 of 5
             </ThemedText>
-            <View
+            <WeedGrowCard
+              entering={FadeIn.duration(500)}
               style={{
                 backgroundColor: theme === 'dark' ? '#1a2e22' : '#f3f4f6',
                 borderRadius: 20,
@@ -140,7 +144,7 @@ export default function Step5() {
                   Next
                 </Button>
               </View>
-            </View>
+            </WeedGrowCard>
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>

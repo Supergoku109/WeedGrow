@@ -27,6 +27,7 @@ import { ThemedText } from '@/ui/ThemedText';
 import { useWeedGrowInputStyle } from '@/ui/WeedGrowInputStyle';
 import { WeedGrowTextInput } from '@/ui/WeedGrowTextInput';
 import { WeedGrowDropdownInput } from '@/ui/WeedGrowDropdownInput';
+import { WeedGrowCard } from '@/ui/WeedGrowCard';
 
 export default function Step2() {
   const router = useRouter();
@@ -106,22 +107,7 @@ export default function Step2() {
             <ThemedText style={{ textAlign: 'center', color: Colors[theme].tint, marginBottom: 18, fontSize: 15 }}>
               Select the environment, pot/ground, and any relevant sensor or sunlight details.
             </ThemedText>
-            <Animated.View
-              entering={FadeIn.duration(500)}
-              style={{
-                backgroundColor: theme === 'dark' ? '#1a2e22' : '#f3f4f6',
-                borderRadius: 20,
-                padding: 22,
-                marginTop: 8,
-                shadowColor: '#000',
-                shadowOpacity: 0.16,
-                shadowRadius: 18,
-                shadowOffset: { width: 0, height: 8 },
-                elevation: 6,
-                borderWidth: 1,
-                borderColor: theme === 'dark' ? '#223c2b' : '#e0e0e0',
-              }}
-            >
+            <WeedGrowCard entering={FadeIn.duration(500)} style={{ alignItems: 'stretch', marginTop: 8 }}>
               <SegmentedButtons
                 value={environment}
                 onValueChange={(val) => setField('environment', val as any)}
@@ -207,7 +193,7 @@ export default function Step2() {
                   Next
                 </Button>
               </View>
-            </Animated.View>
+            </WeedGrowCard>
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>

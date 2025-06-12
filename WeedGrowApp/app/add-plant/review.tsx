@@ -1,9 +1,10 @@
 import React from 'react';
 import { ScrollView, View, Image, StyleSheet } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Divider } from 'react-native-paper';
+import { Button } from 'react-native-paper';
 import { ThemedText } from '@/ui/ThemedText';
 import { useRouter } from 'expo-router';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import StepIndicatorBar from '@/ui/StepIndicatorBar';
 import { usePlantForm } from '@/features/plants/hooks/usePlantForm';
@@ -15,6 +16,8 @@ import { db } from '@/services/firebase';
 import { fetchWeather } from '@/lib/weather/fetchWeather';
 import { parseWeatherData } from '@/lib/weather/parseWeatherData';
 import { updateWeatherCache } from '@/lib/weather/updateFirestore';
+import { WeedGrowCard } from '@/ui/WeedGrowCard';
+import { WeedGrowDivider } from '@/ui/WeedGrowDivider';
 
 export default function Review() {
   const router = useRouter();
@@ -83,27 +86,7 @@ export default function Review() {
         keyboardShouldPersistTaps="handled"
       >
         <StepIndicatorBar currentPosition={4} />
-        <View
-          style={{
-            backgroundColor: theme === 'dark' ? '#1a2e22' : '#f3f4f6',
-            borderRadius: 20,
-            paddingVertical: 28,
-            paddingHorizontal: 18,
-            marginTop: 16,
-            marginBottom: 24,
-            shadowColor: '#000',
-            shadowOpacity: 0.16,
-            shadowRadius: 18,
-            shadowOffset: { width: 0, height: 8 },
-            elevation: 6,
-            borderWidth: 1,
-            borderColor: theme === 'dark' ? '#223c2b' : '#e0e0e0',
-            alignItems: 'center',
-            width: '100%',
-            alignSelf: 'center',
-            maxWidth: 480,
-          }}
-        >
+        <WeedGrowCard entering={FadeIn.duration(500)} style={{ alignItems: 'stretch', marginTop: 8 }}>
           <ThemedText type="title" style={{ textAlign: 'center', marginBottom: 10, fontSize: 22, color: Colors[theme].tint }}>
             🌱 Review Your Plant
           </ThemedText>
@@ -148,7 +131,7 @@ export default function Review() {
                 <ThemedText>{form.ageDays}</ThemedText>
               </View>
             )}
-            <View style={{ height: 1, backgroundColor: theme === 'dark' ? '#223c2b' : '#e0e0e0', marginVertical: 10, opacity: 0.2 }} />
+            <WeedGrowDivider />
             <ThemedText style={{ fontWeight: 'bold', marginTop: 0, marginBottom: 8, fontSize: 16, color: Colors[theme].tint }}>
               Environment
             </ThemedText>
@@ -198,7 +181,7 @@ export default function Review() {
                 </View>
               )
             ) : null}
-            <View style={{ height: 1, backgroundColor: theme === 'dark' ? '#223c2b' : '#e0e0e0', marginVertical: 10, opacity: 0.2 }} />
+            <WeedGrowDivider />
             <ThemedText style={{ fontWeight: 'bold', marginTop: 0, marginBottom: 8, fontSize: 16, color: Colors[theme].tint }}>
               Care
             </ThemedText>
@@ -280,7 +263,7 @@ export default function Review() {
               Save Plant
             </Button>
           </View>
-        </View>
+        </WeedGrowCard>
       </ScrollView>
     </SafeAreaView>
   );
