@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, LayoutAnimation, UIManager, Modal, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, LayoutAnimation, UIManager, Modal, Pressable, Alert, Animated as RNAnimated } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ThemedText } from '@/ui/ThemedText';
 import WeedGrowLogTypeSheet, { LogType } from './WeedGrowLogTypeSheet';
@@ -43,9 +43,10 @@ interface WeeklyPlantCalendarBarProps {
   onViewGallery?: () => void;
   onAddPicture?: () => void;
   uploading?: boolean;
+  onUpdateWeekData?: (updater: (prev: WeeklyDayData[]) => WeeklyDayData[]) => void; // <-- Added prop
 }
 
-export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedLogDate: controlledExpandedLogDate, setExpandedLogDate: setControlledExpandedLogDate, getLogsForDate, plantId, onViewGallery, onAddPicture, uploading }: WeeklyPlantCalendarBarProps) {
+export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedLogDate: controlledExpandedLogDate, setExpandedLogDate: setControlledExpandedLogDate, getLogsForDate, plantId, onViewGallery, onAddPicture, uploading, onUpdateWeekData }: WeeklyPlantCalendarBarProps) {
   const [expanded, setExpanded] = useState(false);
   const [actionBubble, setActionBubble] = useState<{ visible: boolean; x: number; y: number; date: string | null }>({ visible: false, x: 0, y: 0, date: null });
   const [logTypeSheetVisible, setLogTypeSheetVisible] = useState(false);
@@ -78,7 +79,8 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
     if (actionBubble.date) {
       setPendingLogDate(actionBubble.date);
       setSelectedLogType('watering');
-      setLogTypeSheetVisible(true);
+      // Directly show the log form, skip log type sheet
+      setLogTypeSheetVisible(false);
     }
     handleCloseBubble();
   };
@@ -87,7 +89,7 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
     if (actionBubble.date) {
       setPendingLogDate(actionBubble.date);
       setSelectedLogType('feeding');
-      setLogTypeSheetVisible(true);
+      setLogTypeSheetVisible(false);
     }
     handleCloseBubble();
   };
@@ -95,7 +97,7 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
     if (actionBubble.date) {
       setPendingLogDate(actionBubble.date);
       setSelectedLogType('pests');
-      setLogTypeSheetVisible(true);
+      setLogTypeSheetVisible(false);
     }
     handleCloseBubble();
   };
@@ -103,13 +105,31 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
     if (actionBubble.date) {
       setPendingLogDate(actionBubble.date);
       setSelectedLogType('health');
-      setLogTypeSheetVisible(true);
+      setLogTypeSheetVisible(false);
     }
     handleCloseBubble();
   };
 
-  // Expanded Log Panel component
-  function ExpandedLogPanel({ date, weather, logs, onAddLog, onAddPic }: {
+  // Animated transition for log card
+  const [logCardKey, setLogCardKey] = useState<string>('');
+  React.useEffect(() => {
+    if (expandedLogDate) setLogCardKey(expandedLogDate + '-' + ((getLogsForDate && expandedLogDate) ? (getLogsForDate(expandedLogDate)?.length || 0) : 0));
+  }, [expandedLogDate, getLogsForDate && expandedLogDate ? getLogsForDate(expandedLogDate)?.length : 0]);
+
+  // Animated fade for log card
+  const [fadeAnim] = useState(new RNAnimated.Value(1));
+  React.useEffect(() => {
+    RNAnimated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 120,
+      useNativeDriver: true,
+    }).start(() => {
+      fadeAnim.setValue(1);
+    });
+  }, [expandedLogDate]);
+
+  // Modern Log Summary Card (redesigned)
+  function ModernLogCard({ date, weather, logs, onAddLog, onAddPic }: {
     date: string;
     weather?: WeeklyDayData;
     logs: Array<{ type: string; description?: string; updatedBy?: string; timestamp?: any }>;
@@ -118,52 +138,105 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
     onAddPic: () => void;
   }) {
     return (
-      <View style={{ backgroundColor: '#fff', borderRadius: 14, margin: 8, padding: 14, shadowColor: '#000', shadowOpacity: 0.10, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}>
-        {uploading && (
-          <View style={{ alignItems: 'center', marginVertical: 12 }}>
-            <Text style={{ color: '#2563eb' }}>Loading logs...</Text>
+      <RNAnimated.View
+        key={logCardKey}
+        style={{
+          borderRadius: 20,
+          backgroundColor: '#fff',
+          marginHorizontal: 0, // Make card wider than content
+          marginTop: 8,
+          marginBottom: 16,
+          padding: 20,
+          shadowColor: '#000',
+          shadowOpacity: 0.13,
+          shadowRadius: 16,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 5,
+          minHeight: 120,
+          position: 'relative',
+          overflow: 'visible',
+          borderWidth: 1,
+          borderColor: '#e5e7eb',
+          alignSelf: 'stretch', // Make card as wide as possible
+        }}
+      >
+        {/* Weather Row - always show if any weather data */}
+        {(weather && (weather.minTemp != null || weather.maxTemp != null || weather.humidity != null || weather.rain != null)) && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2, gap: 12, flexWrap: 'wrap' }}>
+            {(weather.minTemp != null && weather.maxTemp != null) && (
+              <Text style={{ fontSize: 16, marginRight: 4, color: '#222' }}>🌡 {weather.maxTemp}° / {weather.minTemp}°</Text>
+            )}
+            {(weather.humidity != null) && (
+              <Text style={{ fontSize: 16, color: '#2563eb' }}>💧 {weather.humidity}%</Text>
+            )}
+            {(weather.rain != null) && (
+              <Text style={{ fontSize: 15, color: '#2563eb', marginLeft: 8 }}>☔ {weather.rain}mm rainfall</Text>
+            )}
           </View>
         )}
-        <ThemedText style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 6 }}>Logs for {date}</ThemedText>
-        {/* Weather details */}
-        {weather && (
-          <View style={{ marginBottom: 10 }}>
-            <ThemedText style={{ fontWeight: '600', marginBottom: 2 }}>Weather</ThemedText>
-            <ThemedText style={{ color: '#2563eb' }}>{weather.weatherSummary || 'No summary'}</ThemedText>
-            <Text style={{ color: '#444', fontSize: 13 }}>
-              🌡️ {weather.minTemp}° / {weather.maxTemp}°  |  💧 {weather.humidity}%  |  ☔ {weather.rain}mm
-            </Text>
-          </View>
-        )}
-        {/* Logs summary */}
-        <View style={{ marginBottom: 10 }}>
-          <ThemedText style={{ fontWeight: '600', marginBottom: 2 }}>Logs</ThemedText>
-        {logs.length === 0 ? (
-          <ThemedText style={{ color: '#888' }}>No logs for this day.</ThemedText>
-        ) : (
-          logs.map((log, i) => (
-            <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-              <Text style={{ fontSize: 15, marginRight: 6 }}>
-                {log.type === 'watering' ? '💧' : log.type === 'fertilizing' ? '🧪' : log.type === 'pest' ? '🪲' : log.type === 'health' ? '❤️' : '📝'}
-              </Text>
-              <Text style={{ color: '#444', fontSize: 13 }}>{log.description || log.type}</Text>
-              {log.updatedBy && <Text style={{ color: '#aaa', fontSize: 11, marginLeft: 6 }}>by {log.updatedBy}</Text>}
+        {/* Log List or Empty State */}
+        <View style={{ minHeight: 36, marginTop: 6, marginBottom: 8 }}>
+          {logs.length === 0 ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, opacity: 0.7, justifyContent: 'center' }}>
+              <Text style={{ fontSize: 18 }}>📒</Text>
+              <Text style={{ fontSize: 15, color: '#888' }}>No logs for this day.</Text>
             </View>
-          ))
-        )}
+          ) : (
+            logs.map((log, i) => (
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2, gap: 6 }}>
+                <Text style={{ fontSize: 16 }}>
+                  {log.type === 'watering' ? '💧' : log.type === 'fertilizing' ? '🧪' : log.type === 'pest' ? '🪲' : log.type === 'health' ? '❤️' : '📝'}
+                </Text>
+                <Text style={{ color: '#444', fontSize: 15 }}>{log.description || log.type}</Text>
+                {log.updatedBy && <Text style={{ color: '#aaa', fontSize: 12 }}>by {log.updatedBy}</Text>}
+              </View>
+            ))
+          )}
         </View>
-        {/* Action buttons */}
-        <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
-          <TouchableOpacity onPress={() => { setPendingLogDate(date); setLogTypeSheetVisible(true); setSelectedLogType(null); }} style={{ backgroundColor: '#2563eb', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 16 }}>
-            <Text style={{ color: '#fff', fontWeight: 'bold' }}>Add Log</Text>
+        {/* FAB-style action buttons, bottom right inside card */}
+        <View style={{ position: 'absolute', right: 18, bottom: 14, flexDirection: 'row', gap: 10 }}>
+          <TouchableOpacity
+            onPress={onAddLog}
+            style={{ backgroundColor: '#2563eb', borderRadius: 24, width: 44, height: 44, alignItems: 'center', justifyContent: 'center', shadowColor: '#2563eb', shadowOpacity: 0.18, shadowRadius: 6, elevation: 3, marginLeft: 2 }}
+            accessibilityLabel="Add Log"
+            activeOpacity={0.85}
+          >
+            <MaterialCommunityIcons name="plus" size={26} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={onAddPic} style={{ backgroundColor: '#00c853', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 16 }}>
-            <Text style={{ color: '#fff', fontWeight: 'bold' }}>Add Progress Pic</Text>
+          <TouchableOpacity
+            onPress={onAddPic}
+            style={{ backgroundColor: '#00c853', borderRadius: 24, width: 44, height: 44, alignItems: 'center', justifyContent: 'center', shadowColor: '#00c853', shadowOpacity: 0.18, shadowRadius: 6, elevation: 3 }}
+            accessibilityLabel="Add Progress Pic"
+            activeOpacity={0.85}
+          >
+            <MaterialCommunityIcons name="camera" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
-      </View>
+      </RNAnimated.View>
     );
   }
+
+  // When a log is submitted, update the local weekData to reflect watering/fed/pest/health immediately
+  React.useEffect(() => {
+    if (!pendingLogDate || !selectedLogType) return;
+    // Only update if the log form just closed (i.e., selectedLogType was just set to null)
+    if (selectedLogType === null) {
+      setWeekData((prev) => prev.map((d) => {
+        if (d.date !== pendingLogDate) return d;
+        if (lastLoggedTypeRef.current === 'watering') return { ...d, watered: true };
+        if (lastLoggedTypeRef.current === 'feeding') return { ...d, fed: true };
+        if (lastLoggedTypeRef.current === 'pests') return { ...d, pest: true };
+        if (lastLoggedTypeRef.current === 'health') return { ...d, health: true };
+        return d;
+      }));
+    }
+  }, [selectedLogType]);
+
+  // Track the last log type for immediate update
+  const lastLoggedTypeRef = React.useRef<LogType | null>(null);
+  React.useEffect(() => {
+    if (selectedLogType) lastLoggedTypeRef.current = selectedLogType;
+  }, [selectedLogType]);
 
   return (
     <>
@@ -244,13 +317,13 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
           );
         })}
       </ScrollView>
-      {/* Expanded Log Panel below the bar */}
+      {/* Modern Log Card with animation */}
       {expandedLogDate && (
-        <ExpandedLogPanel
+        <ModernLogCard
           date={expandedLogDate}
           weather={weekData.find(d => d.date === expandedLogDate)}
           logs={uploading ? [] : (getLogsForDate ? getLogsForDate(expandedLogDate) : [])}
-          onAddLog={() => {}}
+          onAddLog={() => { setPendingLogDate(expandedLogDate); setLogTypeSheetVisible(true); setSelectedLogType(null); }}
           onAddPic={onAddPicture || (() => {})}
         />
       )}
@@ -314,6 +387,17 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
                   description,
                   updatedBy: 'demoUser', // TODO: Replace with real user
                 }, pendingLogDate);
+                // Update weekData in parent if onUpdateWeekData prop is provided
+                if (onUpdateWeekData) {
+                  onUpdateWeekData((prev: WeeklyDayData[]) => prev.map((d) => {
+                    if (d.date !== pendingLogDate) return d;
+                    if (selectedLogType === 'watering') return { ...d, watered: true };
+                    if (selectedLogType === 'feeding') return { ...d, fed: true };
+                    if (selectedLogType === 'pests') return { ...d, pest: true };
+                    if (selectedLogType === 'health') return { ...d, health: true };
+                    return d;
+                  }));
+                }
               }
             } catch (e: any) {
               Alert.alert('Error', e.message || 'Failed to save log.');

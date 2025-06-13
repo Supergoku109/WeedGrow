@@ -1,3 +1,6 @@
+// PLANT DETAIL SCREEN: This file displays all details, logs, weather, and actions for a single plant.
+// If you are looking for the main plant detail UI, this is the correct file.
+
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Alert, Image, Dimensions, FlatList } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +19,7 @@ import { fetchWateringHistory, DEFAULT_HISTORY_DAYS, WateringHistoryEntry } from
 import WeeklyPlantCalendarBar, { WeeklyDayData } from '@/ui/WeeklyPlantCalendarBar';
 import { addPlantLog } from '@/lib/logs/addPlantLog';
 import { fetchPlantLogsForDate } from '@/lib/logs/fetchPlantLogsForDate';
+import { fetchLogsAndWeatherForRange } from '@/lib/logs/fetchLogsAndWeatherForRange';
 
 const HEADER_MAX_HEIGHT = 220;
 const galleryBarHeight = 96;
@@ -118,30 +122,52 @@ export default function PlantDetailScreen() {
     fetchHistory();
   }, [plant, id]);
 
+  // --- Replace the weekData population effect with weather integration ---
   useEffect(() => {
     if (!plant || plant.environment !== 'outdoor') return;
     const fetchWeekData = async () => {
       const today = new Date();
       const weekStart = new Date(today);
       weekStart.setDate(today.getDate() - today.getDay());
+      const startDate = weekStart.toISOString().split('T')[0];
+      const endDate = new Date(weekStart);
+      endDate.setDate(weekStart.getDate() + 6);
+      const endDateStr = endDate.toISOString().split('T')[0];
+
+      // Fetch logs and weather for the week
+      const logsAndWeather = await fetchLogsAndWeatherForRange(String(id), startDate, endDateStr);
       const days: WeeklyDayData[] = [];
       for (let i = 0; i < 7; i++) {
         const d = new Date(weekStart);
         d.setDate(weekStart.getDate() + i);
+        const dateStr = d.toISOString().split('T')[0];
+        const weather = logsAndWeather[dateStr]?.weather;
         days.push({
-          date: d.toISOString().split('T')[0],
+          date: dateStr,
           day: d.toLocaleDateString('en-US', { weekday: 'short' }),
           dayNum: d.getDate(),
-          minTemp: null, maxTemp: null, rain: null, humidity: null,
-          watered: !!history.find(h => h.date === d.toISOString().split('T')[0]),
+          minTemp: weather?.detailedTemps?.min ?? null,
+          maxTemp: weather?.detailedTemps?.max ?? null,
+          rain: weather?.rainfall ?? null,
+          humidity: weather?.humidity ?? null,
+          watered: !!history.find(h => h.date === dateStr),
           isToday: d.toDateString() === today.toDateString(),
-          plantId: String(id), // Ensure plantId is present for log creation
+          plantId: String(id),
+          weatherSummary: weather?.weatherSummary,
+          detailedTemps: weather?.detailedTemps ? {
+            morn: weather.detailedTemps.morn ?? null,
+            day: weather.detailedTemps.day ?? null,
+            eve: weather.detailedTemps.eve ?? null,
+            night: weather.detailedTemps.night ?? null,
+            min: weather.detailedTemps.min ?? null,
+            max: weather.detailedTemps.max ?? null,
+          } : undefined,
         });
       }
       setWeekData(days);
     };
     fetchWeekData();
-  }, [plant, history]);
+  }, [plant, history, id]);
 
   useEffect(() => {
     if (!id || !expandedLogDate) return;
@@ -280,6 +306,7 @@ export default function PlantDetailScreen() {
                 getLogsForDate={(date: string) => dailyLogs[date] || []}
                 plantId={id}
                 uploading={expandedLogLoading}
+                onUpdateWeekData={(updater) => setWeekData((prev) => updater([...prev]))}
                 // ProgressPicPreview and gallery/add buttons removed below weather bar
               />
               <Button mode="outlined" style={{ marginTop: 10 }} onPress={() => router.push({ pathname: '/plant/LogHistoryCalendar', params: { plantId: String(id) } })}>
