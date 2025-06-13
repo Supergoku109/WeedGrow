@@ -2,6 +2,7 @@
 import Constants from "expo-constants";
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 // Depending on the Expo version and environment, the config might be under manifest or expoConfig:
 const expoConfig: any =
@@ -34,3 +35,4 @@ const firebaseConfig = {
 // Initialize Firebase and export Firestore
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
