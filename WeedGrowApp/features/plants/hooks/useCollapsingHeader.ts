@@ -32,7 +32,7 @@ export function useCollapsingHeader(
 
     return {
       position: 'absolute',
-      top: insetsTop,
+      top: 0, // changed from insetsTop to 0
       left: 0,
       right: 0,
       width: '100%',
@@ -52,7 +52,7 @@ export function useCollapsingHeader(
 
     return {
       position: 'absolute',
-      top: insetsTop,
+      top: insetsTop, // use insetsTop so collapsed bar sits below the notch
       left: 0,
       right: 0,
       height: minHeight,
