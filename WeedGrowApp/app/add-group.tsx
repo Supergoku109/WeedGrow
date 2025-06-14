@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, View, Alert, Dimensions, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TextInput, Button, ActivityIndicator, Menu } from 'react-native-paper';
-import * as Location from 'expo-location';
-import { collection, getDocs, query } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
+import { useFirestoreCollection } from '@/services/firestoreHooks';
 import { useRouter } from 'expo-router';
 
 import { Colors } from '@/constants/Colors';
@@ -20,68 +20,48 @@ interface PlantItem extends Plant {
 
 export default function AddGroupScreen() {
   const router = useRouter();
-  const [plants, setPlants] = useState<PlantItem[]>([]);
-  const [loadingPlants, setLoadingPlants] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: plants,
+    loading: loadingPlants,
+    error,
+  } = useFirestoreCollection<PlantItem>(collection(db, 'plants'));
   const [name, setName] = useState('');
   const [selectedPlantIds, setSelectedPlantIds] = useState<string[]>([]);
   const [groupLocationPlantId, setGroupLocationPlantId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [sensorProfiles, setSensorProfiles] = useState<any[]>([]);
   const [sensorMenu, setSensorMenu] = useState(false);
-  const [loadingProfiles, setLoadingProfiles] = useState(false);
   const [groupSensorProfileId, setGroupSensorProfileId] = useState<string | null>(null);
   const [availableGroupProfiles, setAvailableGroupProfiles] = useState<any[]>([]);
   const screen = Dimensions.get('window');
   type Theme = keyof typeof Colors;
   const theme = (useColorScheme() ?? 'dark') as Theme;
 
-  useEffect(() => {
-    const fetchPlants = async () => {
-      try {
-        const q = query(collection(db, 'plants'));
-        const snap = await getDocs(q);
-        const items: PlantItem[] = snap.docs.map((d) => ({
-          id: d.id,
-          ...(d.data() as Plant),
-        }));
-        setPlants(items);
-      } catch (e: any) {
-        console.error('Error fetching plants', e);
-        setError(e.message || 'Failed to load plants');
-      } finally {
-        setLoadingPlants(false);
-      }
-    };
-    fetchPlants();
-  }, []);
+
 
   const selectedPlants = plants.filter(p => selectedPlantIds.includes(p.id));
   const selectableLocationPlants = selectedPlants.filter(p => p.location);
 
-  // Fetch all sensor profiles if needed
+  // Fetch sensor profiles when needed
+  const showProfiles =
+    selectedPlantIds.length > 0 &&
+    selectedPlants.every(p => p.environment === 'indoor' || p.environment === 'greenhouse');
+  const {
+    data: sensorProfiles,
+    loading: loadingProfiles,
+  } = useFirestoreCollection<any>(showProfiles ? collection(db, 'sensorProfiles') : null);
+
   useEffect(() => {
-    if (selectedPlantIds.length > 0 && selectedPlants.every(p => p.environment === 'indoor' || p.environment === 'greenhouse')) {
-      setLoadingProfiles(true);
-      getDocs(collection(db, 'sensorProfiles')).then(snap => {
-        const allProfiles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        setSensorProfiles(allProfiles);
-        // Find intersection of sensorProfileIds
-        const allIds = selectedPlants.map(p => p.sensorProfileId).filter(Boolean);
-        const sharedIds = arrayIntersection(selectedPlants.map(p => p.sensorProfileId ? [p.sensorProfileId] : []));
-        const sharedProfiles = allProfiles.filter(p => sharedIds.includes(p.id));
-        setAvailableGroupProfiles(sharedProfiles);
-        // If only one, select it by default
-        if (sharedProfiles.length === 1) setGroupSensorProfileId(sharedProfiles[0].id);
-        else setGroupSensorProfileId(null);
-        setLoadingProfiles(false);
-      }).catch(() => setLoadingProfiles(false));
-    } else {
-      setSensorProfiles([]);
+    if (!showProfiles) {
       setAvailableGroupProfiles([]);
       setGroupSensorProfileId(null);
+      return;
     }
-  }, [selectedPlantIds.join(','), selectedPlants.map(p => p.sensorProfileId).join(',')]);
+    const sharedIds = arrayIntersection(selectedPlants.map(p => p.sensorProfileId ? [p.sensorProfileId] : []));
+    const sharedProfiles = sensorProfiles.filter(p => sharedIds.includes(p.id));
+    setAvailableGroupProfiles(sharedProfiles);
+    if (sharedProfiles.length === 1) setGroupSensorProfileId(sharedProfiles[0].id);
+    else setGroupSensorProfileId(null);
+  }, [showProfiles, selectedPlantIds.join(','), selectedPlants.map(p => p.sensorProfileId).join(','), sensorProfiles]);
 
   const handleTogglePlant = (id: string) => {
     setSelectedPlantIds((prev) =>
