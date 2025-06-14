@@ -1,43 +1,25 @@
 import { create } from 'zustand';
+import type { PlantForm } from '../form/PlantForm';
 
 export type GrowthStage = 'germination' | 'seedling' | 'vegetative' | 'flowering';
 export type Environment = 'outdoor' | 'greenhouse' | 'indoor';
 export type PlantedIn = 'pot' | 'ground';
 
-export interface PlantFormState {
-  name: string;
-  strain: string;
-  growthStage: GrowthStage;
-  ageDays: string;
-  environment: Environment;
-  potSize?: string;
-  sunlightExposure?: string;
-  plantedIn: PlantedIn;
-  location?: { lat: number; lng: number };
-  locationNickname?: string;
-  wateringFrequency?: string;
-  fertilizer?: string;
-  pests?: string[];
-  trainingTags?: string[];
-  notes?: string;
-  imageUri?: string;
-  sensorProfileId?: string;
-  setField: (key: keyof Omit<PlantFormState, 'setField' | 'reset'>, value: any) => void;
-  reset: () => void;
-}
-
-const initialState: Omit<PlantFormState, 'setField' | 'reset'> = {
+const initialState: PlantForm = {
   name: '',
   strain: '',
   growthStage: 'germination',
   ageDays: '0',
   environment: 'outdoor',
   plantedIn: 'pot',
-  sensorProfileId: undefined,
+  sensorProfileId: null,
 };
 
-export const usePlantForm = create<PlantFormState>((set) => ({
+export const usePlantForm = create<PlantForm & {
+  setField: (key: keyof PlantForm, value: any) => void;
+  reset: () => void;
+}>((set) => ({
   ...initialState,
-  setField: (key, value) => set({ [key]: value }),
+  setField: (key, value) => set((state) => ({ ...state, [key]: value })),
   reset: () => set(initialState),
 }));
