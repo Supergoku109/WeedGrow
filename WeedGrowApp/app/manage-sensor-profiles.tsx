@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Button, List, Dialog, Portal, TextInput, ActivityIndicator } from 'react-native-paper';
@@ -7,11 +7,12 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { db } from '@/services/firebase';
 import { useRouter } from 'expo-router';
 import { collection, getDocs, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { useFirestoreCollection } from '@/services/firestoreHooks';
 import { deleteField } from 'firebase/firestore';
 
 export default function ManageSensorProfilesScreen({ emptyMessage }: { emptyMessage?: string } = {}) {
-  const [profiles, setProfiles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const profilesQuery = collection(db, 'sensorProfiles');
+  const { data: profiles, loading } = useFirestoreCollection<any>(profilesQuery);
   const [editing, setEditing] = useState<any | null>(null);
   const [editName, setEditName] = useState('');
   const [editEnv, setEditEnv] = useState<'indoor' | 'greenhouse'>('indoor');
@@ -24,24 +25,7 @@ export default function ManageSensorProfilesScreen({ emptyMessage }: { emptyMess
   const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
   const router = useRouter();
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchProfiles = async () => {
-      setLoading(true);
-      try {
-        const snap = await getDocs(collection(db, 'sensorProfiles'));
-        if (isMounted) {
-          setProfiles(snap.docs.map((d: any) => ({ id: d.id, ...d.data() })));
-        }
-      } catch (e) {
-        if (isMounted) setProfiles([]);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-    fetchProfiles();
-    return () => { isMounted = false; };
-  }, [editing, deletingId]);
+
 
   const handleEdit = (profile: any) => {
     setEditing(profile);

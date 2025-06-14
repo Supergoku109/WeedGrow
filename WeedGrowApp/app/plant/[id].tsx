@@ -7,7 +7,8 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ActivityIndicator, IconButton, Button } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedScrollHandler, useAnimatedStyle, interpolate, Extrapolate } from 'react-native-reanimated';
-import { doc, getDoc, deleteDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, deleteDoc, collection, writeBatch, getDocs } from 'firebase/firestore';
+import { useFirestoreDocument, useFirestoreCollection } from '@/services/firestoreHooks';
 import { Plant, PlantLog } from '@/firestoreModels';
 import { ThemedView } from '@/ui/ThemedView';
 import { ThemedText } from '@/ui/ThemedText';
@@ -27,14 +28,17 @@ const HEADER_MIN_HEIGHT = galleryBarHeight;
 
 export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [plant, setPlant] = useState<Plant | null>(null);
-  const [loading, setLoading] = useState(true);
+  const plantRef = id ? doc(db, 'plants', String(id)) : null;
+  const { data: plant, loading } = useFirestoreDocument<Plant>(plantRef);
+  const { data: progressPicDocs } = useFirestoreCollection<{ url: string }>(
+    id ? collection(db, 'plants', String(id), 'progressPics') : null
+  );
+  const progressPics = progressPicDocs.map((d) => d.url).filter(Boolean);
   const [history, setHistory] = useState<WateringHistoryEntry[]>([]);
   const [weekData, setWeekData] = useState<WeeklyDayData[]>([]);
   const [dailyLogs, setDailyLogs] = useState<Record<string, PlantLog[]>>({});
   const [expandedLogDate, setExpandedLogDate] = useState<string | null>(null);
   const [expandedLogLoading, setExpandedLogLoading] = useState(false);
-  const [progressPics, setProgressPics] = useState<string[]>([]);
   const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -97,21 +101,7 @@ export default function PlantDetailScreen() {
     ]);
   };
 
-  useEffect(() => {
-    const fetchPlant = async () => {
-      if (!id) {
-        setLoading(false);
-        return;
-      }
-      const ref = doc(db, 'plants', String(id));
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        setPlant(snap.data() as Plant);
-      }
-      setLoading(false);
-    };
-    fetchPlant();
-  }, [id]);
+
 
   useEffect(() => {
     if (!plant) return;
@@ -183,14 +173,7 @@ export default function PlantDetailScreen() {
     return () => { cancelled = true; };
   }, [id, expandedLogDate]);
 
-  useEffect(() => {
-    if (!id) return;
-    // Fetch progress pics from Firestore (assuming a subcollection 'progressPics' with 'url' field)
-    (async () => {
-      const picsSnap = await getDocs(collection(db, 'plants', String(id), 'progressPics'));
-      setProgressPics(picsSnap.docs.map(doc => doc.data().url).filter(Boolean));
-    })();
-  }, [id]);
+
 
   const handleLogWater = async (date: string) => {
     if (!plant || !id) return;
