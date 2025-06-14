@@ -21,12 +21,15 @@ import { addPlantLog } from '@/lib/logs/addPlantLog';
 import { fetchPlantLogsForDate } from '@/lib/logs/fetchPlantLogsForDate';
 import { fetchLogsAndWeatherForRange } from '@/lib/logs/fetchLogsAndWeatherForRange';
 
+// Constants for header and gallery bar heights
 const HEADER_MAX_HEIGHT = 220;
 const galleryBarHeight = 96;
 const HEADER_MIN_HEIGHT = galleryBarHeight;
 
 export default function PlantDetailScreen() {
+  // Get the plant ID from the route params
   const { id } = useLocalSearchParams<{ id: string }>();
+  // State to hold plant data, loading state, watering history, week data, logs, etc.
   const [plant, setPlant] = useState<Plant | null>(null);
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState<WateringHistoryEntry[]>([]);
@@ -35,11 +38,13 @@ export default function PlantDetailScreen() {
   const [expandedLogDate, setExpandedLogDate] = useState<string | null>(null);
   const [expandedLogLoading, setExpandedLogLoading] = useState(false);
   const [progressPics, setProgressPics] = useState<string[]>([]);
+  // Get the current color theme (light/dark)
   const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  // Animated style for the background image (absolute, collapses on scroll)
+  // --- ANIMATION LOGIC ---
+  // Used to animate the header image as the user scrolls
   const scrollY = useSharedValue(0);
   const maxScroll = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
   const onScroll = useAnimatedScrollHandler({
@@ -47,6 +52,7 @@ export default function PlantDetailScreen() {
       scrollY.value = Math.min(event.contentOffset.y, maxScroll);
     },
   });
+  // Animated style for the background image (collapses on scroll)
   const animatedBgImageStyle = useAnimatedStyle(() => {
     const height = interpolate(
       scrollY.value,
@@ -65,6 +71,7 @@ export default function PlantDetailScreen() {
     };
   });
 
+  // Show a confirmation dialog before deleting a plant
   const confirmDelete = () => {
     Alert.alert('Delete Plant', 'Are you sure you want to delete this plant?', [
       { text: 'Cancel', style: 'cancel' },
@@ -74,6 +81,7 @@ export default function PlantDetailScreen() {
         onPress: async () => {
           try {
             if (id) {
+              // Delete the plant and all its subcollections (logs, weather, progress pics)
               const plantRef = doc(db, 'plants', String(id));
               const deleteSubcollection = async (sub: string) => {
                 const subSnap = await getDocs(collection(db, 'plants', String(id), sub));
@@ -88,6 +96,7 @@ export default function PlantDetailScreen() {
               ]);
               await deleteDoc(plantRef);
             }
+            // Navigate back to the plants list after deletion
             router.replace('/(tabs)/plants');
           } catch (e) {
             console.error('Error deleting plant:', e);
@@ -97,6 +106,7 @@ export default function PlantDetailScreen() {
     ]);
   };
 
+  // Fetch plant data from Firestore when the component mounts or the ID changes
   useEffect(() => {
     const fetchPlant = async () => {
       if (!id) {
@@ -113,6 +123,7 @@ export default function PlantDetailScreen() {
     fetchPlant();
   }, [id]);
 
+  // Fetch watering history for the plant
   useEffect(() => {
     if (!plant) return;
     const fetchHistory = async () => {
@@ -122,7 +133,7 @@ export default function PlantDetailScreen() {
     fetchHistory();
   }, [plant, id]);
 
-  // --- Replace the weekData population effect with weather integration ---
+  // Fetch weather and logs for the current week (for outdoor plants)
   useEffect(() => {
     if (!plant || plant.environment !== 'outdoor') return;
     const fetchWeekData = async () => {
@@ -169,6 +180,7 @@ export default function PlantDetailScreen() {
     fetchWeekData();
   }, [plant, history, id]);
 
+  // Fetch logs for a specific day when the user expands a day in the calendar
   useEffect(() => {
     if (!id || !expandedLogDate) return;
     let cancelled = false;
@@ -183,6 +195,7 @@ export default function PlantDetailScreen() {
     return () => { cancelled = true; };
   }, [id, expandedLogDate]);
 
+  // Fetch progress pictures for the plant
   useEffect(() => {
     if (!id) return;
     // Fetch progress pics from Firestore (assuming a subcollection 'progressPics' with 'url' field)
@@ -192,6 +205,7 @@ export default function PlantDetailScreen() {
     })();
   }, [id]);
 
+  // Handle logging a watering event for a specific date
   const handleLogWater = async (date: string) => {
     if (!plant || !id) return;
     try {
@@ -203,7 +217,8 @@ export default function PlantDetailScreen() {
     }
   };
 
-  // Gallery bar height
+  // --- ANIMATED GALLERY BAR ---
+  // This bar shows a horizontal list of images (main + progress pics) and animates on scroll
   const galleryBarAnimatedStyle = useAnimatedStyle(() => {
     const progress = (scrollY.value / maxScroll);
     return {
@@ -228,6 +243,7 @@ export default function PlantDetailScreen() {
     ...progressPics.filter((url) => url && url !== plant?.imageUri),
   ].filter(Boolean);
 
+  // Show loading spinner while fetching plant data
   if (loading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
@@ -238,6 +254,7 @@ export default function PlantDetailScreen() {
     );
   }
 
+  // Show a message if the plant is not found
   if (!plant) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
@@ -248,6 +265,8 @@ export default function PlantDetailScreen() {
     );
   }
 
+  // --- MAIN RENDER ---
+  // This is the main UI for the plant detail screen
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
       {/* Collapsing background image */}
@@ -294,8 +313,10 @@ export default function PlantDetailScreen() {
         overScrollMode="never"
       >
         <View style={{ paddingHorizontal: 16 }}>
+          {/* Plant name and strain */}
           <ThemedText type="title">{plant.name}</ThemedText>
           {plant.strain && <ThemedText type="subtitle" style={{ marginBottom: 10 }}>{plant.strain}</ThemedText>}
+          {/* Show the weekly calendar/weather bar for outdoor plants */}
           {plant.environment === 'outdoor' && weekData.length === 7 && (
             <>
               <WeeklyPlantCalendarBar
@@ -314,6 +335,7 @@ export default function PlantDetailScreen() {
               </Button>
             </>
           )}
+          {/* Show plant notes if available */}
           {plant.notes && (
             <View style={styles.section}>
               <ThemedText type="subtitle">Notes</ThemedText>
@@ -323,6 +345,7 @@ export default function PlantDetailScreen() {
         </View>
         {/* REMOVE the tall spacer that causes excessive scroll */}
       </Animated.ScrollView>
+      {/* Delete button in the top right corner */}
       <IconButton
         icon="delete"
         mode="contained"
@@ -335,6 +358,7 @@ export default function PlantDetailScreen() {
   );
 }
 
+// Styles for centering and section spacing
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   section: { marginVertical: 10 },
