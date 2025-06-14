@@ -1,0 +1,3 @@
+export const HEADER_MAX_HEIGHT = 220;
+export const GALLERY_BAR_HEIGHT = 96;
+export const HEADER_MIN_HEIGHT = GALLERY_BAR_HEIGHT;

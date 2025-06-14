@@ -245,7 +245,8 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
   }, [selectedLogType]);
 
   return (
-    <>
+    <><View style={{ flexDirection: 'column', paddingBottom: 8 }}>
+
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scroll} contentContainerStyle={styles.container}>
         {weekData.map((d, idx) => {
           const isToday = !!d.isToday;
@@ -323,6 +324,8 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
           );
         })}
       </ScrollView>
+      </View>
+
       {/* Modern Log Card with animation */}
       {expandedLogDate && (
         <ModernLogCard
@@ -432,6 +435,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: 60,
+    height: 100, // <-- Add this!
     backgroundColor: '#f3f4f6',
     borderRadius: 14,
     alignItems: 'center',
@@ -450,6 +454,7 @@ const styles = StyleSheet.create({
       android: {},
     }),
   },
+
   todayCard: {
     borderColor: '#2563eb',
     borderWidth: 2,
