@@ -50,6 +50,7 @@ export function EnvironmentForm({ form, logic, next, back }: EnvironmentFormProp
               options={logic.sensorOptions}
               onSelect={v => logic.setField('sensorProfileId', v)}
               placeholder="Select profile"
+              zIndex={3000}
             />
           </WeedGrowFormSection>
         )}
@@ -81,6 +82,7 @@ export function EnvironmentForm({ form, logic, next, back }: EnvironmentFormProp
               options={logic.potSizeOptions.map(p => ({ label: p, value: p }))}
               onSelect={v => logic.setField('potSize', v)}
               placeholder="Select pot size"
+              zIndex={2000}
             />
           </WeedGrowFormSection>
         )}
@@ -92,9 +94,10 @@ export function EnvironmentForm({ form, logic, next, back }: EnvironmentFormProp
               icon="white-balance-sunny"
               label="Sunlight Exposure"
               value={form.sunlightExposure || ''}
-              options={logic.sunlightOptions}
+              options={logic.sunlightOptions.map(opt => ({ label: opt.label, value: opt.value }))}
               onSelect={v => logic.setField('sunlightExposure', v)}
               placeholder="Select sunlight"
+              zIndex={1000}
             />
           </WeedGrowFormSection>
         )}

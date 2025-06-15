@@ -12,6 +12,7 @@ interface WeedGrowDropdownInputProps {
   options: Array<{ label: string; value: string }>;
   onSelect: (value: string) => void;
   placeholder?: string;
+  zIndex?: number;
 }
 
 export function WeedGrowDropdownInput({
@@ -21,6 +22,7 @@ export function WeedGrowDropdownInput({
   options,
   onSelect,
   placeholder,
+  zIndex = 1000,
 }: WeedGrowDropdownInputProps) {
   const scheme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
   const themeColors = Colors[scheme];
@@ -33,7 +35,7 @@ export function WeedGrowDropdownInput({
   }, [options]);
 
   return (
-    <View style={{ zIndex: 1000, marginBottom: 16 }}>
+    <View style={{ zIndex, marginBottom: 16 }}>
       <View style={styles.labelContainer}>
         {icon && (
           <MaterialCommunityIcons
