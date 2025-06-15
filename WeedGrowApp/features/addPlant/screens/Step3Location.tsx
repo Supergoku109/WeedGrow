@@ -1,27 +1,28 @@
-import React from 'react'
-import { StepIndicatorBar } from '../components/StepIndicatorBar'
-import { ScreenLayout } from '../components/ScreenLayout'
-import { LocationForm } from '../components/LocationForm'
-import { useStep3Location } from '../hooks/useStep3Location'
-import type { PlantForm } from '@/features/plants/form/PlantForm'
+import React from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenLayout } from '../components/ScreenLayout';
+import { StepIndicatorBar } from '../components/StepIndicatorBar';
+import { LocationForm } from '../components/LocationForm';
+import { useStep3Location } from '../hooks/useStep3Location';
+import type { PlantForm } from '@/features/plants/form/PlantForm';
 
 interface StepProps {
-  form: PlantForm
-  setField: (k: keyof PlantForm, v: any) => void
-  next(): void
-  back(): void
-  step: number
+  form: PlantForm;
+  setField: (k: keyof PlantForm, v: any) => void;
+  next(): void;
+  back(): void;
+  step: number;
 }
 
-export default function Step3Location({
-  form, setField, next, back, step
-}: StepProps) {
-  const logic = useStep3Location(form, setField)
+export default function Step3Location({ form, setField, next, back, step }: StepProps) {
+  const logic = useStep3Location(form, setField);
 
   return (
-    <ScreenLayout backgroundColor={logic.backgroundColor} paddingTopIndicator>
+    <SafeAreaView style={{ flex: 1, backgroundColor: logic.backgroundColor }}>
       <StepIndicatorBar currentPosition={step - 1} />
-      <LocationForm form={form} logic={logic} next={next} back={back} />
-    </ScreenLayout>
-  )
+      <ScreenLayout backgroundColor={logic.backgroundColor}>
+        <LocationForm form={form} logic={logic} next={next} back={back} />
+      </ScreenLayout>
+    </SafeAreaView>
+  );
 }

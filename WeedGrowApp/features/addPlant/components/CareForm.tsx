@@ -31,7 +31,7 @@ export function CareForm({ form, logic, next, back }: CareFormProps) {
             label="Watering Frequency"
             value={form.wateringFrequency || ''}
             options={logic.wateringOptions.map(opt => ({ label: opt, value: opt }))}
-            onSelect={val => logic.setField('wateringFrequency', val)}
+            onSelect={(val: string) => logic.setField('wateringFrequency', val)}
             menuVisible={logic.waterMenu}
             setMenuVisible={logic.setWaterMenu}
             placeholder="Select frequency"
@@ -39,7 +39,7 @@ export function CareForm({ form, logic, next, back }: CareFormProps) {
           <WeedGrowTextInput
             label="Fertilizer"
             value={form.fertilizer}
-            onChangeText={val => logic.setField('fertilizer', val)}
+            onChangeText={(val: string) => logic.setField('fertilizer', val)}
             icon="leaf"
           />
         </WeedGrowFormSection>

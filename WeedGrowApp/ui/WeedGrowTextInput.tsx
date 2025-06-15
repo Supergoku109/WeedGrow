@@ -1,25 +1,74 @@
 import React from 'react';
-import { TextInput } from 'react-native-paper';
-import { useWeedGrowInputStyle } from './WeedGrowInputStyle';
+import { TextInput, View, StyleSheet } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+interface WeedGrowTextInputProps {
+  label?: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder?: string;
+  icon?: string;
+  keyboardType?: 'default' | 'numeric' | 'email-address';
+  secureTextEntry?: boolean;
+  error?: boolean;
+}
 
 export function WeedGrowTextInput({
+  label,
+  value,
+  onChangeText,
+  placeholder,
   icon,
-  ...props
-}: {
-  icon?: string;
-  [key: string]: any;
-}) {
-  const { inputStyle, menuInputStyle, iconStyle } = useWeedGrowInputStyle();
-  // Remove outlineColor and activeOutlineColor to prevent double border
+  keyboardType = 'default',
+  secureTextEntry = false,
+  error = false,
+}: WeedGrowTextInputProps) {
+  const scheme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
+  const themeColors = Colors[scheme];
+
+  const borderColor = error ? 'red' : themeColors.tint;
+
   return (
-    <TextInput
-      mode="outlined"
-      style={[inputStyle, menuInputStyle, props.style]}
-      contentStyle={{ minHeight: 56, height: 56, paddingTop: 0, paddingBottom: 0 }}
-      outlineColor="transparent"
-      underlineColor="transparent"
-      left={icon ? <TextInput.Icon icon={icon} size={24} style={iconStyle} /> : undefined}
-      {...props}
-    />
+    <View style={[styles.container, { borderColor }]}>
+      {icon && (
+        <MaterialCommunityIcons
+          name={icon as any}
+          size={20}
+          color={themeColors.text}
+          style={styles.icon}
+        />
+      )}
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor="#b5eec5"
+        style={[styles.input, { color: themeColors.text }]}
+        keyboardType={keyboardType}
+        secureTextEntry={secureTextEntry}
+      />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 52,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#1a2e22', // You can replace with theme background
+  },
+  icon: {
+    marginRight: 8,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: 0,
+  },
+});

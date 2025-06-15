@@ -1,9 +1,9 @@
-// features/addPlant/screens/Step2Environment.tsx
 import React from 'react';
-import { ScreenLayout }         from '../components/ScreenLayout';
-import { StepIndicatorBar }     from '../components/StepIndicatorBar';
-import { EnvironmentForm }      from '../components/EnvironmentForm';
-import { useStep2Environment }  from '../hooks/useStep2Environment';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenLayout } from '../components/ScreenLayout';
+import { StepIndicatorBar } from '../components/StepIndicatorBar';
+import { EnvironmentForm } from '../components/EnvironmentForm';
+import { useStep2Environment } from '../hooks/useStep2Environment';
 import type { PlantForm } from '@/features/plants/form/PlantForm';
 
 interface StepProps {
@@ -18,12 +18,11 @@ export default function Step2Environment({ form, setField, next, back, step }: S
   const logic = useStep2Environment(form, setField);
 
   return (
-    <ScreenLayout
-      backgroundColor={logic.backgroundColor}
-      paddingTopIndicator
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: logic.backgroundColor }}>
       <StepIndicatorBar currentPosition={step - 1} />
-      <EnvironmentForm logic={logic} next={next} back={back}/>
-    </ScreenLayout>
+      <ScreenLayout backgroundColor={logic.backgroundColor}>
+        <EnvironmentForm form={form} logic={logic} next={next} back={back} />
+      </ScreenLayout>
+    </SafeAreaView>
   );
 }

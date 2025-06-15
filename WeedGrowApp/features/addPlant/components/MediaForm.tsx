@@ -51,7 +51,7 @@ export function MediaForm({ form, logic, next, back }: MediaFormProps) {
           <WeedGrowTextInput
             label="Observations (optional)"
             value={form.notes}
-            onChangeText={val => logic.setField('notes', val)}
+            onChangeText={(val: string) => logic.setField('notes', val)}
             multiline
             placeholder="Add any observations here..."
             icon="note-text"

@@ -1,8 +1,18 @@
-import React from 'react';
-import { TextInput, Menu } from 'react-native-paper';
-import { useWeedGrowInputStyle } from './WeedGrowInputStyle';
-import { Colors } from '@/constants/Colors';
+import React, { useState, useEffect } from 'react';
+import DropDownPicker from 'react-native-dropdown-picker';
+import { View, StyleSheet, Text } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+interface WeedGrowDropdownInputProps {
+  icon?: string;
+  value: string;
+  label: string;
+  options: Array<{ label: string; value: string }>;
+  onSelect: (value: string) => void;
+  placeholder?: string;
+}
 
 export function WeedGrowDropdownInput({
   icon,
@@ -10,58 +20,74 @@ export function WeedGrowDropdownInput({
   label,
   options,
   onSelect,
-  menuVisible,
-  setMenuVisible,
   placeholder,
-  rightIcon = 'menu-down',
-  ...props
-}: {
-  icon?: string;
-  value: string;
-  label: string;
-  options: Array<{ label: string; value: string; icon?: string }>;
-  onSelect: (value: string) => void;
-  menuVisible: boolean;
-  setMenuVisible: (v: boolean) => void;
-  placeholder?: string;
-  rightIcon?: string;
-  [key: string]: any;
-}) {
-  const { inputStyle, menuInputStyle, iconStyle } = useWeedGrowInputStyle();
-  const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
+}: WeedGrowDropdownInputProps) {
+  const scheme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
+  const themeColors = Colors[scheme];
+
+  const [open, setOpen] = useState(false);
+  const [items, setItems] = useState(options);
+
+  useEffect(() => {
+    setItems(options);
+  }, [options]);
+
   return (
-    <Menu
-      visible={menuVisible}
-      onDismiss={() => setMenuVisible(false)}
-      anchor={
-        <TextInput
-          mode="outlined"
-          style={[inputStyle, menuInputStyle, props.style]}
-          contentStyle={{ minHeight: 56, height: 56, paddingTop: 0, paddingBottom: 0 }}
-          outlineColor="transparent"
-          underlineColor="transparent"
-          label={label}
-          value={value}
-          editable={false}
-          left={icon ? <TextInput.Icon icon={icon} size={24} style={iconStyle} /> : undefined}
-          right={<TextInput.Icon icon={rightIcon} size={24} style={iconStyle} onPress={() => setMenuVisible(true)} />}
-          placeholder={placeholder}
-          theme={{ colors: { background: inputStyle.backgroundColor } }}
-          {...props}
-        />
-      }
-    >
-      {options.map((opt) => (
-        <Menu.Item
-          key={opt.value}
-          onPress={() => {
-            onSelect(opt.value);
-            setMenuVisible(false);
-          }}
-          title={opt.label}
-          leadingIcon={opt.icon}
-        />
-      ))}
-    </Menu>
+    <View style={{ zIndex: 1000, marginBottom: 16 }}>
+      <View style={styles.labelContainer}>
+        {icon && (
+          <MaterialCommunityIcons
+            name={icon as any}
+            size={18}
+            color={themeColors.text}
+            style={{ marginRight: 6 }}
+          />
+        )}
+        <Text style={[styles.label, { color: themeColors.text }]}>{label}</Text>
+      </View>
+
+      <DropDownPicker
+        open={open}
+        value={value}
+        items={items}
+        setOpen={setOpen}
+        setValue={(callback) => onSelect(callback(value))}
+        setItems={setItems}
+        placeholder={placeholder}
+        style={{
+          backgroundColor: '#1a2e22',
+          borderColor: themeColors.tint,
+          height: 52,
+        }}
+        textStyle={{
+          color: themeColors.text,
+          fontSize: 16,
+        }}
+        dropDownContainerStyle={{
+          backgroundColor: '#1a2e22',
+          borderColor: themeColors.tint,
+        }}
+        listItemLabelStyle={{
+          color: themeColors.text,
+        }}
+        ArrowDownIconComponent={({ style }: { style?: any }) => (
+          <MaterialCommunityIcons name="chevron-down" size={20} color="#fff" style={style} />
+        )}
+        tickIconStyle={{}}
+        listMode="SCROLLVIEW"
+      />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+});

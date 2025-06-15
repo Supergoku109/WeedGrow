@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "expo-linear-gradient": "^14.1.5"
+    "expo-linear-gradient": "^14.1.5",
+    "react-native-paper-dropdown": "^2.3.1"
   }
 }

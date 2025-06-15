@@ -1,7 +1,7 @@
 // features/addPlant/components/BasicInfoForm.tsx
 
 import React from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import {
   TextInput as PaperTextInput,
   Menu,
@@ -13,6 +13,7 @@ import { WeedGrowCard } from '@/ui/WeedGrowCard';
 import { WeedGrowFormSection } from '@/ui/WeedGrowFormSection';
 import { WeedGrowButtonRow } from '@/ui/WeedGrowButtonRow';
 import { WeedGrowTextInput } from '@/ui/WeedGrowTextInput';
+import { WeedGrowDropdownInput } from '@/ui/WeedGrowDropdownInput';
 
 import type { PlantForm } from '@/features/plants/form/PlantForm';
 import type { Step1BasicInfoLogic } from '../hooks/useStep1BasicInfo';
@@ -27,10 +28,7 @@ interface BasicInfoFormProps {
 export function BasicInfoForm({ form, logic, next, back }: BasicInfoFormProps) {
   return (
     <WeedGrowCard style={{ width: '100%', maxWidth: 480 }}>
-      <ScrollView
-        contentContainerStyle={{ padding: 16, gap: 16 }}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={{ padding: 16, gap: 16 }}>
         <ThemedText type="title" style={{ textAlign: 'center', fontSize: 24 }}>
           🌱 Let’s start with the basics
         </ThemedText>
@@ -43,36 +41,14 @@ export function BasicInfoForm({ form, logic, next, back }: BasicInfoFormProps) {
             icon="sprout"
           />
 
-          <Menu
-            visible={logic.strainMenuVisible}
-            onDismiss={logic.closeStrainMenu}
-            anchor={
-              <WeedGrowTextInput
-                label="Strain"
-                value={form.strain || 'Unknown'}
-                editable={false}
-                right={<PaperTextInput.Icon icon="menu-down" onPress={logic.openStrainMenu} />}
-                icon="dna"
-              />
-            }
-          >
-            <PaperTextInput
-              placeholder="Search…"
-              value={logic.strainSearch}
-              onChangeText={logic.setStrainSearch}
-              style={{ margin: 8 }}
-            />
-            {['Unknown', ...logic.filteredStrains].map(opt => (
-              <Menu.Item
-                key={opt}
-                title={opt}
-                onPress={() => {
-                  logic.setField('strain', opt);
-                  logic.closeStrainMenu();
-                }}
-              />
-            ))}
-          </Menu>
+          <WeedGrowDropdownInput
+            icon="dna"
+            label="Strain"
+            value={form.strain || 'Unknown'}
+            options={[{ label: 'Unknown', value: 'Unknown' }, ...logic.filteredStrains.map(opt => ({ label: opt, value: opt }))]}
+            onSelect={val => logic.setField('strain', val)}
+            placeholder="Select strain"
+          />
         </WeedGrowFormSection>
 
         <WeedGrowFormSection label="Growth Stage">
@@ -119,7 +95,7 @@ export function BasicInfoForm({ form, logic, next, back }: BasicInfoFormProps) {
             Next
           </Button>
         </WeedGrowButtonRow>
-      </ScrollView>
+      </View>
     </WeedGrowCard>
   );
 }

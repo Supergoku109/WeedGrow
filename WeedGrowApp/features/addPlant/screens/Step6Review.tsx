@@ -1,27 +1,28 @@
-import React from 'react'
-import { StepIndicatorBar } from '../components/StepIndicatorBar'
-import { ScreenLayout } from '../components/ScreenLayout'
-import { ReviewForm } from '../components/ReviewForm'
-import { useStep6Review } from '../hooks/useStep6Review'
-import type { PlantForm } from '@/features/plants/form/PlantForm'
+import React from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenLayout } from '../components/ScreenLayout';
+import { StepIndicatorBar } from '../components/StepIndicatorBar';
+import { ReviewForm } from '../components/ReviewForm';
+import { useStep6Review } from '../hooks/useStep6Review';
+import type { PlantForm } from '@/features/plants/form/PlantForm';
 
 interface StepProps {
-  form: PlantForm
-  setField: (k: keyof PlantForm, v: any) => void
-  next(): void
-  back(): void
-  step: number
+  form: PlantForm;
+  setField: (k: keyof PlantForm, v: any) => void;
+  next(): void;
+  back(): void;
+  step: number;
 }
 
-export default function Step6Review({
-  form, setField, next, back, step
-}: StepProps) {
-  const logic = useStep6Review(form)
+export default function Step6Review({ form, setField, next, back, step }: StepProps) {
+  const logic = useStep6Review(form);
 
   return (
-    <ScreenLayout backgroundColor={logic.backgroundColor} paddingTopIndicator>
+    <SafeAreaView style={{ flex: 1, backgroundColor: logic.backgroundColor }}>
       <StepIndicatorBar currentPosition={step - 1} />
-      <ReviewForm form={form} logic={logic} back={back} />
-    </ScreenLayout>
-  )
+      <ScreenLayout backgroundColor={logic.backgroundColor}>
+        <ReviewForm form={form} logic={logic} back={back} />
+      </ScreenLayout>
+    </SafeAreaView>
+  );
 }

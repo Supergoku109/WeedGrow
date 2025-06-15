@@ -1,5 +1,6 @@
 // features/addPlant/screens/Step1BasicInfo.tsx
 import React from 'react'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { StepIndicatorBar } from '../components/StepIndicatorBar'
 import { ScreenLayout }      from '../components/ScreenLayout'
 import { BasicInfoForm }     from '../components/BasicInfoForm'
@@ -20,17 +21,17 @@ export default function Step1BasicInfo({
   const logic = useStep1BasicInfo(form, setField)
 
   return (
-    <ScreenLayout
-      backgroundColor={logic.backgroundColor}
-      paddingTopIndicator
-    >
-      <StepIndicatorBar currentPosition={step - 1} />
-      <BasicInfoForm
-        form={form}
-        logic={logic}
-        next={next}
-        back={back}
-      />
-    </ScreenLayout>
+<SafeAreaView style={{ flex: 1, backgroundColor: logic.backgroundColor }}>
+  <StepIndicatorBar currentPosition={step - 1} />
+  <ScreenLayout backgroundColor={logic.backgroundColor} paddingTopIndicator>
+    <BasicInfoForm
+      form={form}
+      logic={logic}
+      next={next}
+      back={back}
+    />
+  </ScreenLayout>
+</SafeAreaView>
+
   )
 }
