@@ -40,7 +40,7 @@ export function LocationForm({ form, logic, next, back }: LocationFormProps) {
 
           <WeedGrowTextInput
             label="Location Nickname"
-            value={form.locationNickname}
+            value={form.locationNickname ?? ""}
             onChangeText={(val: string) => logic.setField('locationNickname', val)}
             icon="map-marker"
           />

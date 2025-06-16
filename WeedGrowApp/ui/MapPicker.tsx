@@ -1,6 +1,6 @@
 // ui/MapPicker.tsx
 
-import React from 'react'
+import React, { useRef, useEffect } from 'react'
 import { View, Dimensions } from 'react-native'
 import MapView, { Marker, MapPressEvent } from 'react-native-maps'
 import { Colors } from '@/constants/Colors'
@@ -15,15 +15,28 @@ interface MapPickerProps {
 
 export function MapPicker({ location, onLocationChange }: MapPickerProps) {
   const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors
+  const mapRef = useRef<MapView>(null)
 
   const handleMapPress = (event: MapPressEvent) => {
     const { latitude, longitude } = event.nativeEvent.coordinate
     onLocationChange({ lat: latitude, lng: longitude })
   }
 
+  useEffect(() => {
+    if (location && mapRef.current) {
+      mapRef.current.animateToRegion({
+        latitude: location.lat,
+        longitude: location.lng,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      })
+    }
+  }, [location])
+
   return (
     <View style={{ height: 300, borderRadius: 16, overflow: 'hidden', borderWidth: 2, borderColor: Colors[theme].tint }}>
       <MapView
+        ref={mapRef}
         style={{ width: screen.width - 56, height: 300 }}
         onPress={handleMapPress}
         initialRegion={{
