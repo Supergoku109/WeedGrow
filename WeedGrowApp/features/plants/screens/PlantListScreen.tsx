@@ -60,8 +60,8 @@ export default function PlantListScreen({
   );
 
   return (
-    <View style={[styles.safeArea, { backgroundColor: Colors[theme].background, paddingTop: insets.top }]}>
-      <ThemedView style={styles.container}>
+    <View style={[styles.safeArea, { backgroundColor: Colors[theme].background, paddingTop: 4 }]}>
+      <ThemedView style={[styles.container, { paddingTop: 0 }]}>
         {/* <ThemedText type="title" style={styles.title}>My Plants</ThemedText> */}
 
         {loading && <ActivityIndicator style={styles.loading} color={Colors[theme].tint} />}
@@ -72,7 +72,7 @@ export default function PlantListScreen({
             keyExtractor={(item) => item.id}
             renderItem={({ item, index }) => (
               <>
-                <PlantCard plant={item} weather={weatherMap[item.id]} />
+                <PlantCard plant={item} />
                 {index === filteredPlants.length - 1 && (
                   <View style={{ alignItems: 'center', marginTop: 16 }}>
                     <TouchableOpacity
@@ -108,7 +108,7 @@ export default function PlantListScreen({
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  container: { flex: 1, padding: 16 },
+  container: { flex: 1, padding: 16, paddingTop: 0 },
   loading: { marginTop: 20 },
   errorText: { marginTop: 10 },
   addPlantButton: {

@@ -62,25 +62,31 @@ export function PlantCard({ plant }: PlantCardProps) {
         onPress={() => router.push({ pathname: '/plant/[id]', params: { id: plant.id } })}
       >
         <Animated.View style={{ transform: [{ scale: scaleAnim }], opacity: opacityAnim }}>
-          <ThemedView style={[styles.card, { flexDirection: 'row', alignItems: 'center', minHeight: 90 }]}> 
-            {/* Left: Image */}
-            {(plant as any).imageUri ? (
-              <Image source={{ uri: (plant as any).imageUri }} style={styles.imageSmall} />
-            ) : (
-              <View style={styles.imageSmallPlaceholder}>
-                <MaterialCommunityIcons name="leaf" size={36} color="#00c853" />
-              </View>
-            )}
-            {/* Right: Info and Water Button */}
-            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', minWidth: 0, marginLeft: 12 }}>
-              <View style={{ flex: 1, flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
-                <ThemedText style={styles.plantNameTopTight} numberOfLines={1}>{plant.name}</ThemedText>
-                <WeedGrowEnvBadge environment={env} size={14} style={{ marginTop: 2, marginBottom: 2, alignSelf: 'flex-start' }} />
-                <View style={styles.statusRow}>
-                  <MaterialCommunityIcons name="progress-clock" size={15} color="#a3e635" style={{ marginRight: 2 }} />
-                  <ThemedText style={styles.statusText}>{plant.status}</ThemedText>
+          <ThemedView style={[styles.card, { flexDirection: 'row', alignItems: 'stretch', minHeight: 90 }]}> 
+            {/* Left: Env Badge above Image, fixed width */}
+            <View style={styles.leftSection}>
+              <WeedGrowEnvBadge environment={env} size={16} style={{ alignSelf: 'center', marginBottom: 6 }} />
+              {(plant as any).imageUri ? (
+                <Image source={{ uri: (plant as any).imageUri }} style={styles.imageSmall} />
+              ) : (
+                <View style={styles.imageSmallPlaceholder}>
+                  <MaterialCommunityIcons name="leaf" size={36} color="#00c853" />
                 </View>
+              )}
+            </View>
+            {/* Middle: Info */}
+            <View style={styles.rightSection}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                <ThemedText style={styles.plantNameTopTight} numberOfLines={1}>{plant.name}</ThemedText>
               </View>
+              <ThemedText style={styles.strainText} numberOfLines={1}>{(plant as any).strain}</ThemedText>
+              <View style={styles.statusRow}>
+                <MaterialCommunityIcons name="progress-clock" size={15} color="#a3e635" style={{ marginRight: 2 }} />
+                <ThemedText style={styles.statusText}>{plant.status}</ThemedText>
+              </View>
+            </View>
+            {/* Right: Water Button */}
+            <View style={styles.waterButtonSection}>
               <IconButton
                 icon="water"
                 size={24}
@@ -130,12 +136,24 @@ const styles = StyleSheet.create({
     marginBottom: 2,
     flexShrink: 1,
   },
+  leftSection: {
+    width: 70,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingVertical: 8,
+    marginRight: 10,
+  },
+  rightSection: {
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    minWidth: 0,
+    paddingVertical: 4,
+  },
   imageSmall: {
     height: 56,
     width: 56,
     borderRadius: 12,
-    marginRight: 10,
-    marginLeft: 0,
     resizeMode: 'cover',
     backgroundColor: '#222',
   },
@@ -143,8 +161,6 @@ const styles = StyleSheet.create({
     height: 56,
     width: 56,
     borderRadius: 12,
-    marginRight: 10,
-    marginLeft: 0,
     backgroundColor: '#222',
     justifyContent: 'center',
     alignItems: 'center',
@@ -153,6 +169,12 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     alignSelf: 'center',
     elevation: 2,
+  },
+  waterButtonSection: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    paddingHorizontal: 4,
   },
   statusRow: {
     flexDirection: 'row',
@@ -164,6 +186,12 @@ const styles = StyleSheet.create({
     color: '#e0e7ef',
     fontSize: 13,
     fontWeight: '600',
+  },
+  strainText: {
+    color: '#a3e635',
+    fontSize: 13,
+    marginBottom: 2,
+    marginTop: 0,
   },
 });
 
