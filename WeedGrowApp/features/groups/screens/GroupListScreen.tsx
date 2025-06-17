@@ -1,32 +1,22 @@
 import React, { useState } from 'react';
-import { FlatList, View, StyleSheet, TouchableOpacity } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Snackbar, ActivityIndicator, Searchbar, IconButton, Chip } from 'react-native-paper';
+import { View, StyleSheet } from 'react-native';
+import { Snackbar, Searchbar, IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import { ThemedText } from '@/ui/ThemedText';
-import GroupCard from '@/features/groups/components/GroupCard';
+import GroupList from '../components/GroupList';
 import EditGroupModal from '@/features/groups/components/EditGroupModal';
 import { useGroupList } from '@/features/groups/hooks/useGroupList';
 import PlantListScreen from '@/features/plants/screens/PlantListScreen';
 import SuggestionCatalog from '@/ui/SuggestionCatalog';
 import AppHeader from '@/ui/AppHeader';
 import SwipeTabs from '@/ui/SwipeTabs';
-
-const FilterChips = ({ label, options, value, setValue }: any) => (
-  <>
-    <ThemedText style={styles.filterLabel}>{label}</ThemedText>
-    <View style={styles.chipRow}>
-      <Chip selected={!value} onPress={() => setValue(null)}>All</Chip>
-      {options.map((opt: string) => (
-        <Chip key={opt} selected={value === opt} onPress={() => setValue(opt)}>{opt}</Chip>
-      ))}
-    </View>
-  </>
-);
+import FilterChips from '../components/FilterChips';
+import { useGroupListFilters } from '../hooks/useGroupListFilters';
+import { useGroupPlantsMap } from '../hooks/useGroupPlantsMap';
+import { useGroupListHandlers } from '../hooks/useGroupListHandlers';
 
 const styles = StyleSheet.create({
   appHeaderModern: {
@@ -82,8 +72,6 @@ const styles = StyleSheet.create({
   searchRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 10 },
   searchBar: { marginRight: 8 },
   filtersContainer: { marginBottom: 12, gap: 8 },
-  filterLabel: { marginBottom: 4 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   tabHeader: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -115,14 +103,41 @@ export default function GroupListScreen() {
   const router = useRouter();
   const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
   const state = useGroupList();
-  const [tab, setTab] = useState<'groups' | 'plants'>('groups');
-  const [searchQuery, setSearchQuery] = useState('');
-  // Plant filters
-  const [filtersVisible, setFiltersVisible] = useState(false);
+
+  // Search/filter logic
+  const {
+    searchQuery, setSearchQuery,
+    envFilter, setEnvFilter,
+    filtersVisible, setFiltersVisible,
+    filteredGroups
+  } = useGroupListFilters(state.groups);
+
+  // Group-to-plant mapping
+  const groupPlantsMap = useGroupPlantsMap(filteredGroups, state.allPlants);
+
+  // Snackbar state
+  const [snackVisible, setSnackVisible] = useState(false);
+  const [snackMessage, setSnackMessage] = useState('');
+
+  // Handlers
+  const { handleWaterAll, handleEditGroup } = useGroupListHandlers(
+    state.handleWaterAll,
+    state.setEditGroup,
+    setSnackMessage,
+    setSnackVisible
+  );
+
+  // Tab state
+  const [tabIndex, setTabIndex] = useState(0);
+  const tabKeys = ['groups', 'plants'];
+
+  // Plant tab filter state (local, not shared with group tab)
+  const [plantSearchQuery, setPlantSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [envFilter, setEnvFilter] = useState<string | null>(null);
+  const [plantEnvFilter, setPlantEnvFilter] = useState<string | null>(null);
   const [plantedFilter, setPlantedFilter] = useState<string | null>(null);
   const [trainingFilter, setTrainingFilter] = useState<string | null>(null);
+  const [plantFiltersVisible, setPlantFiltersVisible] = useState(false);
 
   // Mock suggestions data
   const mockSuggestions = [
@@ -158,9 +173,6 @@ export default function GroupListScreen() {
     },
   ];
 
-  // Filtered groups
-  const filteredGroups = state.groups.filter((g) => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
-
   return (
     <View style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: insets.top }}>
       {/* Modern App Header */}
@@ -170,79 +182,38 @@ export default function GroupListScreen() {
       {/* Search & Filter UI */}
       <View style={styles.searchRow}>
         <Searchbar
-          placeholder={tab === 'groups' ? 'Search groups' : 'Search plants'}
+          placeholder={tabKeys[tabIndex] === 'groups' ? 'Search groups' : 'Search plants'}
           value={searchQuery}
           onChangeText={setSearchQuery}
           style={[styles.searchBar, { flex: 1 }]}
         />
-        {tab === 'plants' && (
-          <IconButton icon={filtersVisible ? 'filter-off-outline' : 'filter-variant'} onPress={() => setFiltersVisible((v) => !v)} />
+        {tabKeys[tabIndex] === 'plants' && (
+          <IconButton icon={plantFiltersVisible ? 'filter-off-outline' : 'filter-variant'} onPress={() => setPlantFiltersVisible((v) => !v)} />
         )}
       </View>
-      {tab === 'plants' && filtersVisible && (
+      {tabKeys[tabIndex] === 'plants' && plantFiltersVisible && (
         <View style={styles.filtersContainer}>
-          <FilterChips label="Status" options={['active', 'archived', 'harvested', 'dead']} value={statusFilter} setValue={setStatusFilter} />
+          {/* Only show environment filter for groups */}
           <FilterChips label="Environment" options={['outdoor', 'greenhouse', 'indoor']} value={envFilter} setValue={setEnvFilter} />
-          <FilterChips label="Planted In" options={['pot', 'ground']} value={plantedFilter} setValue={setPlantedFilter} />
-          <FilterChips label="Training" options={['LST', 'Topping', 'SCROG']} value={trainingFilter} setValue={setTrainingFilter} />
         </View>
       )}
       <SwipeTabs
-        initialKey={tab}
+        index={tabIndex}
+        onIndexChange={setTabIndex}
         tabs={[
           {
             key: 'groups',
             title: 'Groups',
             render: () => (
-              <FlatList
-                data={filteredGroups}
-                keyExtractor={(item) => item.id}
-                ListEmptyComponent={
-                  state.loading ? (
-                    <ActivityIndicator style={styles.loading} color={Colors[theme].tint} />
-                  ) : state.error ? (
-                    <ThemedText>❌ {state.error}</ThemedText>
-                  ) : (
-                    <View style={{ alignItems: 'center', marginTop: 32 }}>
-                      <TouchableOpacity
-                        accessibilityLabel="Add Group"
-                        onPress={() => router.push('/add-group')}
-                        style={[styles.addGroupButton, { backgroundColor: Colors[theme].tint }]}
-                      >
-                        <MaterialCommunityIcons name="plus" size={24} color={Colors[theme].white} />
-                        <ThemedText style={styles.addGroupText}>Add Group</ThemedText>
-                      </TouchableOpacity>
-                    </View>
-                  )
-                }
-                renderItem={({ item, index }: { item: any; index: number }) => (
-                  <>
-                    <GroupCard
-                      group={item}
-                      onWaterAll={() => state.handleWaterAll(item.id)}
-                      waterDisabled={state.wateringId === item.id}
-                      onEdit={() => state.setEditGroup(item)}
-                    />
-                    {index === filteredGroups.length - 1 && (
-                      <View style={{ alignItems: 'center', marginTop: 16 }}>
-                        <TouchableOpacity
-                          accessibilityLabel="Add Group"
-                          onPress={() => router.push('/add-group')}
-                          style={[styles.addGroupButton, { backgroundColor: Colors[theme].tint }]}
-                        >
-                          <MaterialCommunityIcons name="plus" size={24} color={Colors[theme].white} />
-                          <ThemedText style={styles.addGroupText}>Add Group</ThemedText>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                  </>
-                )}
-                contentContainerStyle={{
-                  paddingHorizontal: 16,
-                  paddingTop: 4,
-                  gap: 12,
-                  flexGrow: 1,
-                }}
+              <GroupList
+                groups={filteredGroups}
+                groupPlantsMap={groupPlantsMap}
+                loading={state.loading}
+                error={state.error}
+                onWaterAll={handleWaterAll}
+                onEditGroup={handleEditGroup}
+                onAddGroup={() => router.push('/add-group')}
+                theme={theme}
               />
             ),
           },
@@ -251,25 +222,25 @@ export default function GroupListScreen() {
             title: 'Plants',
             render: () => (
               <PlantListScreen
-                searchQuery={searchQuery}
+                searchQuery={plantSearchQuery}
                 statusFilter={statusFilter}
-                envFilter={envFilter}
+                envFilter={plantEnvFilter}
                 plantedFilter={plantedFilter}
                 trainingFilter={trainingFilter}
-                setSearchQuery={setSearchQuery}
+                setSearchQuery={setPlantSearchQuery}
                 setStatusFilter={setStatusFilter}
-                setEnvFilter={setEnvFilter}
+                setEnvFilter={setPlantEnvFilter}
                 setPlantedFilter={setPlantedFilter}
                 setTrainingFilter={setTrainingFilter}
-                filtersVisible={filtersVisible}
-                setFiltersVisible={setFiltersVisible}
+                filtersVisible={plantFiltersVisible}
+                setFiltersVisible={setPlantFiltersVisible}
               />
             ),
           },
         ]}
       />
-      <Snackbar visible={state.snackVisible} onDismiss={() => state.setSnackVisible(false)} duration={3000}>
-        {state.snackMessage}
+      <Snackbar visible={snackVisible} onDismiss={() => setSnackVisible(false)} duration={3000}>
+        {snackMessage}
       </Snackbar>
       <EditGroupModal
         visible={!!state.editGroup}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { getUserGroups, waterAllPlantsInGroup } from '@/features/groups/api/groupApi';
 import { collection, getDocs, query } from 'firebase/firestore';
 import { db } from '@/services/firebase';
@@ -8,17 +8,20 @@ export function useGroupList() {
   const [groups, setGroups] = useState<(Group & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [wateringId, setWateringId] = useState<string | null>(null);
-  const [snackVisible, setSnackVisible] = useState(false);
-  const [snackMessage, setSnackMessage] = useState('');
   const [editGroup, setEditGroup] = useState<Group & { id: string } | null>(null);
   const [allPlants, setAllPlants] = useState<(Plant & { id: string })[]>([]);
+
+  const lastGroupsRef = useRef<string>('');
 
   useEffect(() => {
     const fetchGroups = async () => {
       try {
         const data = await getUserGroups('demoUser');
-        setGroups(data);
+        const dataHash = JSON.stringify(data);
+        if (dataHash !== lastGroupsRef.current) {
+          setGroups(data);
+          lastGroupsRef.current = dataHash;
+        }
       } catch (e: any) {
         console.error('Error fetching groups', e);
         setError(e.message || 'Failed to load groups');
@@ -43,16 +46,8 @@ export function useGroupList() {
   }, []);
 
   const handleWaterAll = async (groupId: string) => {
-    setWateringId(groupId);
-    try {
-      await waterAllPlantsInGroup(groupId, 'demoUser');
-      setSnackMessage('All plants watered');
-    } catch (err: any) {
-      setSnackMessage(err.message || 'Failed to log');
-    } finally {
-      setWateringId(null);
-      setSnackVisible(true);
-    }
+    await waterAllPlantsInGroup(groupId, 'demoUser');
+    // No reloadGroups after waterAll — state stays stable
   };
 
   const reloadGroups = async () => {
@@ -66,11 +61,7 @@ export function useGroupList() {
     groups,
     loading,
     error,
-    wateringId,
     handleWaterAll,
-    snackVisible,
-    setSnackVisible,
-    snackMessage,
     editGroup,
     setEditGroup,
     reloadGroups,

@@ -1,18 +1,22 @@
 import * as React from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, useWindowDimensions, Text } from 'react-native';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { Colors } from '@/constants/Colors';
 
 interface SwipeTabsProps {
   tabs: { key: string; title: string; render: () => React.ReactNode }[];
   initialKey?: string;
+  index?: number;
+  onIndexChange?: (idx: number) => void;
 }
 
-export default function SwipeTabs({ tabs, initialKey }: SwipeTabsProps) {
+export default function SwipeTabs({ tabs, initialKey, index: controlledIndex, onIndexChange }: SwipeTabsProps) {
   const layout = useWindowDimensions();
-  const [index, setIndex] = React.useState(
+  const [uncontrolledIndex, setUncontrolledIndex] = React.useState(
     initialKey ? Math.max(0, tabs.findIndex(t => t.key === initialKey)) : 0
   );
+  const index = controlledIndex !== undefined ? controlledIndex : uncontrolledIndex;
+  const setIndex = onIndexChange || setUncontrolledIndex;
   const routes = tabs.map(({ key, title }) => ({ key, title }));
   const renderScene = SceneMap(
     Object.fromEntries(tabs.map(tab => [tab.key, tab.render]))
@@ -28,7 +32,6 @@ export default function SwipeTabs({ tabs, initialKey }: SwipeTabsProps) {
           {...props}
           indicatorStyle={{ backgroundColor: Colors.light.tint, height: 3, borderRadius: 2 }}
           style={styles.tabBar}
-          labelStyle={styles.tabLabel}
           activeColor={Colors.light.tint}
           inactiveColor={'#888'}
           pressColor={Colors.light.tint + '22'}
