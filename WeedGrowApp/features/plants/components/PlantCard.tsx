@@ -2,7 +2,6 @@ import React from 'react';
 import { StyleSheet, TouchableOpacity, Image, View, Animated } from 'react-native';
 import { IconButton, Snackbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { ThemedView } from '@/ui/ThemedView';
 import { ThemedText } from '@/ui/ThemedText';
 import { Plant } from '@/firestoreModels';
 import { calendarGreen } from '@/constants/Colors';
@@ -10,6 +9,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { addPlantLog } from '@/lib/logs/addPlantLog';
 import { LinearGradient } from 'expo-linear-gradient';
 import { WeedGrowEnvBadge } from '@/ui/WeedGrowEnvBadge';
+import { ThemedView } from '@/ui/ThemedView';
 
 export interface PlantCardProps {
   plant: Plant & { id: string };
@@ -119,7 +119,6 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     padding: 2,
     borderRadius: 16,
-    backgroundColor: 'transparent',
     borderLeftWidth: 5,
     borderLeftColor: '#00c853',
     position: 'relative',
