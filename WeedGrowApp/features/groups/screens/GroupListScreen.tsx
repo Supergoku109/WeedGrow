@@ -13,13 +13,13 @@ import { useGroupList } from '@/features/groups/hooks/useGroupList';
 import PlantListScreen from '@/features/plants/screens/PlantListScreen';
 import SuggestionCatalog from '@/ui/SuggestionCatalog';
 import AppHeader from '@/ui/AppHeader';
-import SwipeTabs from '@/ui/SwipeTabs';
 import FilterChips from '../components/FilterChips';
 import { useGroupListFilters } from '../hooks/useGroupListFilters';
 import { useGroupPlantsMap } from '../hooks/useGroupPlantsMap';
 import { useGroupListHandlers } from '../hooks/useGroupListHandlers';
 import { ThemedText } from '@/ui/ThemedText';
 import HomeBackground from '../components/HomeBackground';
+import SwipeTabs from '@/ui/SwipeTabs';
 
 const styles = StyleSheet.create({
   appHeaderModern: {
@@ -27,11 +27,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 32,
-    paddingBottom: 24,
+    paddingBottom: 0,
     backgroundColor: '#181f1b', // clean, dark, minimal
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
-    marginBottom: 0,
+    marginBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#26332b',
     elevation: 6,
@@ -72,8 +72,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 8,
   },
-  searchRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 10, paddingHorizontal: 12 },
-  searchBar: { marginRight: 8 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginTop: 0, paddingHorizontal: 12 },
+  searchBar: {
+    marginRight: 8,
+    height: 55,
+    minHeight: 55,
+    paddingVertical: 0,
+    flex: 1,
+    backgroundColor: 'rgba(59, 67, 66, 0.55)',
+    borderRadius: 100,
+    borderWidth: 0,
+    paddingHorizontal: 10,
+  },
   filtersContainer: { marginBottom: 12, gap: 8 },
   tabHeader: {
     flexDirection: 'row',
@@ -203,79 +213,88 @@ export default function GroupListScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#181f1b', position: 'relative' }}>
       <HomeBackground />
-      <View style={{ flex: 1, backgroundColor: 'transparent', paddingTop: insets.top }}>
+      <View style={{ flex: 1, backgroundColor: 'transparent', paddingTop:0 }}>
         {/* Modern App Header */}
         <AppHeader />
         {/* TLC needed indicator */}
-        <View style={{ alignItems: 'flex-start', marginBottom: 2, marginLeft: 20, flexDirection: 'row', gap: 4 }}>
+        <View style={{ alignItems: 'flex-start', marginBottom: 0, marginLeft: 20, flexDirection: 'row', gap: 0 }}>
           <MaterialCommunityIcons name="heart-pulse" size={15} color="#ff6b81" style={{ marginRight: 1, marginTop: 6 }} />
           <ThemedText style={{ color: '#ff6b81', fontWeight: '600', fontSize: 13 }}>({tlcCount}) TLC Needed</ThemedText>
         </View>
         {/* Suggestion Catalog */}
         <SuggestionCatalog suggestions={mockSuggestions} />
-        {/* Search & Filter UI */}
-        <View style={styles.searchRow}>
-          <Searchbar
-            placeholder={tabKeys[tabIndex] === 'groups' ? 'Search groups' : 'Search plants'}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            style={[
-              styles.searchBar,
-              { flex: 1, backgroundColor: 'rgba(30, 50, 40, 0.65)', borderRadius: 100, borderWidth: 0, paddingHorizontal: 10 },
+        {/* Swipeable Tabs at the top, compact style */}
+        <View style={{ marginTop: 4, marginBottom: 4, flex: 1 }}>
+          <SwipeTabs
+            index={tabIndex}
+            onIndexChange={setTabIndex}
+            tabs={[
+              {
+                key: 'groups',
+                title: 'Groups',
+                render: () => (
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.searchRow}>
+                      <Searchbar
+                        placeholder="Search groups"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        style={styles.searchBar}
+                        inputStyle={{ color: '#fff', textAlignVertical: 'center' }}
+                      />
+                    </View>
+                    <GroupList
+                      groups={filteredGroups}
+                      groupPlantsMap={groupPlantsMap}
+                      loading={state.loading}
+                      error={state.error}
+                      onEditGroup={handleEditGroup}
+                      onAddGroup={() => router.push('/add-group')}
+                      theme={theme}
+                    />
+                  </View>
+                ),
+              },
+              {
+                key: 'plants',
+                title: 'Plants',
+                render: () => (
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.searchRow}>
+                      <Searchbar
+                        placeholder="Search plants"
+                        value={plantSearchQuery}
+                        onChangeText={setPlantSearchQuery}
+                        style={styles.searchBar}
+                        inputStyle={{ color: '#fff', textAlignVertical: 'center' }}
+                      />
+                      <IconButton icon={plantFiltersVisible ? 'filter-off-outline' : 'filter-variant'} onPress={() => setPlantFiltersVisible((v) => !v)} />
+                    </View>
+                    {plantFiltersVisible && (
+                      <View style={styles.filtersContainer}>
+                        <FilterChips label="Environment" options={['outdoor', 'greenhouse', 'indoor']} value={plantEnvFilter} setValue={setPlantEnvFilter} />
+                      </View>
+                    )}
+                    <PlantListScreen
+                      searchQuery={plantSearchQuery}
+                      statusFilter={statusFilter}
+                      envFilter={plantEnvFilter}
+                      plantedFilter={plantedFilter}
+                      trainingFilter={trainingFilter}
+                      setSearchQuery={setPlantSearchQuery}
+                      setStatusFilter={setStatusFilter}
+                      setEnvFilter={setPlantEnvFilter}
+                      setPlantedFilter={setPlantedFilter}
+                      setTrainingFilter={setTrainingFilter}
+                      filtersVisible={plantFiltersVisible}
+                      setFiltersVisible={setPlantFiltersVisible}
+                    />
+                  </View>
+                ),
+              },
             ]}
-            inputStyle={{ color: '#fff' }}
           />
-          {tabKeys[tabIndex] === 'plants' && (
-            <IconButton icon={plantFiltersVisible ? 'filter-off-outline' : 'filter-variant'} onPress={() => setPlantFiltersVisible((v) => !v)} />
-          )}
         </View>
-        {tabKeys[tabIndex] === 'plants' && plantFiltersVisible && (
-          <View style={styles.filtersContainer}>
-            {/* Only show environment filter for groups */}
-            <FilterChips label="Environment" options={['outdoor', 'greenhouse', 'indoor']} value={envFilter} setValue={setEnvFilter} />
-          </View>
-        )}
-        <SwipeTabs
-          index={tabIndex}
-          onIndexChange={setTabIndex}
-          tabs={[
-            {
-              key: 'groups',
-              title: 'Groups',
-              render: () => (
-                <GroupList
-                  groups={filteredGroups}
-                  groupPlantsMap={groupPlantsMap}
-                  loading={state.loading}
-                  error={state.error}
-                  onEditGroup={handleEditGroup}
-                  onAddGroup={() => router.push('/add-group')}
-                  theme={theme}
-                />
-              ),
-            },
-            {
-              key: 'plants',
-              title: 'Plants',
-              render: () => (
-                <PlantListScreen
-                  searchQuery={plantSearchQuery}
-                  statusFilter={statusFilter}
-                  envFilter={plantEnvFilter}
-                  plantedFilter={plantedFilter}
-                  trainingFilter={trainingFilter}
-                  setSearchQuery={setPlantSearchQuery}
-                  setStatusFilter={setStatusFilter}
-                  setEnvFilter={setPlantEnvFilter}
-                  setPlantedFilter={setPlantedFilter}
-                  setTrainingFilter={setTrainingFilter}
-                  filtersVisible={plantFiltersVisible}
-                  setFiltersVisible={setPlantFiltersVisible}
-                />
-              ),
-            },
-          ]}
-        />
         <Snackbar visible={snackVisible} onDismiss={() => setSnackVisible(false)} duration={3000}>
           {snackMessage}
         </Snackbar>

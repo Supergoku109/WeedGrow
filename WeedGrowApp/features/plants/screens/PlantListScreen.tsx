@@ -119,7 +119,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 28,
     marginTop: -20,
-    marginBottom: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.09)', // Glassy white
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.03)',

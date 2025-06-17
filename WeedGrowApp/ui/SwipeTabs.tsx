@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { View, StyleSheet, useWindowDimensions, Text } from 'react-native';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import { View, StyleSheet, useWindowDimensions, Text, Pressable } from 'react-native';
+import { TabView, SceneMap, SceneRendererProps, NavigationState } from 'react-native-tab-view';
 import { Colors } from '@/constants/Colors';
 
 interface SwipeTabsProps {
@@ -21,40 +21,70 @@ export default function SwipeTabs({ tabs, initialKey, index: controlledIndex, on
   const renderScene = SceneMap(
     Object.fromEntries(tabs.map(tab => [tab.key, tab.render]))
   );
+
+  // Custom tab bar for pill-style tabs
+  const renderTabBar = ({ navigationState, position }: SceneRendererProps & { navigationState: NavigationState<{ key: string; title: string }> }) => (
+    <View style={styles.pillTabBarContainer}>
+      {navigationState.routes.map((route: { key: string; title: string }, i: number) => {
+        const active = index === i;
+        return (
+          <Pressable
+            key={route.key}
+            onPress={() => setIndex(i)}
+            style={[styles.pillTab, active && styles.pillTabActive]}
+          >
+            <Text style={[styles.pillTabLabel, active && styles.pillTabLabelActive]}>{route.title}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+
   return (
     <TabView
       navigationState={{ index, routes }}
       renderScene={renderScene}
       onIndexChange={setIndex}
       initialLayout={{ width: layout.width }}
-      renderTabBar={props => (
-        <TabBar
-          {...props}
-          indicatorStyle={{ backgroundColor: Colors.light.tint, height: 3, borderRadius: 2 }}
-          style={styles.tabBar}
-          activeColor={Colors.light.tint}
-          inactiveColor={'#888'}
-          pressColor={Colors.light.tint + '22'}
-        />
-      )}
+      renderTabBar={renderTabBar}
       swipeEnabled
     />
   );
 }
 
 const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: 'transparent',
-    elevation: 0,
-    shadowOpacity: 0,
-    borderBottomWidth: 0,
-    marginBottom: 4,
+  pillTabBarContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(30,40,36,0.85)',
+    borderRadius: 16,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    marginTop: 2,
+    padding: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
-  tabLabel: {
-    fontWeight: '600',
-    fontSize: 16,
-    textTransform: 'none',
-    margin: 0,
-    padding: 0,
+  pillTab: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: 'transparent',
+    transitionDuration: '150ms',
+  },
+  pillTabActive: {
+    backgroundColor: Colors.light.tint,
+  },
+  pillTabLabel: {
+    color: '#bbb',
+    fontWeight: '700',
+    fontSize: 15,
+    paddingHorizontal: 12,
+    paddingVertical: 2,
+  },
+  pillTabLabelActive: {
+    color: '#fff',
   },
 });
