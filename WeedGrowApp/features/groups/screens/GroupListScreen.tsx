@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { Snackbar, Searchbar, IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
@@ -17,6 +18,7 @@ import FilterChips from '../components/FilterChips';
 import { useGroupListFilters } from '../hooks/useGroupListFilters';
 import { useGroupPlantsMap } from '../hooks/useGroupPlantsMap';
 import { useGroupListHandlers } from '../hooks/useGroupListHandlers';
+import { ThemedText } from '@/ui/ThemedText';
 
 const styles = StyleSheet.create({
   appHeaderModern: {
@@ -173,10 +175,18 @@ export default function GroupListScreen() {
     },
   ];
 
+  // TLC needed indicator
+  const tlcCount = mockSuggestions.length;
+
   return (
     <View style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: insets.top }}>
       {/* Modern App Header */}
       <AppHeader />
+      {/* TLC needed indicator */}
+      <View style={{ alignItems: 'flex-start', marginBottom: 2, marginLeft: 20, flexDirection: 'row', gap: 4 }}>
+        <MaterialCommunityIcons name="heart-pulse" size={15} color="#ff6b81" style={{ marginRight: 1, marginTop: 6 }} />
+        <ThemedText style={{ color: '#ff6b81', fontWeight: '600', fontSize: 13 }}>({tlcCount}) TLC Needed</ThemedText>
+      </View>
       {/* Suggestion Catalog */}
       <SuggestionCatalog suggestions={mockSuggestions} />
       {/* Search & Filter UI */}
