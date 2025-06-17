@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, FlatList, Dimensions } from 'react-native';
 import { ThemedText } from './ThemedText';
+import GradientOverlay from './GradientOverlay';
 
 export interface Suggestion {
   key: string;
@@ -17,6 +18,24 @@ interface SuggestionCatalogProps {
 
 const CARD_WIDTH = Math.min(Dimensions.get('window').width - 32, 340);
 
+// Color codes for suggestion types (edit here)
+const SUGGESTION_COLORS = {
+  watering: 'rgb(15, 69, 161)', // blue
+  mildew: 'rgba(139, 9, 9, 0.93)',  // red
+  weather: 'rgb(189, 138, 17)', // orange
+  fertilizer: 'rgb(34, 142, 77)', // green
+  default: 'rgba(26,46,34,1)',
+};
+
+const getCardColor = (suggestion: Suggestion) => {
+  const title = suggestion.title.toLowerCase();
+  if (title.includes('water')) return SUGGESTION_COLORS.watering;
+  if (title.includes('mildew') || title.includes('risk')) return SUGGESTION_COLORS.mildew;
+  if (title.includes('storm') || title.includes('weather') || title.includes('hail') || title.includes('wind')) return SUGGESTION_COLORS.weather;
+  if (title.includes('fertilizer')) return SUGGESTION_COLORS.fertilizer;
+  return SUGGESTION_COLORS.default;
+};
+
 export function SuggestionCatalog({ suggestions }: SuggestionCatalogProps) {
   return (
     <View style={styles.catalogContainer}>
@@ -30,7 +49,8 @@ export function SuggestionCatalog({ suggestions }: SuggestionCatalogProps) {
         decelerationRate="fast"
         contentContainerStyle={{ paddingHorizontal: 8 }}
         renderItem={({ item }) => (
-          <View style={[styles.card, { width: CARD_WIDTH }]}>
+          <View style={[styles.card, { width: CARD_WIDTH, backgroundColor: getCardColor(item), overflow: 'hidden' }]}> 
+            <GradientOverlay color={getCardColor(item)} />
             <View style={styles.headerRow}>
               <ThemedText style={styles.icon}>{item.icon}</ThemedText>
               <ThemedText style={styles.title}>{item.title}</ThemedText>
@@ -60,7 +80,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   card: {
-    backgroundColor: '#1a2e22',
     borderRadius: 14,
     padding: 14,
     shadowColor: '#000',
