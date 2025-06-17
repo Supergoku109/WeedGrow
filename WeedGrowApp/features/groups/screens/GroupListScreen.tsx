@@ -122,13 +122,34 @@ export default function GroupListScreen() {
   const [snackVisible, setSnackVisible] = useState(false);
   const [snackMessage, setSnackMessage] = useState('');
 
+  // Per-group water loading/disabled state
+  const [waterLoadingMap, setWaterLoadingMap] = useState<Record<string, boolean>>({});
+  const [waterDisabledMap, setWaterDisabledMap] = useState<Record<string, boolean>>({});
+
   // Handlers
-  const { handleWaterAll, handleEditGroup } = useGroupListHandlers(
+  const { handleEditGroup } = useGroupListHandlers(
     state.handleWaterAll,
     state.setEditGroup,
     setSnackMessage,
     setSnackVisible
   );
+
+  // Custom handleWaterAll to manage loading state
+  const handleWaterAll = async (groupId: string) => {
+    setWaterLoadingMap((prev) => ({ ...prev, [groupId]: true }));
+    setWaterDisabledMap((prev) => ({ ...prev, [groupId]: true }));
+    try {
+      await state.handleWaterAll(groupId);
+      setSnackMessage('All plants watered!');
+      setSnackVisible(true);
+    } catch (e: any) {
+      setSnackMessage(e?.message || 'Failed to water all');
+      setSnackVisible(true);
+    } finally {
+      setWaterLoadingMap((prev) => ({ ...prev, [groupId]: false }));
+      setWaterDisabledMap((prev) => ({ ...prev, [groupId]: false }));
+    }
+  };
 
   // Tab state
   const [tabIndex, setTabIndex] = useState(0);
@@ -227,7 +248,6 @@ export default function GroupListScreen() {
                   groupPlantsMap={groupPlantsMap}
                   loading={state.loading}
                   error={state.error}
-                  onWaterAll={handleWaterAll}
                   onEditGroup={handleEditGroup}
                   onAddGroup={() => router.push('/add-group')}
                   theme={theme}

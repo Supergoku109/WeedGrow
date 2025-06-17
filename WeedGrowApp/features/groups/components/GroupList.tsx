@@ -11,7 +11,6 @@ interface GroupListProps {
   groupPlantsMap: Record<string, (Plant & { id: string })[]>;
   loading: boolean;
   error: string | null;
-  onWaterAll: (groupId: string) => void;
   onEditGroup: (group: Group & { id: string }) => void;
   onAddGroup: () => void;
   theme: string;
@@ -22,16 +21,11 @@ export default function GroupList({
   groupPlantsMap,
   loading,
   error,
-  onWaterAll,
   onEditGroup,
   onAddGroup,
   theme,
 }: GroupListProps) {
   // Memoize handlers per group
-  const getOnWaterAll = useCallback(
-    (groupId: string) => () => onWaterAll(groupId),
-    [onWaterAll]
-  );
   const getOnEditGroup = useCallback(
     (group: Group & { id: string }) => () => onEditGroup(group),
     [onEditGroup]

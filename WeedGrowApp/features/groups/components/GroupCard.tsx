@@ -6,9 +6,10 @@ import {
   Image,
   Animated,
 } from 'react-native';
-import { Button, Snackbar } from 'react-native-paper';
+import { Button, IconButton, Snackbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { ThemedView } from '@/ui/ThemedView';
@@ -31,9 +32,9 @@ export interface GroupCardProps {
   onEdit?: () => void;
 }
 
-const GroupCardComponent = function GroupCard({
+export default function GroupCard({
   group,
-  plants: _plants = [],
+  plants = [],
   weatherData,
   lastWatered,
   onEdit,
@@ -41,6 +42,10 @@ const GroupCardComponent = function GroupCard({
   const router = useRouter();
   const [weather, setWeather] = useState<any>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
+  const [watering, setWatering] = useState(false);
+  const [snackVisible, setSnackVisible] = useState(false);
+  const [snackMessage, setSnackMessage] = useState('');
+
   useEffect(() => {
     let ignore = false;
     async function fetchWeather() {
@@ -95,9 +100,23 @@ const GroupCardComponent = function GroupCard({
     }
   }, [group.environment, group.sensorProfileId]);
 
-  // Use the plants prop directly
-  const previewPlants = _plants.slice(0, 3);
-  const moreCount = _plants.length - 3;
+  // Environment badge
+  const envIcon =
+    group.environment === 'indoor'
+      ? 'home'
+      : group.environment === 'outdoor'
+      ? 'weather-sunny'
+      : 'greenhouse';
+  const envLabel =
+    group.environment === 'indoor'
+      ? 'Indoor'
+      : group.environment === 'outdoor'
+      ? 'Outdoor'
+      : 'Greenhouse';
+
+  // Plant preview
+  const previewPlants = plants.slice(0, 3);
+  const moreCount = plants.length - 3;
 
   // Long press for quick actions (optional)
   const handleLongPress = () => {
@@ -108,21 +127,16 @@ const GroupCardComponent = function GroupCard({
   const handlePress = () =>
     router.push({ pathname: '/group/[id]', params: { id: group.id } });
 
-  // Local state for water button loading
-  const [watering, setWatering] = useState(false);
-  const [snackVisible, setSnackVisible] = useState(false);
-  const [snackMessage, setSnackMessage] = useState('');
   const handleWaterAll = async (e: any) => {
     e.stopPropagation();
     setWatering(true);
     try {
       await waterAllPlantsInGroup(group.id, 'demoUser');
-      setSnackMessage('All plants watered');
-      setSnackVisible(true);
+      setSnackMessage('All plants watered!');
     } catch (err: any) {
-      setSnackMessage(err?.message || 'Failed to log');
-      setSnackVisible(true);
+      setSnackMessage(err?.message || 'Failed to water all');
     } finally {
+      setSnackVisible(true);
       setWatering(false);
     }
   };
@@ -151,49 +165,19 @@ const GroupCardComponent = function GroupCard({
   }, []);
 
   return (
-    <>
-      <TouchableOpacity onPress={handlePress} onLongPress={handleLongPress}>
-        <Animated.View style={{
-          transform: [{ scale: scaleAnim }],
-          opacity: opacityAnim,
-        }}>
-          <ThemedView style={[styles.card, { flexDirection: 'column', minHeight: 90, padding: 10 }]}> 
-            {/* Top Row: Env badge, group name, water button */}
-            <View style={styles.topRow}>
+    <TouchableOpacity onPress={handlePress} onLongPress={handleLongPress}>
+      <Animated.View style={{
+        transform: [{ scale: scaleAnim }],
+        opacity: opacityAnim,
+      }}>
+        <View style={styles.card}>
+          {/* Green accent bar on the left */}
+          <View style={styles.greenBar} />
+          <View style={{ flex: 1 }}>
+            {/* Header: Env badge + name horizontally */}
+            <View style={styles.headerRow}>
               <WeedGrowEnvBadge environment={group.environment} size={16} style={{ marginRight: 8 }} />
               <ThemedText style={styles.groupName} numberOfLines={1}>{group.name}</ThemedText>
-              <TouchableOpacity
-                onPress={handleWaterAll}
-                disabled={watering}
-                style={styles.waterButtonCompact}
-                accessibilityLabel="Water all plants in group"
-              >
-                {watering ? (
-                  <MaterialCommunityIcons name="loading" size={22} color="#fff" />
-                ) : (
-                  <MaterialCommunityIcons name="water" size={22} color="#fff" />
-                )}
-              </TouchableOpacity>
-            </View>
-            {/* Plant images row under env/name/water */}
-            <View style={styles.plantImagesRow}>
-              {previewPlants.map((p) =>
-                p.imageUri ? (
-                  <Image
-                    key={p.id}
-                    source={{ uri: p.imageUri }}
-                    style={styles.plantImage}
-                    accessibilityLabel={`${p.name} image`}
-                  />
-                ) : (
-                  <View key={p.id} style={styles.plantPlaceholder}>
-                    <ThemedText style={styles.plantPlaceholderText}>{p.name}</ThemedText>
-                  </View>
-                )
-              )}
-              {moreCount > 0 && (
-                <ThemedText style={styles.moreText}>+{moreCount}</ThemedText>
-              )}
             </View>
             {/* Weather info (outdoor only) */}
             {group.environment === 'outdoor' && (
@@ -242,13 +226,47 @@ const GroupCardComponent = function GroupCard({
                 )}
               </View>
             )}
+            {/* Plant preview */}
+            <View style={styles.plantsRow}>
+              {previewPlants.map((p) =>
+                p.imageUri ? (
+                  <Image
+                    key={p.id}
+                    source={{ uri: p.imageUri }}
+                    style={styles.plantImage}
+                    accessibilityLabel={`${p.name} image`}
+                  />
+                ) : (
+                  <View key={p.id} style={styles.plantPlaceholder}>
+                    <ThemedText style={styles.plantPlaceholderText}>{p.name}</ThemedText>
+                  </View>
+                )
+              )}
+              {moreCount > 0 && (
+                <ThemedText style={styles.moreText}>+{moreCount}</ThemedText>
+              )}
+            </View>
             {/* Last watered info */}
             {lastWatered && (
               <ThemedText style={styles.lastWatered}>Last watered: {lastWatered}</ThemedText>
             )}
-          </ThemedView>
-        </Animated.View>
-      </TouchableOpacity>
+          </View>
+          {/* Water All button on the right */}
+          <View style={styles.waterButtonSection}>
+            <IconButton
+              icon="water"
+              size={24}
+              mode="contained"
+              iconColor="#fff"
+              containerColor="#1e90ff"
+              style={[styles.waterButtonCompact, { borderRadius: 24, backgroundColor: '#1e90ff' }]}
+              onPress={handleWaterAll}
+              accessibilityLabel="Water all plants in group"
+              disabled={watering}
+            />
+          </View>
+        </View>
+      </Animated.View>
       <Snackbar
         visible={snackVisible}
         onDismiss={() => setSnackVisible(false)}
@@ -256,51 +274,41 @@ const GroupCardComponent = function GroupCard({
       >
         {snackMessage}
       </Snackbar>
-    </>
+    </TouchableOpacity>
   );
 }
-
-const GroupCard = React.memo(GroupCardComponent);
-export default GroupCard;
 
 const styles = StyleSheet.create({
   card: {
     marginBottom: 14,
-    padding: 10,
+    padding: 16,
     borderRadius: 16,
-    // Add green left border to match PlantCard
-    borderLeftWidth: 5,
-    borderLeftColor: '#00c853',
+    backgroundColor: '#181f1b',
     position: 'relative',
     elevation: 2,
+    flexDirection: 'row',
+    alignItems: 'stretch',
     minHeight: 90,
+    overflow: 'hidden',
   },
-  topRow: {
+  greenBar: {
+    width: 6,
+    backgroundColor: '#00c853',
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
+    marginRight: 12,
+  },
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 2,
-    gap: 8,
+    marginBottom: 4,
+    gap: 6,
   },
   groupName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
     flexShrink: 1,
-    marginRight: 8,
-  },
-  waterButtonCompact: {
-    marginLeft: 'auto',
-    backgroundColor: '#1e90ff',
-    borderRadius: 20,
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
   },
   weatherRow: {
     flexDirection: 'row',
@@ -318,13 +326,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 4,
     marginBottom: 4,
-  },
-  plantImagesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-    marginBottom: 4,
-    gap: 4,
   },
   plantImage: {
     width: 40,
@@ -354,5 +355,20 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: '#fff',
     fontSize: 13,
+  },
+  waterButtonSection: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    paddingHorizontal: 4,
+    marginLeft: 8,
+  },
+  waterButtonCompact: {
+    alignSelf: 'center',
+    borderRadius: 8,
+    backgroundColor: '#2563eb',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    elevation: 2,
   },
 });
