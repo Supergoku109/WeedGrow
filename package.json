@@ -3,6 +3,7 @@
     "expo-linear-gradient": "^14.1.5",
     "react-native-paper-dropdown": "^2.3.1",
     "react-native-portalize": "^1.0.7",
-    "react-native-tab-view": "^4.1.2"
+    "react-native-tab-view": "^4.1.2",
+    "react-native-svg": "15.11.2"
   }
 }

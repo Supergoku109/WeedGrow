@@ -19,6 +19,7 @@ import { useGroupListFilters } from '../hooks/useGroupListFilters';
 import { useGroupPlantsMap } from '../hooks/useGroupPlantsMap';
 import { useGroupListHandlers } from '../hooks/useGroupListHandlers';
 import { ThemedText } from '@/ui/ThemedText';
+import HomeBackground from '../components/HomeBackground';
 
 const styles = StyleSheet.create({
   appHeaderModern: {
@@ -180,6 +181,8 @@ export default function GroupListScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: insets.top }}>
+      {/* Blurred green spots background */}
+      <HomeBackground />
       {/* Modern App Header */}
       <AppHeader />
       {/* TLC needed indicator */}
