@@ -7,6 +7,7 @@ import { ThemedText } from '@/ui/ThemedText';
 import { ThemedView } from '@/ui/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import HomeBackground from '@/features/groups/components/HomeBackground';
 
 const SECTIONS = [
   {
@@ -64,6 +65,7 @@ export default function MoreScreen() {
         paddingTop: insets.top,
       }}
     >
+      <HomeBackground />
       <ScrollView contentContainerStyle={styles.container}>
         {SECTIONS.map((section, index) => (
           <React.Fragment key={section.title}>

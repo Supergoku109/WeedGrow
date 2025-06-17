@@ -46,18 +46,19 @@ export default function GroupList({
           <ActivityIndicator style={styles.loading} />
         ) : error ? (
           <ThemedText>❌ {error}</ThemedText>
-        ) : (
-          <View style={{ alignItems: 'center', marginTop: 32 }}>
-            <TouchableOpacity
-              accessibilityLabel="Add Group"
-              onPress={onAddGroup}
-              style={[styles.addGroupButton]}
-            >
-              <MaterialCommunityIcons name="plus" size={24} />
-              <ThemedText style={styles.addGroupText}>Add Group</ThemedText>
-            </TouchableOpacity>
-          </View>
-        )
+        ) : null
+      }
+      ListFooterComponent={
+        <View style={{ alignItems: 'center', marginTop: 16, marginBottom: 24 }}>
+          <TouchableOpacity
+            accessibilityLabel="Add Group"
+            onPress={onAddGroup}
+            style={[styles.addGroupButton]}
+          >
+            <MaterialCommunityIcons name="plus" size={24} color="#fff" style={{ marginRight: 4 }} />
+            <ThemedText style={styles.addGroupText}>Add Group</ThemedText>
+          </TouchableOpacity>
+        </View>
       }
       renderItem={({ item }) => {
         const group = groups.find(g => g.id === item);
@@ -87,20 +88,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 24,
-    marginTop: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 28,
+    marginTop: -20,
     marginBottom: 8,
-    elevation: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.09)', // Glassy white
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.03)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.13,
+    shadowRadius: 12,
+    elevation: 6,
   },
   addGroupText: {
+    color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
-    marginLeft: 8,
+    fontSize: 17,
+    marginLeft: 10,
+    letterSpacing: 0.5,
   },
 });

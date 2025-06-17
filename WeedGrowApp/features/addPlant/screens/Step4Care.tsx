@@ -5,6 +5,7 @@ import { StepIndicatorBar } from '../components/StepIndicatorBar';
 import { CareForm } from '../components/CareForm';
 import { useStep4Care } from '../hooks/useStep4Care';
 import type { PlantForm } from '@/features/plants/form/PlantForm';
+import HomeBackground from '@/features/groups/components/HomeBackground';
 
 interface StepProps {
   form: PlantForm;
@@ -19,6 +20,7 @@ export default function Step4Care({ form, setField, next, back, step }: StepProp
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: logic.backgroundColor }}>
+      <HomeBackground />
       <StepIndicatorBar currentPosition={step - 1} />
       <ScreenLayout backgroundColor={logic.backgroundColor}>
         <CareForm form={form} logic={logic} next={next} back={back} />

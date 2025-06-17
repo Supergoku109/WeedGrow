@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 8,
   },
-  searchRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 10 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 10, paddingHorizontal: 12 },
   searchBar: { marginRight: 8 },
   filtersContainer: { marginBottom: 12, gap: 8 },
   tabHeader: {
@@ -180,88 +180,93 @@ export default function GroupListScreen() {
   const tlcCount = mockSuggestions.length;
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[theme].background, paddingTop: insets.top }}>
-      {/* Blurred green spots background */}
+    <View style={{ flex: 1, backgroundColor: '#181f1b', position: 'relative' }}>
       <HomeBackground />
-      {/* Modern App Header */}
-      <AppHeader />
-      {/* TLC needed indicator */}
-      <View style={{ alignItems: 'flex-start', marginBottom: 2, marginLeft: 20, flexDirection: 'row', gap: 4 }}>
-        <MaterialCommunityIcons name="heart-pulse" size={15} color="#ff6b81" style={{ marginRight: 1, marginTop: 6 }} />
-        <ThemedText style={{ color: '#ff6b81', fontWeight: '600', fontSize: 13 }}>({tlcCount}) TLC Needed</ThemedText>
-      </View>
-      {/* Suggestion Catalog */}
-      <SuggestionCatalog suggestions={mockSuggestions} />
-      {/* Search & Filter UI */}
-      <View style={styles.searchRow}>
-        <Searchbar
-          placeholder={tabKeys[tabIndex] === 'groups' ? 'Search groups' : 'Search plants'}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          style={[styles.searchBar, { flex: 1 }]}
-        />
-        {tabKeys[tabIndex] === 'plants' && (
-          <IconButton icon={plantFiltersVisible ? 'filter-off-outline' : 'filter-variant'} onPress={() => setPlantFiltersVisible((v) => !v)} />
-        )}
-      </View>
-      {tabKeys[tabIndex] === 'plants' && plantFiltersVisible && (
-        <View style={styles.filtersContainer}>
-          {/* Only show environment filter for groups */}
-          <FilterChips label="Environment" options={['outdoor', 'greenhouse', 'indoor']} value={envFilter} setValue={setEnvFilter} />
+      <View style={{ flex: 1, backgroundColor: 'transparent', paddingTop: insets.top }}>
+        {/* Modern App Header */}
+        <AppHeader />
+        {/* TLC needed indicator */}
+        <View style={{ alignItems: 'flex-start', marginBottom: 2, marginLeft: 20, flexDirection: 'row', gap: 4 }}>
+          <MaterialCommunityIcons name="heart-pulse" size={15} color="#ff6b81" style={{ marginRight: 1, marginTop: 6 }} />
+          <ThemedText style={{ color: '#ff6b81', fontWeight: '600', fontSize: 13 }}>({tlcCount}) TLC Needed</ThemedText>
         </View>
-      )}
-      <SwipeTabs
-        index={tabIndex}
-        onIndexChange={setTabIndex}
-        tabs={[
-          {
-            key: 'groups',
-            title: 'Groups',
-            render: () => (
-              <GroupList
-                groups={filteredGroups}
-                groupPlantsMap={groupPlantsMap}
-                loading={state.loading}
-                error={state.error}
-                onWaterAll={handleWaterAll}
-                onEditGroup={handleEditGroup}
-                onAddGroup={() => router.push('/add-group')}
-                theme={theme}
-              />
-            ),
-          },
-          {
-            key: 'plants',
-            title: 'Plants',
-            render: () => (
-              <PlantListScreen
-                searchQuery={plantSearchQuery}
-                statusFilter={statusFilter}
-                envFilter={plantEnvFilter}
-                plantedFilter={plantedFilter}
-                trainingFilter={trainingFilter}
-                setSearchQuery={setPlantSearchQuery}
-                setStatusFilter={setStatusFilter}
-                setEnvFilter={setPlantEnvFilter}
-                setPlantedFilter={setPlantedFilter}
-                setTrainingFilter={setTrainingFilter}
-                filtersVisible={plantFiltersVisible}
-                setFiltersVisible={setPlantFiltersVisible}
-              />
-            ),
-          },
-        ]}
-      />
-      <Snackbar visible={snackVisible} onDismiss={() => setSnackVisible(false)} duration={3000}>
-        {snackMessage}
-      </Snackbar>
-      <EditGroupModal
-        visible={!!state.editGroup}
-        group={state.editGroup as any}
-        allPlants={state.allPlants}
-        onClose={() => state.setEditGroup(null)}
-        onSave={state.reloadGroups}
-      />
+        {/* Suggestion Catalog */}
+        <SuggestionCatalog suggestions={mockSuggestions} />
+        {/* Search & Filter UI */}
+        <View style={styles.searchRow}>
+          <Searchbar
+            placeholder={tabKeys[tabIndex] === 'groups' ? 'Search groups' : 'Search plants'}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            style={[
+              styles.searchBar,
+              { flex: 1, backgroundColor: 'rgba(30, 50, 40, 0.65)', borderRadius: 100, borderWidth: 0, paddingHorizontal: 10 },
+            ]}
+            inputStyle={{ color: '#fff' }}
+          />
+          {tabKeys[tabIndex] === 'plants' && (
+            <IconButton icon={plantFiltersVisible ? 'filter-off-outline' : 'filter-variant'} onPress={() => setPlantFiltersVisible((v) => !v)} />
+          )}
+        </View>
+        {tabKeys[tabIndex] === 'plants' && plantFiltersVisible && (
+          <View style={styles.filtersContainer}>
+            {/* Only show environment filter for groups */}
+            <FilterChips label="Environment" options={['outdoor', 'greenhouse', 'indoor']} value={envFilter} setValue={setEnvFilter} />
+          </View>
+        )}
+        <SwipeTabs
+          index={tabIndex}
+          onIndexChange={setTabIndex}
+          tabs={[
+            {
+              key: 'groups',
+              title: 'Groups',
+              render: () => (
+                <GroupList
+                  groups={filteredGroups}
+                  groupPlantsMap={groupPlantsMap}
+                  loading={state.loading}
+                  error={state.error}
+                  onWaterAll={handleWaterAll}
+                  onEditGroup={handleEditGroup}
+                  onAddGroup={() => router.push('/add-group')}
+                  theme={theme}
+                />
+              ),
+            },
+            {
+              key: 'plants',
+              title: 'Plants',
+              render: () => (
+                <PlantListScreen
+                  searchQuery={plantSearchQuery}
+                  statusFilter={statusFilter}
+                  envFilter={plantEnvFilter}
+                  plantedFilter={plantedFilter}
+                  trainingFilter={trainingFilter}
+                  setSearchQuery={setPlantSearchQuery}
+                  setStatusFilter={setStatusFilter}
+                  setEnvFilter={setPlantEnvFilter}
+                  setPlantedFilter={setPlantedFilter}
+                  setTrainingFilter={setTrainingFilter}
+                  filtersVisible={plantFiltersVisible}
+                  setFiltersVisible={setPlantFiltersVisible}
+                />
+              ),
+            },
+          ]}
+        />
+        <Snackbar visible={snackVisible} onDismiss={() => setSnackVisible(false)} duration={3000}>
+          {snackMessage}
+        </Snackbar>
+        <EditGroupModal
+          visible={!!state.editGroup}
+          group={state.editGroup as any}
+          allPlants={state.allPlants}
+          onClose={() => state.setEditGroup(null)}
+          onSave={state.reloadGroups}
+        />
+      </View>
     </View>
   );
 }

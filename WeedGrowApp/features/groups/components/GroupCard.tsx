@@ -38,7 +38,6 @@ const GroupCardComponent = function GroupCard({
   lastWatered,
   onEdit,
 }: GroupCardProps) {
-  console.log('GroupCard render', group.id);
   const router = useRouter();
   const [weather, setWeather] = useState<any>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);

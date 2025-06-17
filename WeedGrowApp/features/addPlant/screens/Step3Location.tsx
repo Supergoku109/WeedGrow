@@ -5,6 +5,7 @@ import { StepIndicatorBar } from '../components/StepIndicatorBar';
 import { LocationForm } from '../components/LocationForm';
 import { useStep3Location } from '../hooks/useStep3Location';
 import type { PlantForm } from '@/features/plants/form/PlantForm';
+import HomeBackground from '@/features/groups/components/HomeBackground';
 
 interface StepProps {
   form: PlantForm;
@@ -19,6 +20,7 @@ export default function Step3Location({ form, setField, next, back, step }: Step
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: logic.backgroundColor }}>
+      <HomeBackground />
       <StepIndicatorBar currentPosition={step - 1} />
       <ScreenLayout backgroundColor={logic.backgroundColor}>
         <LocationForm form={form} logic={logic} next={next} back={back} />

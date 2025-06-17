@@ -8,6 +8,7 @@ import { db } from '@/services/firebase';
 import { useRouter } from 'expo-router';
 import { collection, getDocs, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { deleteField } from 'firebase/firestore';
+import HomeBackground from '@/features/groups/components/HomeBackground';
 
 export default function ManageSensorProfilesScreen({ emptyMessage }: { emptyMessage?: string } = {}) {
   const [profiles, setProfiles] = useState<any[]>([]);
@@ -91,7 +92,8 @@ export default function ManageSensorProfilesScreen({ emptyMessage }: { emptyMess
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#181f1b' }}>
+      <HomeBackground />
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.heading}>Manage Sensor Profiles</Text>
         <Text style={styles.topInfo}>

@@ -64,59 +64,56 @@ export default function PlantDetailScreen() {
   if (!plant) return <NotFoundView />;
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[theme].background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
       {/* Collapsing background image */}
-      <Animated.View style={[animatedBgImageStyle, { top: insets.top }]}>
+      <Animated.View style={animatedBgImageStyle}>
         <PlantHeader imageUri={plant.imageUri} height={HEADER_MAX_HEIGHT} />
       </Animated.View>
 
       {/* Animated Gallery Bar */}
-      <Animated.View style={[galleryBarAnimatedStyle, { top: insets.top }]}>
+      <Animated.View style={galleryBarAnimatedStyle}>
         <GalleryBar plant={plant} progressPics={progressPics} />
       </Animated.View>
 
-      {/* Main content inside SafeAreaView */}
-      <SafeAreaView style={{ flex: 1 }}>
-        <Animated.ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{
-            paddingBottom: HEADER_MIN_HEIGHT + insets.bottom,
-            minHeight: Dimensions.get('window').height + HEADER_MAX_HEIGHT,
-          }}
-          scrollIndicatorInsets={{ top: HEADER_MAX_HEIGHT + insets.top, bottom: insets.bottom }}
-          onScroll={onScroll}
-          scrollEventThrottle={16}
-          bounces={false}
-          overScrollMode="never"
-        >
-          {/* TODO: one day change so it's not hardcoded */}
-          <View style={{ height: HEADER_MAX_HEIGHT+55 }} />
-          <View style={{ paddingHorizontal: 16 }}>
-            <ThemedText type="title">{plant.name}</ThemedText>
-            {plant.strain && (
-              <ThemedText type="subtitle" style={{ marginBottom: 10 }}>
-                {plant.strain}
-              </ThemedText>
-            )}
-          </View>
+          {/* Main content */}
+    <Animated.ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{
+        paddingTop: HEADER_MAX_HEIGHT + insets.top,
+        minHeight: Dimensions.get('window').height + HEADER_MAX_HEIGHT,
+      }}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+      bounces={false}
+      overScrollMode="never"
+    >
 
-          {plant.environment === 'outdoor' && (
-            <WeeklyCalendar
-              weekData={weekData}
-              history={history}
-              expandedLogDate={expandedLogDate}
-              setExpandedLogDate={setExpandedLogDate}
-              getLogsForDate={(date: string) => dailyLogs[date] || []}
-              loadingLogs={loadingLogs}
-              updateWeekData={updateWeekData}
-              plantId={id}
-            />
+        <View style={{ paddingHorizontal: 16 }}>
+          <ThemedText type="title">{plant.name}</ThemedText>
+          {plant.strain && (
+            <ThemedText type="subtitle" style={{ marginBottom: 10 }}>
+              {plant.strain}
+            </ThemedText>
           )}
+        </View>
 
-          <NotesSection notes={plant.notes} />
-        </Animated.ScrollView>
-        <DeleteButton onDelete={onDelete} insets={insets} />
-      </SafeAreaView>
-    </View>
+        {plant.environment === 'outdoor' && (
+          <WeeklyCalendar
+            weekData={weekData}
+            history={history}
+            expandedLogDate={expandedLogDate}
+            setExpandedLogDate={setExpandedLogDate}
+            getLogsForDate={(date: string) => dailyLogs[date] || []}
+            loadingLogs={loadingLogs}
+            updateWeekData={updateWeekData}
+            plantId={id}
+          />
+        )}
+
+        <NotesSection notes={plant.notes} />
+      </Animated.ScrollView>
+
+      <DeleteButton onDelete={onDelete} insets={insets} />
+    </SafeAreaView>
   );
 }

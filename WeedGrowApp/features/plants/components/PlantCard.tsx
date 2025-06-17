@@ -63,9 +63,8 @@ export function PlantCard({ plant }: PlantCardProps) {
       >
         <Animated.View style={{ transform: [{ scale: scaleAnim }], opacity: opacityAnim }}>
           <ThemedView style={[styles.card, { flexDirection: 'row', alignItems: 'stretch', minHeight: 90 }]}> 
-            {/* Left: Env Badge above Image, fixed width */}
-            <View style={styles.leftSection}>
-              <WeedGrowEnvBadge environment={env} size={16} style={{ alignSelf: 'center', marginBottom: 6 }} />
+            {/* Left: Image, fixed width */}
+            <View style={[styles.leftSection, { alignItems: 'flex-start', paddingLeft: 8 }]}> 
               {(plant as any).imageUri ? (
                 <Image source={{ uri: (plant as any).imageUri }} style={styles.imageSmall} />
               ) : (
@@ -76,11 +75,14 @@ export function PlantCard({ plant }: PlantCardProps) {
             </View>
             {/* Middle: Info */}
             <View style={styles.rightSection}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 1 }}>
                 <ThemedText style={styles.plantNameTopTight} numberOfLines={1}>{plant.name}</ThemedText>
               </View>
-              <ThemedText style={styles.strainText} numberOfLines={1}>{(plant as any).strain}</ThemedText>
-              <View style={styles.statusRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 1, gap: 6 }}>
+                <WeedGrowEnvBadge environment={env} size={12} style={{ marginRight: 4, alignSelf: 'center' }} />
+                <ThemedText style={styles.strainText} numberOfLines={1}>{(plant as any).strain}</ThemedText>
+              </View>
+              <View style={[styles.statusRow, { marginTop: 0 }]}> 
                 <MaterialCommunityIcons name="progress-clock" size={15} color="#a3e635" style={{ marginRight: 2 }} />
                 <ThemedText style={styles.statusText}>{plant.status}</ThemedText>
               </View>
@@ -115,7 +117,7 @@ export function PlantCard({ plant }: PlantCardProps) {
 const styles = StyleSheet.create({
   card: {
     marginBottom: 14,
-    padding: 10,
+    padding: 2,
     borderRadius: 16,
     backgroundColor: 'transparent',
     borderLeftWidth: 5,
@@ -127,7 +129,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
-    minHeight: 90,
+    minHeight: 60,
   },
   plantNameTopTight: {
     fontSize: 16,
@@ -137,11 +139,12 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   leftSection: {
-    width: 70,
-    alignItems: 'center',
+    width: 90, // increased from 70
+    alignItems: 'flex-start',
     justifyContent: 'flex-start',
     paddingVertical: 8,
     marginRight: 10,
+    paddingLeft: 8,
   },
   rightSection: {
     flex: 1,
@@ -149,18 +152,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minWidth: 0,
     paddingVertical: 4,
+    paddingLeft: 8, // add more left padding to move content right
   },
   imageSmall: {
-    height: 56,
-    width: 56,
-    borderRadius: 12,
+    height: 80,
+    width: 80,
+    borderRadius: 16,
     resizeMode: 'cover',
     backgroundColor: '#222',
   },
   imageSmallPlaceholder: {
-    height: 56,
-    width: 56,
-    borderRadius: 12,
+    height: 80,
+    width: 80,
+    borderRadius: 16,
     backgroundColor: '#222',
     justifyContent: 'center',
     alignItems: 'center',
