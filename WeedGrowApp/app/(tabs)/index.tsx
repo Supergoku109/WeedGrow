@@ -1,2 +1,2 @@
-import GroupListScreen from '@/features/groups/screens/GroupListScreen';
-export default GroupListScreen;
+import HomeScreen from '@/features/groups/screens/HomeScreen';
+export default HomeScreen;

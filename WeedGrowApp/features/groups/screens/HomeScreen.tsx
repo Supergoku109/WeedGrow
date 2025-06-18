@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Snackbar, Searchbar, IconButton } from 'react-native-paper';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -20,6 +20,7 @@ import { useGroupListHandlers } from '../hooks/useGroupListHandlers';
 import { ThemedText } from '@/ui/ThemedText';
 import HomeBackground from '../components/HomeBackground';
 import SwipeTabs from '@/ui/SwipeTabs';
+import { useHomeScreenState } from '../hooks/useHomeScreenState';
 
 const styles = StyleSheet.create({
   appHeaderModern: {
@@ -27,11 +28,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 32,
-    paddingBottom: 0,
+    paddingBottom: 24,
     backgroundColor: '#181f1b', // clean, dark, minimal
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
-    marginBottom: 20,
+    marginBottom: 0,
     borderBottomWidth: 1,
     borderBottomColor: '#26332b',
     elevation: 6,
@@ -111,55 +112,23 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function GroupListScreen() {
-  const insets = useSafeAreaInsets();
+export default function HomeScreen() {
   const router = useRouter();
   const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
-  const state = useGroupList();
 
-  // Search/filter logic
+  // State and handlers from the custom hook
   const {
-    searchQuery, setSearchQuery,
-    envFilter, setEnvFilter,
-    filtersVisible, setFiltersVisible,
-    filteredGroups
-  } = useGroupListFilters(state.groups);
-
-  // Group-to-plant mapping
-  const groupPlantsMap = useGroupPlantsMap(filteredGroups, state.allPlants);
-
-  // Snackbar state
-  const [snackVisible, setSnackVisible] = useState(false);
-  const [snackMessage, setSnackMessage] = useState('');
-
-  // Per-group water loading/disabled state
-  const [waterLoadingMap, setWaterLoadingMap] = useState<Record<string, boolean>>({});
-  const [waterDisabledMap, setWaterDisabledMap] = useState<Record<string, boolean>>({});
-
-  // Handlers
-  const { handleEditGroup } = useGroupListHandlers(
-    state.handleWaterAll,
-    state.setEditGroup,
-    setSnackMessage,
-    setSnackVisible
-  );
-
-  // Custom handleWaterAll to manage loading state
-  const handleWaterAll = async (groupId: string) => {
-    setWaterLoadingMap((prev) => ({ ...prev, [groupId]: true }));
-    setWaterDisabledMap((prev) => ({ ...prev, [groupId]: true }));
-    try {
-      await state.handleWaterAll(groupId);
-      setSnackMessage('All plants watered!');
-      setSnackVisible(true);
-    } catch (e: any) {
-      setSnackMessage(e?.message || 'Failed to water all');
-      setSnackVisible(true);
-    } finally {
-      setWaterLoadingMap((prev) => ({ ...prev, [groupId]: false }));
-      setWaterDisabledMap((prev) => ({ ...prev, [groupId]: false }));
-    }
-  };
+    state,
+    searchQuery,
+    setSearchQuery,
+    filteredGroups,
+    groupPlantsMap,
+    snackVisible,
+    setSnackVisible,
+    snackMessage,
+    handleEditGroup,
+    handleWaterAll,
+  } = useHomeScreenState();
 
   // Tab state
   const [tabIndex, setTabIndex] = useState(0);
@@ -213,7 +182,7 @@ export default function GroupListScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#181f1b', position: 'relative' }}>
       <HomeBackground />
-      <View style={{ flex: 1, backgroundColor: 'transparent', paddingTop:0 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }} edges={['top', 'left', 'right']}>
         {/* Modern App Header */}
         <AppHeader />
         {/* TLC needed indicator */}
@@ -305,7 +274,7 @@ export default function GroupListScreen() {
           onClose={() => state.setEditGroup(null)}
           onSave={state.reloadGroups}
         />
-      </View>
+      </SafeAreaView>
     </View>
   );
 }
