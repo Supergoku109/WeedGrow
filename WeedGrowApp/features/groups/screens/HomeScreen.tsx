@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { Snackbar, Searchbar, IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -19,7 +19,6 @@ import { useGroupPlantsMap } from '../hooks/useGroupPlantsMap';
 import { useGroupListHandlers } from '../hooks/useGroupListHandlers';
 import { ThemedText } from '@/ui/ThemedText';
 import HomeBackground from '../components/HomeBackground';
-import SwipeTabs from '@/ui/SwipeTabs';
 import { useHomeScreenState } from '../hooks/useHomeScreenState';
 
 const styles = StyleSheet.create({
@@ -86,7 +85,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   filtersContainer: { marginBottom: 12, gap: 8 },
-  tabHeader: {
+  tabContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: 8,
@@ -193,77 +192,76 @@ export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: 
         </View>
         {/* Suggestion Catalog */}
         <SuggestionCatalog suggestions={mockSuggestions} />
-        {/* Swipeable Tabs at the top, compact style */}
+        {/* Simple Tab Implementation */}
         <View style={{ marginTop: 4, marginBottom: 4, flex: 1 }}>
-          <SwipeTabs
-            index={tabIndex}
-            onIndexChange={setTabIndex}
-            tabs={[
-              {
-                key: 'groups',
-                title: 'Groups',
-                render: () => (
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.searchRow}>
-                      <Searchbar
-                        placeholder="Search groups"
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        style={styles.searchBar}
-                        inputStyle={{ color: '#fff', textAlignVertical: 'center' }}
-                      />
-                    </View>
-                    <GroupList
-                      groups={filteredGroups}
-                      groupPlantsMap={groupPlantsMap}
-                      loading={state.loading}
-                      error={state.error}
-                      onEditGroup={handleEditGroup}
-                      onAddGroup={() => router.push('/add-group')}
-                      theme={theme}
-                    />
-                  </View>
-                ),
-              },
-              {
-                key: 'plants',
-                title: 'Plants',
-                render: () => (
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.searchRow}>
-                      <Searchbar
-                        placeholder="Search plants"
-                        value={plantSearchQuery}
-                        onChangeText={setPlantSearchQuery}
-                        style={styles.searchBar}
-                        inputStyle={{ color: '#fff', textAlignVertical: 'center' }}
-                      />
-                      <IconButton icon={plantFiltersVisible ? 'filter-off-outline' : 'filter-variant'} onPress={() => setPlantFiltersVisible((v) => !v)} />
-                    </View>
-                    {plantFiltersVisible && (
-                      <View style={styles.filtersContainer}>
-                        <FilterChips label="Environment" options={['outdoor', 'greenhouse', 'indoor']} value={plantEnvFilter} setValue={setPlantEnvFilter} />
-                      </View>
-                    )}
-                    <PlantListScreen
-                      searchQuery={plantSearchQuery}
-                      statusFilter={statusFilter}
-                      envFilter={plantEnvFilter}
-                      plantedFilter={plantedFilter}
-                      trainingFilter={trainingFilter}
-                      setSearchQuery={setPlantSearchQuery}
-                      setStatusFilter={setStatusFilter}
-                      setEnvFilter={setPlantEnvFilter}
-                      setPlantedFilter={setPlantedFilter}
-                      setTrainingFilter={setTrainingFilter}
-                      filtersVisible={plantFiltersVisible}
-                      setFiltersVisible={setPlantFiltersVisible}
-                    />
-                  </View>
-                ),
-              },
-            ]}
-          />
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[styles.tabButton, tabIndex === 0 && styles.tabButtonActive]}
+              onPress={() => setTabIndex(0)}
+            >
+              <Text style={[styles.tabText, tabIndex === 0 && styles.tabTextActive]}>Groups</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabButton, tabIndex === 1 && styles.tabButtonActive]}
+              onPress={() => setTabIndex(1)}
+            >
+              <Text style={[styles.tabText, tabIndex === 1 && styles.tabTextActive]}>Plants</Text>
+            </TouchableOpacity>
+          </View>
+          {tabIndex === 0 ? (
+            <View style={{ flex: 1 }}>
+              <View style={styles.searchRow}>
+                <Searchbar
+                  placeholder="Search groups"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  style={styles.searchBar}
+                  inputStyle={{ color: '#fff', textAlignVertical: 'center' }}
+                />
+              </View>
+              <GroupList
+                groups={filteredGroups}
+                groupPlantsMap={groupPlantsMap}
+                loading={state.loading}
+                error={state.error}
+                onEditGroup={handleEditGroup}
+                onAddGroup={() => router.push('/add-group')}
+                theme={theme}
+              />
+            </View>
+          ) : (
+            <View style={{ flex: 1 }}>
+              <View style={styles.searchRow}>
+                <Searchbar
+                  placeholder="Search plants"
+                  value={plantSearchQuery}
+                  onChangeText={setPlantSearchQuery}
+                  style={styles.searchBar}
+                  inputStyle={{ color: '#fff', textAlignVertical: 'center' }}
+                />
+                <IconButton icon={plantFiltersVisible ? 'filter-off-outline' : 'filter-variant'} onPress={() => setPlantFiltersVisible((v) => !v)} />
+              </View>
+              {plantFiltersVisible && (
+                <View style={styles.filtersContainer}>
+                  <FilterChips label="Environment" options={['outdoor', 'greenhouse', 'indoor']} value={plantEnvFilter} setValue={setPlantEnvFilter} />
+                </View>
+              )}
+              <PlantListScreen
+                searchQuery={plantSearchQuery}
+                statusFilter={statusFilter}
+                envFilter={plantEnvFilter}
+                plantedFilter={plantedFilter}
+                trainingFilter={trainingFilter}
+                setSearchQuery={setPlantSearchQuery}
+                setStatusFilter={setStatusFilter}
+                setEnvFilter={setPlantEnvFilter}
+                setPlantedFilter={setPlantedFilter}
+                setTrainingFilter={setTrainingFilter}
+                filtersVisible={plantFiltersVisible}
+                setFiltersVisible={setPlantFiltersVisible}
+              />
+            </View>
+          )}
         </View>
         <Snackbar visible={snackVisible} onDismiss={() => setSnackVisible(false)} duration={3000}>
           {snackMessage}

@@ -6,10 +6,6 @@ import { PlantAdviceContext } from '@/lib/weather/getPlantAdvice';
 import { collection, getDocs, query } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 import { fetchPlantWeatherContext } from '@/lib/weather/fetchPlantWeatherContext';
-import { fetchWeather } from '@/lib/weather/fetchWeather';
-import { updateWeatherCache } from '@/lib/weather/updateFirestore';
-import { parseWeatherData } from '@/lib/weather/parseWeatherData';
-import { shouldUpdateWeather } from '@/lib/weather/shouldUpdateWeather';
 import { FirebaseError } from 'firebase/app';
 
 interface PlantItem extends Plant {
@@ -21,16 +17,23 @@ const plantCache: { plants: PlantItem[] | null; weatherMap: Record<string, Plant
   weatherMap: {},
 };
 
-// Introduce a delay in updating the plants state
 export function usePlantList() {
-  const [plants, setPlants] = useState<PlantItem[]>([]); // Start with empty array
-  const [loading, setLoading] = useState(true); // Always start in loading state
+  const [plants, setPlants] = useState<PlantItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [weatherMap, setWeatherMap] = useState<Record<string, PlantAdviceContext | undefined>>({});
 
   useEffect(() => {
     const fetchPlants = async () => {
       try {
+        if (plantCache.plants) {
+          // Use cached data if available
+          setPlants(plantCache.plants);
+          setWeatherMap(plantCache.weatherMap);
+          setLoading(false);
+          return;
+        }
+
         const plantsQuery = query(collection(db, 'plants'));
         const snapshot = await getDocs(plantsQuery);
         const items: PlantItem[] = snapshot.docs.map((doc) => ({
@@ -38,11 +41,8 @@ export function usePlantList() {
           ...(doc.data() as Plant),
         }));
 
-        // Delay updating state to allow animation setup
-        setTimeout(() => {
-          setPlants(items);
-          plantCache.plants = items; // Update cache
-        }, 500); // Delay by 500ms
+        setPlants(items);
+        plantCache.plants = items;
 
         const weatherResults = await Promise.all(
           items.map(async (p) => {
@@ -53,12 +53,14 @@ export function usePlantList() {
             }
           })
         );
+
         const map: Record<string, PlantAdviceContext | undefined> = {};
         items.forEach((p, idx) => {
           map[p.id] = weatherResults[idx];
         });
+
         setWeatherMap(map);
-        plantCache.weatherMap = map; // Update cache
+        plantCache.weatherMap = map;
       } catch (e: any) {
         setError(e.message || 'Unknown error');
       } finally {
@@ -74,5 +76,6 @@ export function usePlantList() {
     loading,
     error,
     weatherMap,
+    isDataReady: !loading && plants.length > 0,
   };
 }

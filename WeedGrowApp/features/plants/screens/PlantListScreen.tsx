@@ -59,7 +59,7 @@ export default function PlantListScreen({
       (!trainingFilter || (p.trainingTags && p.trainingTags.includes(trainingFilter)))
   );
 
-  // Delay rendering of FlatList until animation is ready
+  // Prevent rendering of FlatList items until animation is ready
   return (
     <View style={[styles.safeArea, { backgroundColor: 'transparent', flex: 1 }]}> 
       <View style={[styles.container, { paddingTop: 0, backgroundColor: 'transparent', flex: 1 }]}> 

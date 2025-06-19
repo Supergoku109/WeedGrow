@@ -5,7 +5,6 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { IconSymbol } from '@/ui/IconSymbol';
-import TabBarBackground, { useBottomTabOverflow } from '@/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { HapticTab } from '@/ui/HapticTab';
@@ -20,11 +19,10 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[(colorScheme ?? 'light') as 'light' | 'dark'].tint,
+        tabBarActiveTintColor: '#00c853', // Static color
         headerShown: false,
-        tabBarBackground: TabBarBackground,
         tabBarStyle: {
-          backgroundColor: Colors[(colorScheme ?? 'light') as 'light' | 'dark'].background,
+          backgroundColor: '#181a1b', // Static background color
           borderTopWidth: 0,
         },
       }}>

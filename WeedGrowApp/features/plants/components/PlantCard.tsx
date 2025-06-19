@@ -24,7 +24,7 @@ export function PlantCard({ plant }: PlantCardProps) {
   const scaleAnim = React.useRef(new Animated.Value(0)).current;
   const opacityAnim = React.useRef(new Animated.Value(0)).current;
   // Set initial opacity and scale before rendering
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     scaleAnim.setValue(0); // Start scale at 0
     opacityAnim.setValue(0); // Start opacity at 0
 
