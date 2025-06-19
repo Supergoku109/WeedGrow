@@ -59,11 +59,10 @@ export default function PlantListScreen({
       (!trainingFilter || (p.trainingTags && p.trainingTags.includes(trainingFilter)))
   );
 
+  // Delay rendering of FlatList until animation is ready
   return (
     <View style={[styles.safeArea, { backgroundColor: 'transparent', flex: 1 }]}> 
       <View style={[styles.container, { paddingTop: 0, backgroundColor: 'transparent', flex: 1 }]}> 
-        {/* <ThemedText type="title" style={styles.title}>My Plants</ThemedText> */}
-
         {loading && <ActivityIndicator style={styles.loading} color={Colors[theme].tint} />}
         {error && <ThemedText style={[styles.errorText, { color: Colors[theme].tint }]}>❌ Error: {error}</ThemedText>}
         {!loading && !error && filteredPlants.length > 0 && (

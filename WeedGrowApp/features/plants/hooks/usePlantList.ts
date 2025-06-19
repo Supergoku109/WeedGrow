@@ -10,21 +10,22 @@ import { fetchWeather } from '@/lib/weather/fetchWeather';
 import { updateWeatherCache } from '@/lib/weather/updateFirestore';
 import { parseWeatherData } from '@/lib/weather/parseWeatherData';
 import { shouldUpdateWeather } from '@/lib/weather/shouldUpdateWeather';
+import { FirebaseError } from 'firebase/app';
 
 interface PlantItem extends Plant {
   id: string;
 }
 
+const plantCache: { plants: PlantItem[] | null; weatherMap: Record<string, PlantAdviceContext | undefined>; } = {
+  plants: null,
+  weatherMap: {},
+};
+
+// Introduce a delay in updating the plants state
 export function usePlantList() {
-  const [plants, setPlants] = useState<PlantItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [plants, setPlants] = useState<PlantItem[]>([]); // Start with empty array
+  const [loading, setLoading] = useState(true); // Always start in loading state
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [envFilter, setEnvFilter] = useState<string | null>(null);
-  const [plantedFilter, setPlantedFilter] = useState<string | null>(null);
-  const [trainingFilter, setTrainingFilter] = useState<string | null>(null);
-  const [filtersVisible, setFiltersVisible] = useState(false);
   const [weatherMap, setWeatherMap] = useState<Record<string, PlantAdviceContext | undefined>>({});
 
   useEffect(() => {
@@ -36,22 +37,12 @@ export function usePlantList() {
           id: doc.id,
           ...(doc.data() as Plant),
         }));
-        setPlants(items);
 
-        await Promise.all(
-          items.map(async (p) => {
-            if (p.location?.lat && p.location?.lng) {
-              try {
-                const needsUpdate = await shouldUpdateWeather(p.id);
-                if (needsUpdate) {
-                  const weatherApiData = await fetchWeather(p.location.lat, p.location.lng);
-                  const parsed = parseWeatherData(weatherApiData);
-                  await updateWeatherCache(p.id, parsed);
-                }
-              } catch {}
-            }
-          })
-        );
+        // Delay updating state to allow animation setup
+        setTimeout(() => {
+          setPlants(items);
+          plantCache.plants = items; // Update cache
+        }, 500); // Delay by 500ms
 
         const weatherResults = await Promise.all(
           items.map(async (p) => {
@@ -67,8 +58,8 @@ export function usePlantList() {
           map[p.id] = weatherResults[idx];
         });
         setWeatherMap(map);
+        plantCache.weatherMap = map; // Update cache
       } catch (e: any) {
-        console.error('Error fetching plants:', e);
         setError(e.message || 'Unknown error');
       } finally {
         setLoading(false);
@@ -78,32 +69,10 @@ export function usePlantList() {
     fetchPlants();
   }, []);
 
-  const filteredPlants = plants.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      (!statusFilter || p.status === statusFilter) &&
-      (!envFilter || p.environment === envFilter) &&
-      (!plantedFilter || p.plantedIn === plantedFilter) &&
-      (!trainingFilter || (p.trainingTags && p.trainingTags.includes(trainingFilter)))
-  );
-
   return {
     plants,
-    filteredPlants,
     loading,
     error,
-    searchQuery,
-    setSearchQuery,
-    filtersVisible,
-    setFiltersVisible,
-    statusFilter,
-    setStatusFilter,
-    envFilter,
-    setEnvFilter,
-    plantedFilter,
-    setPlantedFilter,
-    trainingFilter,
-    setTrainingFilter,
     weatherMap,
   };
 }

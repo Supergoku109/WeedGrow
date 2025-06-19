@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, Image, View, Animated } from 'react-native';
+import { StyleSheet, TouchableOpacity, Image, View, Animated, Easing } from 'react-native';
 import { IconButton, Snackbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/ui/ThemedText';
@@ -21,18 +21,23 @@ export function PlantCard({ plant }: PlantCardProps) {
   const [snackMessage, setSnackMessage] = React.useState('');
 
   // Animation for card mount
-  const scaleAnim = React.useRef(new Animated.Value(0.92)).current;
+  const scaleAnim = React.useRef(new Animated.Value(0)).current;
   const opacityAnim = React.useRef(new Animated.Value(0)).current;
+  // Set initial opacity and scale before rendering
   React.useEffect(() => {
+    scaleAnim.setValue(0); // Start scale at 0
+    opacityAnim.setValue(0); // Start opacity at 0
+
     Animated.parallel([
       Animated.spring(scaleAnim, {
         toValue: 1,
         useNativeDriver: true,
-        friction: 7,
+        friction: 5, // Reduced friction for smoother bounce
       }),
       Animated.timing(opacityAnim, {
         toValue: 1,
-        duration: 350,
+        duration: 800, // Reduced duration to 800ms for faster animation
+        easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
       }),
     ]).start();
@@ -57,60 +62,51 @@ export function PlantCard({ plant }: PlantCardProps) {
   };
 
   return (
-    <>
-      <TouchableOpacity
-        onPress={() => router.push({ pathname: '/plant/[id]', params: { id: plant.id } })}
-      >
-        <Animated.View style={{ transform: [{ scale: scaleAnim }], opacity: opacityAnim }}>
-          <ThemedView style={[styles.card, { flexDirection: 'row', alignItems: 'stretch', minHeight: 90 }]}> 
-            {/* Left: Image, fixed width */}
-            <View style={[styles.leftSection, { alignItems: 'flex-start', paddingLeft: 8 }]}> 
-              {(plant as any).imageUri ? (
-                <Image source={{ uri: (plant as any).imageUri }} style={styles.imageSmall} />
-              ) : (
-                <View style={styles.imageSmallPlaceholder}>
-                  <MaterialCommunityIcons name="leaf" size={36} color="#00c853" />
-                </View>
-              )}
-            </View>
-            {/* Middle: Info */}
-            <View style={styles.rightSection}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 1 }}>
-                <ThemedText style={styles.plantNameTopTight} numberOfLines={1}>{plant.name}</ThemedText>
+    <TouchableOpacity
+      onPress={() => router.push({ pathname: '/plant/[id]', params: { id: plant.id } })}
+    >
+      <Animated.View style={{ transform: [{ scale: scaleAnim }], opacity: opacityAnim }}>
+        <ThemedView style={[styles.card, { flexDirection: 'row', alignItems: 'stretch', minHeight: 90 }]}> 
+          {/* Left: Image, fixed width */}
+          <View style={[styles.leftSection, { alignItems: 'flex-start', paddingLeft: 8 }]}> 
+            {(plant as any).imageUri ? (
+              <Image source={{ uri: (plant as any).imageUri }} style={styles.imageSmall} />
+            ) : (
+              <View style={styles.imageSmallPlaceholder}>
+                <MaterialCommunityIcons name="leaf" size={36} color="#00c853" />
               </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 1, gap: 6 }}>
-                <WeedGrowEnvBadge environment={env} size={12} style={{ marginRight: 4, alignSelf: 'center' }} />
-                <ThemedText style={styles.strainText} numberOfLines={1}>{(plant as any).strain}</ThemedText>
-              </View>
-              <View style={[styles.statusRow, { marginTop: 0 }]}> 
-                <MaterialCommunityIcons name="progress-clock" size={15} color="#a3e635" style={{ marginRight: 2 }} />
-                <ThemedText style={styles.statusText}>{plant.status}</ThemedText>
-              </View>
+            )}
+          </View>
+          {/* Middle: Info */}
+          <View style={styles.rightSection}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 1 }}>
+              <ThemedText style={styles.plantNameTopTight} numberOfLines={1}>{plant.name}</ThemedText>
             </View>
-            {/* Right: Water Button */}
-            <View style={styles.waterButtonSection}>
-              <IconButton
-                icon="water"
-                size={24}
-                mode="contained"
-                iconColor="#fff"
-                containerColor="#1e90ff"
-                style={styles.waterButtonCompact}
-                onPress={handleWater}
-                accessibilityLabel="Log watering"
-              />
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 1, gap: 6 }}>
+              <WeedGrowEnvBadge environment={env} size={12} style={{ marginRight: 4, alignSelf: 'center' }} />
+              <ThemedText style={styles.strainText} numberOfLines={1}>{(plant as any).strain}</ThemedText>
             </View>
-          </ThemedView>
-        </Animated.View>
-      </TouchableOpacity>
-      <Snackbar
-        visible={snackVisible}
-        onDismiss={() => setSnackVisible(false)}
-        duration={3000}
-      >
-        {snackMessage}
-      </Snackbar>
-    </>
+            <View style={[styles.statusRow, { marginTop: 0 }]}> 
+              <MaterialCommunityIcons name="progress-clock" size={15} color="#a3e635" style={{ marginRight: 2 }} />
+              <ThemedText style={styles.statusText}>{plant.status}</ThemedText>
+            </View>
+          </View>
+          {/* Right: Water Button */}
+          <View style={styles.waterButtonSection}>
+            <IconButton
+              icon="water"
+              size={24}
+              mode="contained"
+              iconColor="#fff"
+              containerColor="#1e90ff"
+              style={styles.waterButtonCompact}
+              onPress={handleWater}
+              accessibilityLabel="Log watering"
+            />
+          </View>
+        </ThemedView>
+      </Animated.View>
+    </TouchableOpacity>
   );
 }
 
