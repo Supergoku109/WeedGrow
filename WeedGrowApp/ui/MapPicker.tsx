@@ -34,10 +34,10 @@ export function MapPicker({ location, onLocationChange }: MapPickerProps) {
   }, [location])
 
   return (
-    <View style={{ height: 300, borderRadius: 16, overflow: 'hidden', borderWidth: 2, borderColor: Colors[theme].tint }}>
+    <View style={{ width: '100%', maxWidth: 480, height: 300, borderRadius: 16, overflow: 'hidden', borderWidth: 2, borderColor: Colors[theme].tint }}>
       <MapView
         ref={mapRef}
-        style={{ width: screen.width - 56, height: 300 }}
+        style={{ width: '100%', height: 300 }}
         onPress={handleMapPress}
         initialRegion={{
           latitude: location?.lat ?? -33.9249,

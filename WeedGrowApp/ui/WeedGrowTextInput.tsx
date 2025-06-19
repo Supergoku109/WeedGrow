@@ -13,6 +13,7 @@ interface WeedGrowTextInputProps {
   keyboardType?: 'default' | 'numeric' | 'email-address';
   secureTextEntry?: boolean;
   error?: boolean;
+  multiline?: boolean;
 }
 
 export function WeedGrowTextInput({
@@ -24,6 +25,7 @@ export function WeedGrowTextInput({
   keyboardType = 'default',
   secureTextEntry = false,
   error = false,
+  multiline = false,
 }: WeedGrowTextInputProps) {
   const scheme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
   const themeColors = Colors[scheme];
@@ -48,6 +50,7 @@ export function WeedGrowTextInput({
         style={[styles.input, { color: themeColors.text }]}
         keyboardType={keyboardType}
         secureTextEntry={secureTextEntry}
+        multiline={multiline}
       />
     </View>
   );

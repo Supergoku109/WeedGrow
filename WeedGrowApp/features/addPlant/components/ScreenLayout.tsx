@@ -38,7 +38,10 @@ export function ScreenLayout({
             <ScrollView
               contentContainerStyle={[
                 styles.scrollContent,
-                { paddingTop: paddingTopIndicator ? 8 : 0, paddingBottom: insets.bottom }
+                {
+                  paddingTop: paddingTopIndicator ? 8 : 0,
+                  paddingBottom: insets.bottom
+                }
               ]}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"

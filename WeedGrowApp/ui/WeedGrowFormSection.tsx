@@ -61,8 +61,8 @@ export const WeedGrowFormSection: React.FC<WeedGrowFormSectionProps> = ({
       <View
         style={
           direction === 'row'
-            ? { flexDirection: 'row', alignItems: 'center', gap: horizontalSpacing }
-            : { gap: spacing }
+            ? { flexDirection: 'row', alignItems: 'center', gap: horizontalSpacing, width: '100%' }
+            : { gap: spacing, width: '100%' }
         }
       >
         {children}

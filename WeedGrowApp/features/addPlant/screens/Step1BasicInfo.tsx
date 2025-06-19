@@ -6,6 +6,7 @@ import { ScreenLayout }      from '../components/ScreenLayout'
 import { BasicInfoForm }     from '../components/BasicInfoForm'
 import { useStep1BasicInfo } from '../hooks/useStep1BasicInfo'
 import type { PlantForm }    from '@/features/plants/form/PlantForm'
+import { useRouter } from 'expo-router'
 
 interface StepProps {
   form: PlantForm
@@ -19,6 +20,11 @@ export default function Step1BasicInfo({
   form, setField, next, back, step
 }: StepProps) {
   const logic = useStep1BasicInfo(form, setField)
+  const router = useRouter()
+
+  const navigateToHome = () => {
+    router.replace('/')
+  }
 
   return (
 <SafeAreaView style={{ flex: 1, backgroundColor: logic.backgroundColor }}>
@@ -28,7 +34,7 @@ export default function Step1BasicInfo({
       form={form}
       logic={logic}
       next={next}
-      back={back}
+      back={navigateToHome}
     />
   </ScreenLayout>
 </SafeAreaView>
