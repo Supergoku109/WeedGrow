@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function HomeScreen() {
+export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: number }) {
   const router = useRouter();
   const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
 
@@ -131,7 +131,8 @@ export default function HomeScreen() {
   } = useHomeScreenState();
 
   // Tab state
-  const [tabIndex, setTabIndex] = useState(0);
+  const [tabIndex, setTabIndex] = useState(initialTabIndex);
+
   const tabKeys = ['groups', 'plants'];
 
   // Plant tab filter state (local, not shared with group tab)

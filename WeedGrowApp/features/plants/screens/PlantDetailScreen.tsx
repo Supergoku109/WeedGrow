@@ -1,5 +1,5 @@
 import React from 'react';
-import { SafeAreaView, Dimensions, View } from 'react-native';
+import { SafeAreaView, Dimensions, View, BackHandler } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -60,6 +60,15 @@ export default function PlantDetailScreen() {
     }
   };
 
+  React.useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      router.replace({ pathname: '/(tabs)', params: { tabIndex: 1 } });
+      return true; // Prevent default back button behavior
+    });
+
+    return () => backHandler.remove();
+  }, [router]);
+
   if (loading) return <LoadingView />;
   if (!plant) return <NotFoundView />;
 
@@ -75,19 +84,18 @@ export default function PlantDetailScreen() {
         <GalleryBar plant={plant} progressPics={progressPics} />
       </Animated.View>
 
-          {/* Main content */}
-    <Animated.ScrollView
-      style={{ flex: 1 }}
-      contentContainerStyle={{
-        paddingTop: HEADER_MAX_HEIGHT + insets.top,
-        minHeight: Dimensions.get('window').height + HEADER_MAX_HEIGHT,
-      }}
-      onScroll={onScroll}
-      scrollEventThrottle={16}
-      bounces={false}
-      overScrollMode="never"
-    >
-
+      {/* Main content */}
+      <Animated.ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingTop: HEADER_MAX_HEIGHT + insets.top,
+          minHeight: Dimensions.get('window').height + HEADER_MAX_HEIGHT,
+        }}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        bounces={false}
+        overScrollMode="never"
+      >
         <View style={{ paddingHorizontal: 16 }}>
           <ThemedText type="title">{plant.name}</ThemedText>
           {plant.strain && (

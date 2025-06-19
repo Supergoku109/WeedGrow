@@ -23,7 +23,7 @@ export default function Step1BasicInfo({
   const router = useRouter()
 
   const navigateToHome = () => {
-    router.replace('/')
+    router.replace({ pathname: '/(tabs)', params: { tabIndex: 1 } });
   }
 
   return (
