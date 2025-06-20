@@ -1,7 +1,5 @@
 import React from 'react';
-import { TextInput, View, StyleSheet } from 'react-native';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
+import { Input } from '@/design-system/components';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface WeedGrowTextInputProps {
@@ -9,10 +7,11 @@ interface WeedGrowTextInputProps {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
-  icon?: string;
+  icon?: keyof typeof MaterialCommunityIcons.glyphMap;
   keyboardType?: 'default' | 'numeric' | 'email-address';
   secureTextEntry?: boolean;
-  error?: boolean;
+  error?: string;
+  helper?: string;
   multiline?: boolean;
 }
 
@@ -24,54 +23,23 @@ export function WeedGrowTextInput({
   icon,
   keyboardType = 'default',
   secureTextEntry = false,
-  error = false,
+  error,
+  helper,
   multiline = false,
 }: WeedGrowTextInputProps) {
-  const scheme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
-  const themeColors = Colors[scheme];
-
-  const borderColor = error ? 'red' : themeColors.tint;
-
   return (
-    <View style={[styles.container, { borderColor }]}>
-      {icon && (
-        <MaterialCommunityIcons
-          name={icon as any}
-          size={20}
-          color={themeColors.text}
-          style={styles.icon}
-        />
-      )}
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor="#b5eec5"
-        style={[styles.input, { color: themeColors.text }]}
-        keyboardType={keyboardType}
-        secureTextEntry={secureTextEntry}
-        multiline={multiline}
-      />
-    </View>
+    <Input
+      label={label}
+      value={value}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+      icon={icon}
+      keyboardType={keyboardType}
+      secureTextEntry={secureTextEntry}
+      error={error}
+      helper={helper}
+      multiline={multiline}
+      variant="outlined"
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 52,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#1a2e22', // You can replace with theme background
-  },
-  icon: {
-    marginRight: 8,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    paddingVertical: 0,
-  },
-});

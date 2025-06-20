@@ -1,28 +1,32 @@
 import React from 'react';
-import { View, StyleSheet, ViewProps } from 'react-native';
+import { ViewProps } from 'react-native';
+import { Row } from '@/design-system/components';
+import { Spacing } from '@/design-system/tokens';
 
 interface WeedGrowButtonRowProps extends ViewProps {
   children: React.ReactNode;
-  style?: any;
+  gap?: keyof typeof Spacing;
+  align?: 'flex-start' | 'center' | 'flex-end' | 'stretch';
+  justify?: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly';
 }
 
-export function WeedGrowButtonRow({ children, style, ...rest }: WeedGrowButtonRowProps) {
+export function WeedGrowButtonRow({ 
+  children, 
+  gap = 'md',
+  align = 'center',
+  justify = 'center',
+  style,
+  ...props 
+}: WeedGrowButtonRowProps) {
   return (
-    <View
-      style={[styles.row, style]}
-      {...rest}
+    <Row
+      gap={gap}
+      align={align}
+      justify={justify}
+      style={[{ marginTop: Spacing.xl, width: '100%' }, style]}
+      {...props}
     >
       {children}
-    </View>
+    </Row>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 32,
-    gap: 16,
-    width: '100%',
-  },
-});

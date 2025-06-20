@@ -1,29 +1,40 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { ThemedText } from './ThemedText';
+import { StyleSheet } from 'react-native';
+import { Text, Container } from '@/design-system';
+import { Spacing } from '@/design-system/tokens';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export function AppHeader() {
   return (
-    <View style={styles.appHeaderModern}>
-      <MaterialCommunityIcons name="sprout" size={24} color="#fff" style={{ marginRight: 8, opacity: 0.85 }} />
-      <ThemedText style={styles.appNameModern}>WeedGrow</ThemedText>
-      <View style={{ flex: 1 }} />
+    <Container 
+      direction="row" 
+      align="center" 
+      justify="flex-start"
+      style={styles.appHeaderModern}
+    >
+      <MaterialCommunityIcons 
+        name="sprout" 
+        size={24} 
+        color="#fff" 
+        style={styles.icon} 
+      />
+      <Text style={styles.appNameModern}>WeedGrow</Text>
+      <Container style={{ flex: 1 }} />
       {/* Future: Add settings dropdown here */}
-    </View>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
   appHeaderModern: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start', // left align
-    paddingTop: 12,
-    paddingBottom: 8,
-    paddingHorizontal: 16,
-    backgroundColor: 'transparent', // no background
-    marginBottom: 0,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    backgroundColor: 'transparent',
+  },
+  icon: {
+    marginRight: Spacing.xs,
+    opacity: 0.85,
   },
   appNameModern: {
     fontSize: 22,

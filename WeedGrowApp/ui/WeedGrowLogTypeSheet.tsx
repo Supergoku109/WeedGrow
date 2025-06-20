@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
-import { ThemedText } from './ThemedText';
+import { View, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { Text, Container, Button } from '@/design-system';
+import { ColorTokens, Spacing, BorderRadius } from '@/design-system/tokens';
 
 export type LogType = 'watering' | 'feeding' | 'pests' | 'training' | 'health' | 'notes';
 
@@ -10,20 +11,42 @@ interface WeedGrowLogTypeSheetProps {
   onClose: () => void;
 }
 
+const LOG_TYPES = [
+  { type: 'watering' as LogType, icon: '💧', label: 'Water' },
+  { type: 'feeding' as LogType, icon: '🧪', label: 'Feeding' },
+  { type: 'pests' as LogType, icon: '🪲', label: 'Pests' },
+  { type: 'training' as LogType, icon: '🌱', label: 'Training' },
+  { type: 'health' as LogType, icon: '❤️', label: 'Health' },
+  { type: 'notes' as LogType, icon: '📝', label: 'Notes' },
+];
+
 export default function WeedGrowLogTypeSheet({ visible, onSelect, onClose }: WeedGrowLogTypeSheetProps) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <View style={styles.sheet}>
-          <ThemedText style={styles.title}>Add Log</ThemedText>
-          <TouchableOpacity style={styles.item} onPress={() => onSelect('watering')}><Text style={styles.icon}>💧</Text><Text>Water</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.item} onPress={() => onSelect('feeding')}><Text style={styles.icon}>🧪</Text><Text>Feeding</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.item} onPress={() => onSelect('pests')}><Text style={styles.icon}>🪲</Text><Text>Pests</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.item} onPress={() => onSelect('training')}><Text style={styles.icon}>🌱</Text><Text>Training</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.item} onPress={() => onSelect('health')}><Text style={styles.icon}>❤️</Text><Text>Health</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.item} onPress={() => onSelect('notes')}><Text style={styles.icon}>📝</Text><Text>Notes</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.cancel} onPress={onClose}><Text style={{ color: '#2563eb', fontWeight: 'bold' }}>Cancel</Text></TouchableOpacity>
-        </View>
+        <Container style={styles.sheet}>
+          <Text variant="h3" align="center" style={{ marginBottom: Spacing.md }}>
+            Add Log
+          </Text>
+          
+          {LOG_TYPES.map(({ type, icon, label }) => (
+            <TouchableOpacity
+              key={type}
+              style={styles.item}
+              onPress={() => onSelect(type)}
+            >
+              <Text style={styles.icon}>{icon}</Text>
+              <Text variant="body">{label}</Text>
+            </TouchableOpacity>
+          ))}
+            <Button
+            variant="ghost"
+            onPress={onClose}
+            style={{ marginTop: Spacing.lg }}
+          >
+            Cancel
+          </Button>
+        </Container>
       </View>
     </Modal>
   );
@@ -32,39 +55,27 @@ export default function WeedGrowLogTypeSheet({ visible, onSelect, onClose }: Wee
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.18)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    padding: 20,
-    paddingBottom: 32,
-    alignItems: 'stretch',
-  },
-  title: {
-    fontWeight: 'bold',
-    fontSize: 18,
-    marginBottom: 16,
-    textAlign: 'center',
+    backgroundColor: ColorTokens.background.primary,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    gap: 12,
+    borderBottomColor: ColorTokens.border.secondary,
+    gap: Spacing.sm,
   },
   icon: {
     fontSize: 20,
     width: 28,
     textAlign: 'center',
-  },
-  cancel: {
-    marginTop: 18,
-    alignItems: 'center',
-    paddingVertical: 10,
   },
 });

@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle, TextStyle } from 'react-native';
-import { ThemedText } from './ThemedText';
+import { View, ViewStyle, TextStyle } from 'react-native';
+import { Text, Container } from '@/design-system/components';
+import { Spacing, ColorTokens } from '@/design-system/tokens';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
 
 interface WeedGrowFormSectionProps {
   label?: string;
@@ -29,8 +29,8 @@ export const WeedGrowFormSection: React.FC<WeedGrowFormSectionProps> = ({
   style,
   labelStyle,
   descriptionStyle,
-  spacing = 14,
-  horizontalSpacing = 12,
+  spacing = Spacing.md,
+  horizontalSpacing = Spacing.md,
   direction = 'column',
   topSpacing = 0,
   bottomSpacing = 0,
@@ -38,57 +38,77 @@ export const WeedGrowFormSection: React.FC<WeedGrowFormSectionProps> = ({
   dividerStyle,
 }) => {
   const theme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
-  // Add fallback colors for secondaryText and divider
-  const secondaryText = theme === 'light' ? '#B0B0B0' : '#B0B0B0';
-  const dividerColor = theme === 'light' ? '#E0E0E0' : '#222';
+  const dividerColor = theme === 'light' ? ColorTokens.gray[300] : ColorTokens.border.primary;
+
   return (
-    <View style={[{ marginTop: topSpacing, marginBottom: bottomSpacing }, style]}>
+    <Container
+      style={[
+        { 
+          marginTop: topSpacing, 
+          marginBottom: bottomSpacing,
+        }, 
+        style
+      ]}
+    >
       {renderLabel ? (
         renderLabel()
       ) : label ? (
-        <ThemedText type="subtitle" style={[styles.label, { color: Colors[theme].tint }, labelStyle]}>
+        <Text 
+          variant="label" 
+          color="accent"
+          style={[
+            { 
+              marginBottom: Spacing.xs,
+              marginLeft: 2,
+            }, 
+            labelStyle
+          ]}
+        >
           {label}
-        </ThemedText>
+        </Text>
       ) : null}
+      
       {!!description && (
-        <ThemedText type="default" style={[styles.description, { color: secondaryText }, descriptionStyle]}>
+        <Text 
+          variant="caption" 
+          color="secondary"
+          style={[
+            { 
+              marginBottom: Spacing.xs,
+              marginLeft: 2,
+            }, 
+            descriptionStyle
+          ]}
+        >
           {description}
-        </ThemedText>
+        </Text>
       )}
+      
       {divider && (
-        <View style={[styles.divider, { backgroundColor: dividerColor }, dividerStyle]} />
+        <View 
+          style={[
+            {
+              height: 1,
+              width: '100%',
+              marginBottom: Spacing.sm,
+              marginTop: 2,
+              backgroundColor: dividerColor,
+              opacity: 0.18,
+              borderRadius: 1,
+            }, 
+            dividerStyle
+          ]} 
+        />
       )}
-      <View
-        style={
-          direction === 'row'
-            ? { flexDirection: 'row', alignItems: 'center', gap: horizontalSpacing, width: '100%' }
-            : { gap: spacing, width: '100%' }
-        }
+      
+      <Container
+        direction={direction}
+        gap={direction === 'row' ? horizontalSpacing : spacing}
+        align={direction === 'row' ? 'center' : 'stretch'}
+        style={{ width: '100%' }}
       >
         {children}
-      </View>
-    </View>
+      </Container>
+    </Container>
   );
 };
-
-const styles = StyleSheet.create({
-  label: {
-    fontWeight: '600',
-    fontSize: 16,
-    marginBottom: 6,
-    marginLeft: 2,
-  },
-  description: {
-    fontSize: 13,
-    marginBottom: 4,
-    marginLeft: 2,
-  },
-  divider: {
-    height: 1,
-    width: '100%',
-    marginBottom: 10,
-    marginTop: 2,
-    opacity: 0.18,
-    borderRadius: 1,
-  },
-});

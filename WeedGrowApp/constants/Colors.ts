@@ -1,20 +1,22 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Legacy Colors - Deprecated
+ * Use design-system/tokens/colors.ts instead
+ * This file is kept for backwards compatibility during migration
  */
 
-const tintColorLight = '#00c853';
-const tintColorDark = '#00c853';
-// Dark green used by the calendar
-export const calendarGreen = 'green';
-const grayColor = '#aaaaaa';
-const labelColor = '#999999';
-const whiteColor = '#ffffff';
+import { ColorTokens, ThemeColors } from '@/design-system/tokens/colors';
+
+const tintColorLight = ColorTokens.brand.primary;
+const tintColorDark = ColorTokens.brand.primary;
+export const calendarGreen = ColorTokens.logTypes.feeding;
+const grayColor = ColorTokens.text.secondary;
+const labelColor = ColorTokens.text.tertiary;
+const whiteColor = ColorTokens.text.primary;
 
 export const Colors = {
   light: {
-    text: '#ECEDEE',
-    background: '#151718',
+    text: ThemeColors.light.text,
+    background: ThemeColors.light.background,
     tint: tintColorLight,
     icon: tintColorLight,
     tabIconDefault: tintColorLight,
@@ -24,8 +26,8 @@ export const Colors = {
     white: whiteColor,
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
+    text: ThemeColors.dark.text,
+    background: ThemeColors.dark.background,
     tint: tintColorDark,
     icon: tintColorDark,
     tabIconDefault: tintColorDark,

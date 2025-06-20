@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, FlatList, Dimensions } from 'react-native';
-import { ThemedText } from './ThemedText';
+import { Text, Container, Card } from '@/design-system';
+import { ColorTokens, Spacing, BorderRadius } from '@/design-system/tokens';
 import GradientOverlay from './GradientOverlay';
 
 export interface Suggestion {
@@ -18,13 +19,13 @@ interface SuggestionCatalogProps {
 
 const CARD_WIDTH = Math.min(Dimensions.get('window').width - 32, 340);
 
-// Color codes for suggestion types (edit here)
+// Color codes for suggestion types
 const SUGGESTION_COLORS = {
   watering: 'rgb(15, 69, 161)', // blue
   mildew: 'rgba(139, 9, 9, 0.93)',  // red
   weather: 'rgb(189, 138, 17)', // orange
   fertilizer: 'rgb(34, 142, 77)', // green
-  default: 'rgba(26,46,34,1)',
+  default: ColorTokens.brand.primary,
 };
 
 const getCardColor = (suggestion: Suggestion) => {
@@ -38,65 +39,75 @@ const getCardColor = (suggestion: Suggestion) => {
 
 export function SuggestionCatalog({ suggestions }: SuggestionCatalogProps) {
   return (
-    <View style={styles.catalogContainer}>
+    <Container style={styles.catalogContainer}>
       <FlatList
         data={suggestions}
         keyExtractor={s => s.key}
         horizontal
         showsHorizontalScrollIndicator={false}
-        snapToInterval={CARD_WIDTH + 12} // Add this
+        snapToInterval={CARD_WIDTH + Spacing.sm}
         decelerationRate="fast"
-        contentContainerStyle={{ paddingHorizontal: 8 }}
+        contentContainerStyle={{ paddingHorizontal: Spacing.xs }}
         renderItem={({ item }) => (
-          <View style={[styles.card, { width: CARD_WIDTH, backgroundColor: getCardColor(item), overflow: 'hidden' }]}> 
+          <Container 
+            style={[
+              styles.card, 
+              { 
+                width: CARD_WIDTH, 
+                backgroundColor: getCardColor(item),
+                overflow: 'hidden'
+              }
+            ]}
+          > 
             <GradientOverlay color={getCardColor(item)} />
-            <View style={styles.headerRow}>
-              <ThemedText style={styles.icon}>{item.icon}</ThemedText>
-              <ThemedText style={styles.title}>{item.title}</ThemedText>
-            </View>
-            {item.description && <ThemedText style={styles.description}>{item.description}</ThemedText>}
-            <View style={styles.affectedRow}>
-              <ThemedText style={styles.affectedName}>
+            <Container direction="row" align="center" style={{ marginBottom: Spacing.xs }}>
+              <Text style={styles.icon}>{item.icon}</Text>
+              <Text style={styles.title}>{item.title}</Text>
+            </Container>
+            {item.description && (
+              <Text style={styles.description}>{item.description}</Text>
+            )}
+            <Container 
+              direction="row" 
+              align="center" 
+              style={{ marginTop: Spacing.xs, flexWrap: 'wrap' }}
+            >
+              <Text style={styles.affectedName}>
                 {item.affected.slice(0, 3).join(', ')}
-              </ThemedText>
+              </Text>
               {item.affected.length > 3 && item.onExpand && (
                 <TouchableOpacity onPress={item.onExpand}>
-                  <ThemedText style={styles.expandText}>+{item.affected.length - 3} more</ThemedText>
+                  <Text style={styles.expandText}>+{item.affected.length - 3} more</Text>
                 </TouchableOpacity>
               )}
-            </View>
-          </View>
+            </Container>
+          </Container>
         )}
       />
-    </View>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
   catalogContainer: {
     width: '100%',
-    marginTop: 8,
-    marginBottom: 8,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.xs,
   },
   card: {
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
     shadowColor: '#000',
     shadowOpacity: 0.08,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
-    marginHorizontal: 6,
+    marginHorizontal: Spacing.xs,
     alignSelf: 'center',
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
   },
   icon: {
     fontSize: 22,
-    marginRight: 8,
+    marginRight: Spacing.xs,
   },
   title: {
     fontSize: 16,
@@ -107,13 +118,7 @@ const styles = StyleSheet.create({
   description: {
     color: '#b5e0c7',
     fontSize: 13,
-    marginBottom: 4,
-  },
-  affectedRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    marginTop: 2,
+    marginBottom: Spacing.xs,
   },
   affectedName: {
     color: '#fff',
@@ -122,7 +127,7 @@ const styles = StyleSheet.create({
   expandText: {
     color: '#4fc3f7',
     fontSize: 13,
-    marginLeft: 4,
+    marginLeft: Spacing.xs,
     fontWeight: 'bold',
   },
 });

@@ -1,30 +1,31 @@
-import { useState } from 'react'
-import { useColorScheme } from '@/hooks/useColorScheme'
-import { Colors } from '@/constants/Colors'
-import type { PlantForm } from '@/features/plants/form/PlantForm'
+import { useState } from 'react';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
+import type { PlantForm } from '@/features/plants/form/PlantForm';
+import { BaseStepLogic } from '../types/StepLogic';
+import { useStepBackground } from './useStepBackground';
 
-export interface Step4CareLogic {
-  backgroundColor: string
-  tint: string
-  textColor: string
-  waterMenu: boolean
-  setWaterMenu: (val: boolean) => void
-  wateringOptions: string[]
-  pestOptions: string[]
-  trainingOptions: string[]
-  setField: (key: keyof PlantForm, value: any) => void
-  togglePest: (pest: string) => void
-  toggleTraining: (training: string) => void
+export interface Step4CareLogic extends BaseStepLogic {
+  tint: string;
+  textColor: string;
+  waterMenu: boolean;
+  setWaterMenu: (val: boolean) => void;
+  wateringOptions: string[];
+  pestOptions: string[];
+  trainingOptions: string[];
+  setField: (key: keyof PlantForm, value: any) => void;
+  togglePest: (pest: string) => void;
+  toggleTraining: (training: string) => void;
 }
 
 export function useStep4Care(
   form: PlantForm,
   setField: (key: keyof PlantForm, value: any) => void
 ): Step4CareLogic {
-  const scheme = (useColorScheme() ?? 'dark') as keyof typeof Colors
-  const backgroundColor = Colors[scheme].background
-  const tint = Colors[scheme].tint
-  const textColor = Colors[scheme].text
+  const backgroundColor = useStepBackground();
+  const scheme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
+  const tint = Colors[scheme].tint;
+  const textColor = Colors[scheme].text;
 
   const [waterMenu, setWaterMenu] = useState(false)
 

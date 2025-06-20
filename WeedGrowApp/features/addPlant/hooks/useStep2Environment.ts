@@ -3,17 +3,16 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocalSearchParams }        from 'expo-router';
 import { useSafeAreaInsets }          from 'react-native-safe-area-context';
-import { useColorScheme }             from '@/hooks/useColorScheme';
-import { Colors }                     from '@/constants/Colors';
 import type { PlantForm }             from '@/features/plants/form/PlantForm';
+import { BaseStepLogic }              from '../types/StepLogic';
+import { useStepBackground }          from './useStepBackground';
 import {
   potSizeOptions,
   sunlightOptions,
   fetchSensorProfiles,
 } from '../api/environmentApi';
 
-export interface Step2EnvironmentLogic {
-  backgroundColor: string;
+export interface Step2EnvironmentLogic extends BaseStepLogic {
   insetsTop: number;
 
   // environment radios:
@@ -50,8 +49,7 @@ export function useStep2Environment(
   setField: (k: keyof PlantForm, v:any) => void
 ): Step2EnvironmentLogic {
   // theming & insets
-  const scheme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
-  const backgroundColor = Colors[scheme].background;
+  const backgroundColor = useStepBackground();
   const { top: insetsTop } = useSafeAreaInsets();
 
   // menus

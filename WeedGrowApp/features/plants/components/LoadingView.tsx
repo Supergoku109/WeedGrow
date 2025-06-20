@@ -1,22 +1,21 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
-import { ThemedView } from '@/ui/ThemedView';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { Container } from '@/design-system/components';
+import { useTheme } from '@/design-system/utils/useTheme';
 
 export default function LoadingView() {
-  const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
+  const theme = useTheme();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
-      <ThemedView style={styles.center}>
-        <ActivityIndicator color={Colors[theme].tint} />
-      </ThemedView>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background.primary }}>
+      <Container 
+        style={{ flex: 1 }} 
+        align="center" 
+        justify="center"
+      >
+        <ActivityIndicator color={theme.colors.brand.primary} />
+      </Container>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-});

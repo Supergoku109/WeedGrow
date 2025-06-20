@@ -1,22 +1,20 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet } from 'react-native';
-import { ThemedView } from '@/ui/ThemedView';
-import { ThemedText } from '@/ui/ThemedText';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { SafeAreaView } from 'react-native';
+import { Container, Text } from '@/design-system/components';
+import { useTheme } from '@/design-system/utils/useTheme';
 
 export default function NotFoundView() {
-  const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
+  const theme = useTheme();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
-      <ThemedView style={styles.center}>
-        <ThemedText>Plant not found.</ThemedText>
-      </ThemedView>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background.primary }}>
+      <Container 
+        style={{ flex: 1 }} 
+        align="center" 
+        justify="center"
+      >
+        <Text variant="body">Plant not found.</Text>
+      </Container>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-});

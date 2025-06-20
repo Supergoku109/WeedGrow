@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { View, StyleSheet, Text } from 'react-native';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
+import { View, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Text, Container, useTheme } from '@/design-system';
+import { Spacing, BorderRadius } from '@/design-system/tokens';
 
 interface WeedGrowDropdownInputProps {
   icon?: string;
@@ -24,9 +24,7 @@ export function WeedGrowDropdownInput({
   placeholder,
   zIndex = 1000,
 }: WeedGrowDropdownInputProps) {
-  const scheme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
-  const themeColors = Colors[scheme];
-
+  const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState(options);
 
@@ -35,18 +33,18 @@ export function WeedGrowDropdownInput({
   }, [options]);
 
   return (
-    <View style={{ zIndex, marginBottom: 16 }}>
-      <View style={styles.labelContainer}>
+    <Container style={{ zIndex, marginBottom: Spacing.md }}>
+      <Container direction="row" align="center" style={{ marginBottom: Spacing.xs }}>
         {icon && (
           <MaterialCommunityIcons
             name={icon as any}
             size={18}
-            color={themeColors.text}
-            style={{ marginRight: 6 }}
+            color={theme.colors.text.primary}
+            style={{ marginRight: Spacing.xs }}
           />
         )}
-        <Text style={[styles.label, { color: themeColors.text }]}>{label}</Text>
-      </View>
+        <Text variant="label" color="primary">{label}</Text>
+      </Container>
 
       <DropDownPicker
         open={open}
@@ -56,40 +54,48 @@ export function WeedGrowDropdownInput({
         setValue={(callback) => onSelect(callback(value))}
         setItems={setItems}
         placeholder={placeholder}
-        style={{
-          backgroundColor: '#1a2e22',
-          borderColor: themeColors.tint,
-          height: 52,
-        }}
+        style={[
+          styles.dropdown,
+          {
+            backgroundColor: theme.colors.background.secondary,
+            borderColor: theme.colors.border.primary,
+          }
+        ]}
         textStyle={{
-          color: themeColors.text,
+          color: theme.colors.text.primary,
           fontSize: 16,
         }}
-        dropDownContainerStyle={{
-          backgroundColor: '#1a2e22',
-          borderColor: themeColors.tint,
-        }}
+        dropDownContainerStyle={[
+          styles.dropdownContainer,
+          {
+            backgroundColor: theme.colors.background.secondary,
+            borderColor: theme.colors.border.primary,
+          }
+        ]}
         listItemLabelStyle={{
-          color: themeColors.text,
+          color: theme.colors.text.primary,
         }}
         ArrowDownIconComponent={({ style }: { style?: any }) => (
-          <MaterialCommunityIcons name="chevron-down" size={20} color="#fff" style={style} />
+          <MaterialCommunityIcons 
+            name="chevron-down" 
+            size={20} 
+            color={theme.colors.text.secondary} 
+            style={style} 
+          />
         )}
-        tickIconStyle={{}}
         listMode="SCROLLVIEW"
       />
-    </View>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  labelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
+  dropdown: {
+    height: 52,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.sm,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
+  dropdownContainer: {
+    borderRadius: BorderRadius.md,
   },
 });

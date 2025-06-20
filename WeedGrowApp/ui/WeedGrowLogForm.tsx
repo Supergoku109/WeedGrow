@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal } from 'react-native';
-import { ThemedText } from './ThemedText';
+import { View, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { Text, Container, Button, Input } from '@/design-system';
+import { ColorTokens, Spacing, BorderRadius } from '@/design-system/tokens';
 import { LogType } from './WeedGrowLogTypeSheet';
 
 interface WeedGrowLogFormProps {
@@ -23,23 +24,50 @@ export default function WeedGrowLogForm({ visible, logType, onSubmit, onCancel }
     case 'notes': label = 'Note'; break;
   }
 
+  const handleSubmit = () => {
+    onSubmit({ description });
+    setDescription(''); // Reset form
+  };
+
+  const handleCancel = () => {
+    onCancel();
+    setDescription(''); // Reset form
+  };
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleCancel}>
       <View style={styles.overlay}>
-        <View style={styles.sheet}>
-          <ThemedText style={styles.title}>{label}</ThemedText>
-          <TextInput
-            style={styles.input}
+        <Container style={styles.sheet}>
+          <Text variant="h3" align="center" style={{ marginBottom: Spacing.md }}>
+            {label}
+          </Text>
+          
+          <Input
             placeholder="Description (optional)"
             value={description}
             onChangeText={setDescription}
             multiline
+            numberOfLines={3}
+            style={{ marginBottom: Spacing.lg }}
           />
-          <View style={styles.row}>
-            <TouchableOpacity style={styles.cancel} onPress={onCancel}><Text style={{ color: '#2563eb', fontWeight: 'bold' }}>Cancel</Text></TouchableOpacity>
-            <TouchableOpacity style={styles.submit} onPress={() => onSubmit({ description })}><Text style={{ color: '#fff', fontWeight: 'bold' }}>Save</Text></TouchableOpacity>
-          </View>
-        </View>
+          
+          <Container direction="row" gap={Spacing.sm}>
+            <Button
+              variant="secondary"
+              onPress={handleCancel}
+              style={{ flex: 1 }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onPress={handleSubmit}
+              style={{ flex: 1 }}
+            >
+              Save
+            </Button>
+          </Container>
+        </Container>
       </View>
     </Modal>
   );
@@ -48,52 +76,14 @@ export default function WeedGrowLogForm({ visible, logType, onSubmit, onCancel }
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.18)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    padding: 20,
-    paddingBottom: 32,
-    alignItems: 'stretch',
-  },
-  title: {
-    fontWeight: 'bold',
-    fontSize: 18,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 15,
-    minHeight: 60,
-    marginBottom: 18,
-    backgroundColor: '#f8fafc',
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  cancel: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    backgroundColor: '#e0e7ff',
-    borderRadius: 8,
-    marginRight: 8,
-  },
-  submit: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    backgroundColor: '#2563eb',
-    borderRadius: 8,
-    marginLeft: 8,
+    backgroundColor: ColorTokens.background.primary,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
 });

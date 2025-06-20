@@ -1,25 +1,26 @@
-import { useState } from 'react'
-import { useColorScheme } from '@/hooks/useColorScheme'
-import { Colors } from '@/constants/Colors'
-import type { PlantForm } from '@/features/plants/form/PlantForm'
-import * as ImagePicker from 'expo-image-picker'
+import { useState } from 'react';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
+import type { PlantForm } from '@/features/plants/form/PlantForm';
+import * as ImagePicker from 'expo-image-picker';
+import { BaseStepLogic } from '../types/StepLogic';
+import { useStepBackground } from './useStepBackground';
 
-export interface Step5MediaLogic {
-  backgroundColor: string
-  tint: string
-  snackVisible: boolean
-  setSnackVisible(val: boolean): void
-  pickImage(fromCamera: boolean): Promise<void>
-  setField(key: keyof PlantForm, value: any): void
+export interface Step5MediaLogic extends BaseStepLogic {
+  tint: string;
+  snackVisible: boolean;
+  setSnackVisible(val: boolean): void;
+  pickImage(fromCamera: boolean): Promise<void>;
+  setField(key: keyof PlantForm, value: any): void;
 }
 
 export function useStep5Media(
   form: PlantForm,
   setField: (key: keyof PlantForm, value: any) => void
 ): Step5MediaLogic {
-  const scheme = (useColorScheme() ?? 'dark') as keyof typeof Colors
-  const backgroundColor = Colors[scheme].background
-  const tint = Colors[scheme].tint
+  const backgroundColor = useStepBackground();
+  const scheme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
+  const tint = Colors[scheme].tint;
 
   const [snackVisible, setSnackVisible] = useState(false)
 

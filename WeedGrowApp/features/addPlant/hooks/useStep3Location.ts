@@ -1,27 +1,27 @@
-import { useState, useMemo, useRef } from 'react'
-import { useColorScheme } from '@/hooks/useColorScheme'
-import { Colors } from '@/constants/Colors'
-import type { PlantForm } from '@/features/plants/form/PlantForm'
-import * as Location from 'expo-location'
-import { Alert } from 'react-native'
-import type MapView from 'react-native-maps'
+import { useState, useMemo, useRef } from 'react';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
+import type { PlantForm } from '@/features/plants/form/PlantForm';
+import * as Location from 'expo-location';
+import { Alert } from 'react-native';
+import type MapView from 'react-native-maps';
+import { BaseStepLogic } from '../types/StepLogic';
+import { useStepBackground } from './useStepBackground';
 
-export interface Step3LocationLogic {
-  backgroundColor: string
-  tint: string
-  loading: boolean
-  isValid: boolean
-  getLocation(): Promise<void>
-  setField(key: keyof PlantForm, value: any): void
+export interface Step3LocationLogic extends BaseStepLogic {
+  tint: string;
+  loading: boolean;
+  isValid: boolean;
+  getLocation(): Promise<void>;
+  setField(key: keyof PlantForm, value: any): void;
 }
 
-export function useStep3Location(
-  form: PlantForm,
+export function useStep3Location(  form: PlantForm,
   setField: (key: keyof PlantForm, value: any) => void
 ): Step3LocationLogic {
-  const scheme = (useColorScheme() ?? 'dark') as keyof typeof Colors
-  const backgroundColor = Colors[scheme].background
-  const tint = Colors[scheme].tint
+  const backgroundColor = useStepBackground();
+  const scheme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
+  const tint = Colors[scheme].tint;
 
   const [loading, setLoading] = useState(false)
 
