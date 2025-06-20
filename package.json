@@ -10,5 +10,9 @@
     "react-native-portalize": "^1.0.7",
     "react-native-svg": "^15.11.2",
     "react-native-tab-view": "^4.1.2"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.3",
+    "@types/react": "~19.0.10"
   }
 }

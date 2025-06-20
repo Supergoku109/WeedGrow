@@ -1,5 +1,6 @@
 import { db } from '@/services/firebase';
 import { doc, deleteDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
+import { invalidatePlantCache } from '@/features/plants/hooks/usePlantList';
 
 // Main delete function for entire plant + subcollections
 export async function deletePlantAndSubcollections(id: string) {
@@ -19,4 +20,7 @@ export async function deletePlantAndSubcollections(id: string) {
   ]);
 
   await deleteDoc(plantRef);
+
+  // Invalidate the plant cache so fresh data is fetched next time
+  invalidatePlantCache();
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { Snackbar, Searchbar, IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,6 +20,7 @@ import { useGroupListHandlers } from '../hooks/useGroupListHandlers';
 import { ThemedText } from '@/ui/ThemedText';
 import HomeBackground from '../components/HomeBackground';
 import { useHomeScreenState } from '../hooks/useHomeScreenState';
+import SwipeTabs from '@/ui/SwipeTabs';
 
 const styles = StyleSheet.create({
   appHeaderModern: {
@@ -115,6 +116,11 @@ export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: 
   const router = useRouter();
   const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
 
+  // Memoize the initial key to prevent unnecessary re-renders
+  const initialKey = useMemo(() => {
+    return initialTabIndex === 0 ? 'groups' : 'plants';
+  }, [initialTabIndex]);
+
   // State and handlers from the custom hook
   const {
     state,
@@ -174,10 +180,74 @@ export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: 
       description: 'Severe weather forecasted for your area.',
       affected: ['Greenhouse Group'],
     },
-  ];
-
-  // TLC needed indicator
+  ];  // TLC needed indicator
   const tlcCount = mockSuggestions.length;
+
+  const renderGroupsTab = React.useCallback(() => (
+    <View style={{ flex: 1 }}>
+      <View style={styles.searchRow}>
+        <Searchbar
+          placeholder="Search groups"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          style={styles.searchBar}
+          inputStyle={{ color: '#fff', textAlignVertical: 'center' }}
+        />
+      </View>
+      <GroupList
+        groups={filteredGroups}
+        groupPlantsMap={groupPlantsMap}
+        loading={state.loading}
+        error={state.error}
+        onEditGroup={handleEditGroup}
+        onAddGroup={() => router.push('/add-group')}
+        theme={theme}
+      />
+    </View>
+  ), [searchQuery, filteredGroups, groupPlantsMap, state.loading, state.error, handleEditGroup, theme, router]);
+
+  const renderPlantsTab = React.useCallback(() => (
+    <View style={{ flex: 1 }}>
+      <View style={styles.searchRow}>
+        <Searchbar
+          placeholder="Search plants"
+          value={plantSearchQuery}
+          onChangeText={setPlantSearchQuery}
+          style={styles.searchBar}
+          inputStyle={{ color: '#fff', textAlignVertical: 'center' }}
+        />
+      </View>
+      <PlantListScreen
+        searchQuery={plantSearchQuery}
+        statusFilter={statusFilter}
+        envFilter={plantEnvFilter}
+        plantedFilter={plantedFilter}
+        trainingFilter={trainingFilter}
+        setSearchQuery={setPlantSearchQuery}
+        setStatusFilter={setStatusFilter}
+        setEnvFilter={setPlantEnvFilter}
+        setPlantedFilter={setPlantedFilter}
+        setTrainingFilter={setTrainingFilter}
+        filtersVisible={plantFiltersVisible}
+        setFiltersVisible={setPlantFiltersVisible}
+      />
+    </View>
+  ), [plantSearchQuery, statusFilter, plantEnvFilter, plantedFilter, trainingFilter, plantFiltersVisible]);
+
+
+  // Create stable tabs array with static keys
+  const tabs = useMemo(() => [
+    {
+      key: 'groups',
+      title: 'Groups',
+      render: renderGroupsTab,
+    },
+    {
+      key: 'plants',
+      title: 'Plants',
+      render: renderPlantsTab,
+    },
+  ], [renderGroupsTab, renderPlantsTab]);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#181f1b', position: 'relative' }}>
@@ -190,78 +260,12 @@ export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: 
           <MaterialCommunityIcons name="heart-pulse" size={15} color="#ff6b81" style={{ marginRight: 1, marginTop: 6 }} />
           <ThemedText style={{ color: '#ff6b81', fontWeight: '600', fontSize: 13 }}>({tlcCount}) TLC Needed</ThemedText>
         </View>
+
         {/* Suggestion Catalog */}
         <SuggestionCatalog suggestions={mockSuggestions} />
-        {/* Simple Tab Implementation */}
+        {/* Swipe Tabs Implementation */}
         <View style={{ marginTop: 4, marginBottom: 4, flex: 1 }}>
-          <View style={styles.tabContainer}>
-            <TouchableOpacity
-              style={[styles.tabButton, tabIndex === 0 && styles.tabButtonActive]}
-              onPress={() => setTabIndex(0)}
-            >
-              <Text style={[styles.tabText, tabIndex === 0 && styles.tabTextActive]}>Groups</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tabButton, tabIndex === 1 && styles.tabButtonActive]}
-              onPress={() => setTabIndex(1)}
-            >
-              <Text style={[styles.tabText, tabIndex === 1 && styles.tabTextActive]}>Plants</Text>
-            </TouchableOpacity>
-          </View>
-          {tabIndex === 0 ? (
-            <View style={{ flex: 1 }}>
-              <View style={styles.searchRow}>
-                <Searchbar
-                  placeholder="Search groups"
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  style={styles.searchBar}
-                  inputStyle={{ color: '#fff', textAlignVertical: 'center' }}
-                />
-              </View>
-              <GroupList
-                groups={filteredGroups}
-                groupPlantsMap={groupPlantsMap}
-                loading={state.loading}
-                error={state.error}
-                onEditGroup={handleEditGroup}
-                onAddGroup={() => router.push('/add-group')}
-                theme={theme}
-              />
-            </View>
-          ) : (
-            <View style={{ flex: 1 }}>
-              <View style={styles.searchRow}>
-                <Searchbar
-                  placeholder="Search plants"
-                  value={plantSearchQuery}
-                  onChangeText={setPlantSearchQuery}
-                  style={styles.searchBar}
-                  inputStyle={{ color: '#fff', textAlignVertical: 'center' }}
-                />
-                <IconButton icon={plantFiltersVisible ? 'filter-off-outline' : 'filter-variant'} onPress={() => setPlantFiltersVisible((v) => !v)} />
-              </View>
-              {plantFiltersVisible && (
-                <View style={styles.filtersContainer}>
-                  <FilterChips label="Environment" options={['outdoor', 'greenhouse', 'indoor']} value={plantEnvFilter} setValue={setPlantEnvFilter} />
-                </View>
-              )}
-              <PlantListScreen
-                searchQuery={plantSearchQuery}
-                statusFilter={statusFilter}
-                envFilter={plantEnvFilter}
-                plantedFilter={plantedFilter}
-                trainingFilter={trainingFilter}
-                setSearchQuery={setPlantSearchQuery}
-                setStatusFilter={setStatusFilter}
-                setEnvFilter={setPlantEnvFilter}
-                setPlantedFilter={setPlantedFilter}
-                setTrainingFilter={setTrainingFilter}
-                filtersVisible={plantFiltersVisible}
-                setFiltersVisible={setPlantFiltersVisible}
-              />
-            </View>
-          )}
+          <SwipeTabs tabs={tabs} initialKey={initialKey} />
         </View>
         <Snackbar visible={snackVisible} onDismiss={() => setSnackVisible(false)} duration={3000}>
           {snackMessage}

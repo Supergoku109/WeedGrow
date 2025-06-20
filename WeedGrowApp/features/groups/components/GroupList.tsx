@@ -31,16 +31,31 @@ export default function GroupList({
     [onEditGroup]
   );
 
+  const renderItem = useCallback(
+    ({ item: group }: { item: Group & { id: string } }) => {
+      const groupPlants = groupPlantsMap[group.id] || [];
+      return <GroupCard group={group} plants={groupPlants} onEdit={getOnEditGroup(group)} />;
+    },
+    [groupPlantsMap, getOnEditGroup]
+  );
+
   return (
     <FlatList
-      data={groups.map(g => g.id)}
-      keyExtractor={item => item}
+      data={groups}
+      keyExtractor={item => item.id}
+      renderItem={renderItem}
       ListEmptyComponent={
         loading ? (
           <ActivityIndicator style={styles.loading} />
         ) : error ? (
           <ThemedText>❌ {error}</ThemedText>
-        ) : null
+        ) : (
+          <View style={{ alignItems: 'center', marginTop: 40 }}>
+            <ThemedText style={{ fontSize: 16, opacity: 0.7, textAlign: 'center' }}>
+              No groups yet.{'\n'}Tap "Add Group" below to get started!
+            </ThemedText>
+          </View>
+        )
       }
       ListFooterComponent={
         <View style={{ alignItems: 'center', marginTop: 16, marginBottom: 24 }}>
@@ -54,18 +69,6 @@ export default function GroupList({
           </TouchableOpacity>
         </View>
       }
-      renderItem={({ item }) => {
-        const group = groups.find(g => g.id === item);
-        if (!group) return null;
-        const groupPlants = groupPlantsMap[group.id] || [];
-        return (
-          <GroupCard
-            group={group}
-            plants={groupPlants}
-            onEdit={getOnEditGroup(group)}
-          />
-        );
-      }}
       contentContainerStyle={{
         paddingHorizontal: 16,
         paddingTop: 4,

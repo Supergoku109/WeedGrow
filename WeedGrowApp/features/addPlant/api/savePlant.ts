@@ -6,6 +6,7 @@ import { MILLISECONDS_PER_DAY } from '@/constants/Time';
 import { fetchWeather } from '@/lib/weather/fetchWeather';
 import { parseWeatherData } from '@/lib/weather/parseWeatherData';
 import { updateWeatherCache } from '@/lib/weather/updateFirestore';
+import { invalidatePlantCache } from '@/features/plants/hooks/usePlantList';
 import type { PlantForm } from '@/features/plants/form/PlantForm';
 
 export async function savePlantToFirestore(form: PlantForm) {
@@ -45,4 +46,7 @@ export async function savePlantToFirestore(form: PlantForm) {
       console.warn('Could not fetch weather for new plant:', err);
     }
   }
+
+  // Invalidate the plant cache so fresh data is fetched next time
+  invalidatePlantCache();
 }

@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useLayoutEffect } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
   View,
   Image,
   Animated,
+  Easing,
 } from 'react-native';
 import { Button, Snackbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
@@ -132,19 +133,24 @@ const GroupCardComponent = function GroupCard({
     onEdit?.();
   };
 
-  // Mount animation (same as PlantCard)
-  const scaleAnim = React.useRef(new Animated.Value(0.92)).current;
+  // Animation for card mount
+  const scaleAnim = React.useRef(new Animated.Value(0)).current;
   const opacityAnim = React.useRef(new Animated.Value(0)).current;
-  React.useEffect(() => {
+  // Set initial opacity and scale before rendering
+  useLayoutEffect(() => {
+    scaleAnim.setValue(0); // Start scale at 0
+    opacityAnim.setValue(0); // Start opacity at 0
+
     Animated.parallel([
       Animated.spring(scaleAnim, {
         toValue: 1,
         useNativeDriver: true,
-        friction: 7,
+        friction: 5, // Reduced friction for smoother bounce
       }),
       Animated.timing(opacityAnim, {
         toValue: 1,
-        duration: 350,
+        duration: 800, // Reduced duration to 800ms for faster animation
+        easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
       }),
     ]).start();

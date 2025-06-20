@@ -43,9 +43,8 @@ export function SuggestionCatalog({ suggestions }: SuggestionCatalogProps) {
         data={suggestions}
         keyExtractor={s => s.key}
         horizontal
-        pagingEnabled
         showsHorizontalScrollIndicator={false}
-        snapToAlignment="center"
+        snapToInterval={CARD_WIDTH + 12} // Add this
         decelerationRate="fast"
         contentContainerStyle={{ paddingHorizontal: 8 }}
         renderItem={({ item }) => (
@@ -57,9 +56,9 @@ export function SuggestionCatalog({ suggestions }: SuggestionCatalogProps) {
             </View>
             {item.description && <ThemedText style={styles.description}>{item.description}</ThemedText>}
             <View style={styles.affectedRow}>
-              {item.affected.slice(0, 3).map((name, idx) => (
-                <ThemedText key={name} style={styles.affectedName}>{name}{idx < item.affected.length - 1 && idx < 2 ? ', ' : ''}</ThemedText>
-              ))}
+              <ThemedText style={styles.affectedName}>
+                {item.affected.slice(0, 3).join(', ')}
+              </ThemedText>
               {item.affected.length > 3 && item.onExpand && (
                 <TouchableOpacity onPress={item.onExpand}>
                   <ThemedText style={styles.expandText}>+{item.affected.length - 3} more</ThemedText>

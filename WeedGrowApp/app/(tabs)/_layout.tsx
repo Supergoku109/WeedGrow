@@ -1,28 +1,20 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform, View } from 'react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { IconSymbol } from '@/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { HapticTab } from '@/ui/HapticTab';
-import ManageSensorProfilesScreen from '../manage-sensor-profiles';
-import { FAB } from 'react-native-paper';
-
-const Tab = createBottomTabNavigator();
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#00c853', // Static color
+        tabBarActiveTintColor: Colors[(colorScheme ?? 'light') as 'light' | 'dark'].tint,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#181a1b', // Static background color
+          backgroundColor: Colors[(colorScheme ?? 'light') as 'light' | 'dark'].background,
           borderTopWidth: 0,
         },
       }}>

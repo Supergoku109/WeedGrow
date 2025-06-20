@@ -59,10 +59,9 @@ export default function PlantDetailScreen() {
       console.error('Failed to log watering', err);
     }
   };
-
   React.useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      router.replace({ pathname: '/(tabs)', params: { tabIndex: 1 } });
+      router.replace('/(tabs)?tabIndex=1'); // Use replace instead of push to avoid stacking
       return true; // Prevent default back button behavior
     });
 
