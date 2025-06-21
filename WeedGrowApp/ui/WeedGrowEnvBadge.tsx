@@ -19,9 +19,8 @@ export const WeedGrowEnvBadge: React.FC<WeedGrowEnvBadgeProps> = ({
 }) => {
   const envIcon = environment === 'indoor' ? 'home' : environment === 'outdoor' ? 'weather-sunny' : 'greenhouse';
   const envLabel = environment.charAt(0).toUpperCase() + environment.slice(1);
-  
-  const backgroundColor = ColorTokens.environment[environment as keyof typeof ColorTokens.environment] || ColorTokens.gray[700];
-  
+  // Use a dark gray background for the badge
+  const backgroundColor = ColorTokens.gray[800];
   return (
     <Row 
       style={[
