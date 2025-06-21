@@ -1,16 +1,16 @@
-// features/addPlant/screens/Step1BasicInfo.tsx
+// features/addPlant/screens/Step2BasicInfo.tsx
 import React from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 import { StepScreen } from '../components/StepScreen';
 import { BasicInfoForm } from '../components/BasicInfoForm';
-import { useStep1BasicInfo } from '../hooks/useStep1BasicInfo';
+import { useStep2BasicInfo } from '../hooks/useStep2BasicInfo';
 import { StepProps } from '../types/StepProps';
 
-export default function Step1BasicInfo({
+export default function Step2BasicInfo({
   form, setField, next, back, step
 }: StepProps) {
-  const logic = useStep1BasicInfo(form, setField);
+  const logic = useStep2BasicInfo(form, setField);
   const router = useRouter();
   const { tabIndex } = useLocalSearchParams<{ tabIndex: string }>();
   const navigateToHome = () => {
@@ -33,7 +33,7 @@ export default function Step1BasicInfo({
         form={form}
         logic={logic}
         next={next}
-        back={navigateToHome}
+        back={back} // Use the step navigation back, not navigateToHome
       />
     </StepScreen>
   );

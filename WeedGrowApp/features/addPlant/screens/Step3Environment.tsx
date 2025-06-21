@@ -2,11 +2,11 @@ import React from 'react';
 
 import { StepScreen } from '../components/StepScreen';
 import { EnvironmentForm } from '../components/EnvironmentForm';
-import { useStep2Environment } from '../hooks/useStep2Environment';
+import { useStep3Environment } from '../hooks/useStep3Environment';
 import { StepProps } from '../types/StepProps';
 
-export default function Step2Environment({ form, setField, next, back, step }: StepProps) {
-  const logic = useStep2Environment(form, setField);
+export default function Step3Environment({ form, setField, next, back, step }: StepProps) {
+  const logic = useStep3Environment(form, setField);
 
   return (
     <StepScreen 

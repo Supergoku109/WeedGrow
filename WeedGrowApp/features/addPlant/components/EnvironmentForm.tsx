@@ -10,32 +10,17 @@ import { WeedGrowButtonRow } from '@/ui/WeedGrowButtonRow'
 import { WeedGrowDropdownInput } from '@/ui/WeedGrowDropdownInput'
 import { SegmentedButtons } from 'react-native-paper'
 import { WeedGrowFormSection } from '@/ui/WeedGrowFormSection'
-import type { Step2EnvironmentLogic } from '../hooks/useStep2Environment'
+import type { Step3EnvironmentLogic } from '../hooks/useStep3Environment'
 import { PlantForm } from '@/features/plants/form/PlantForm'
 
 interface EnvironmentFormProps {
   form: PlantForm
-  logic: Step2EnvironmentLogic
+  logic: Step3EnvironmentLogic
   next(): void
   back(): void
 }
 
-const EnvironmentSection = ({ logic }: { logic: Step2EnvironmentLogic }) => (
-  <WeedGrowFormSection label="Environment">
-    <SegmentedButtons
-      value={logic.environment}
-      onValueChange={(v) => logic.setField('environment', v)}
-      buttons={[
-        { value: 'outdoor', label: 'Outdoor', icon: 'weather-sunny' },
-        { value: 'greenhouse', label: 'Greenhouse', icon: 'greenhouse' },
-        { value: 'indoor', label: 'Indoor', icon: 'home' },
-      ]}
-      style={{ borderRadius: 10, backgroundColor: logic.backgroundColor }}
-    />
-  </WeedGrowFormSection>
-)
-
-const SensorProfileSection = ({ logic }: { logic: Step2EnvironmentLogic }) => (
+const SensorProfileSection = ({ logic }: { logic: Step3EnvironmentLogic }) => (
   <WeedGrowFormSection label="Sensor Profile">
     <WeedGrowDropdownInput
       icon="chip"
@@ -49,7 +34,7 @@ const SensorProfileSection = ({ logic }: { logic: Step2EnvironmentLogic }) => (
   </WeedGrowFormSection>
 )
 
-const PlantedInSection = ({ logic }: { logic: Step2EnvironmentLogic }) => (
+const PlantedInSection = ({ logic }: { logic: Step3EnvironmentLogic }) => (
   <WeedGrowFormSection label="Planted In">
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
       {['pot', 'ground'].map((opt) => (
@@ -72,7 +57,7 @@ const PlantedInSection = ({ logic }: { logic: Step2EnvironmentLogic }) => (
   </WeedGrowFormSection>
 )
 
-const PotSizeSection = ({ form, logic }: { form: PlantForm; logic: Step2EnvironmentLogic }) => (
+const PotSizeSection = ({ form, logic }: { form: PlantForm; logic: Step3EnvironmentLogic }) => (
   <WeedGrowFormSection label="Pot Size">
     <WeedGrowDropdownInput
       icon="flower-pot"
@@ -86,7 +71,7 @@ const PotSizeSection = ({ form, logic }: { form: PlantForm; logic: Step2Environm
   </WeedGrowFormSection>
 )
 
-const SunlightExposureSection = ({ form, logic }: { form: PlantForm; logic: Step2EnvironmentLogic }) => (
+const SunlightExposureSection = ({ form, logic }: { form: PlantForm; logic: Step3EnvironmentLogic }) => (
   <WeedGrowFormSection label="Sunlight Exposure">
     <WeedGrowDropdownInput
       icon="white-balance-sunny"
@@ -107,8 +92,6 @@ export function EnvironmentForm({ form, logic, next, back }: EnvironmentFormProp
         <ThemedText type="title" style={{ textAlign: 'center', fontSize: 24 }}>
           🌿 Where is your plant growing?
         </ThemedText>
-
-        <EnvironmentSection logic={logic} />
 
         {(logic.environment === 'indoor' || logic.environment === 'greenhouse') && (
           <SensorProfileSection logic={logic} />

@@ -1,7 +1,6 @@
 // features/addPlant/components/ScreenLayout.tsx
 import React from 'react';
 import {
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -10,7 +9,7 @@ import {
   View,
   StyleSheet
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ScreenLayoutProps {
   children: React.ReactNode;
@@ -25,10 +24,8 @@ export function ScreenLayout({
   scrollable = true,
   paddingTopIndicator = false
 }: ScreenLayoutProps) {
-  const insets = useSafeAreaInsets();
-
   return (
-    <View style={[styles.safeArea, { backgroundColor }]}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor }]} edges={['bottom']}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -38,10 +35,7 @@ export function ScreenLayout({
             <ScrollView
               contentContainerStyle={[
                 styles.scrollContent,
-                {
-                  paddingTop: paddingTopIndicator ? 8 : 0,
-                  paddingBottom: insets.bottom
-                }
+                { paddingTop: paddingTopIndicator ? 8 : 0 }
               ]}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
@@ -50,13 +44,18 @@ export function ScreenLayout({
               {children}
             </ScrollView>
           ) : (
-            <View style={[styles.flex, { paddingTop: paddingTopIndicator ? 8 : 0 }]}>
+            <View
+              style={[
+                styles.flex,
+                { paddingTop: paddingTopIndicator ? 8 : 0 }
+              ]}
+            >
               {children}
             </View>
           )}
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
-    </View>
+    </SafeAreaView>
   );
 }
 

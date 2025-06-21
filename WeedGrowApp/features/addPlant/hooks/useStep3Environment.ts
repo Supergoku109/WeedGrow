@@ -1,4 +1,4 @@
-// features/addPlant/hooks/useStep2Environment.ts
+// features/addPlant/hooks/useStep3Environment.ts
 
 import { useState, useEffect, useMemo } from 'react';
 import { useLocalSearchParams }        from 'expo-router';
@@ -12,7 +12,7 @@ import {
   fetchSensorProfiles,
 } from '../api/environmentApi';
 
-export interface Step2EnvironmentLogic extends BaseStepLogic {
+export interface Step3EnvironmentLogic extends BaseStepLogic {
   insetsTop: number;
 
   // environment radios:
@@ -44,10 +44,10 @@ export interface Step2EnvironmentLogic extends BaseStepLogic {
   sunlightOptions: typeof sunlightOptions;
 }
 
-export function useStep2Environment(
+export function useStep3Environment(
   form: PlantForm,
   setField: (k: keyof PlantForm, v:any) => void
-): Step2EnvironmentLogic {
+): Step3EnvironmentLogic {
   // theming & insets
   const backgroundColor = useStepBackground();
   const { top: insetsTop } = useSafeAreaInsets();
