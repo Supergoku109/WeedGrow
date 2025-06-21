@@ -1,3 +1,7 @@
+// ReviewForm.tsx
+// This component renders the Review step of the Add Plant flow.
+// It displays a summary of the plant's details for final review before saving.
+
 import React from 'react'
 import { View, ScrollView, Image } from 'react-native'
 import { Button } from 'react-native-paper'
@@ -9,20 +13,24 @@ import type { PlantForm } from '@/features/plants/form/PlantForm'
 import { useStep6Review } from '../hooks/useStep6Review'
 import type { Step6ReviewLogic } from '../hooks/useStep6Review'
 
+// Props for the ReviewForm component
 interface ReviewFormProps {
-  form: PlantForm
-  logic: Step6ReviewLogic
-  back(): void
+  form: PlantForm // Form state object
+  logic: Step6ReviewLogic // Logic handlers for review step
+  back(): void // Callback to go to previous step
 }
 
+// Main form component for reviewing plant details before saving
 export function ReviewForm({ form, logic, back }: ReviewFormProps) {
   return (
     <WeedGrowCard style={{ width: '100%', maxWidth: 480 }}>
       <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }} showsVerticalScrollIndicator={false}>
+        {/* Title */}
         <ThemedText type="title" style={{ textAlign: 'center', fontSize: 24 }}>
           🌱 Review Your Plant
         </ThemedText>
 
+        {/* Show plant image if available */}
         {form.imageUri && (
           <Image
             source={{ uri: form.imageUri }}
@@ -31,6 +39,7 @@ export function ReviewForm({ form, logic, back }: ReviewFormProps) {
           />
         )}
 
+        {/* Summary section with key plant details */}
         <WeedGrowFormSection label="Summary">
           <View style={{ gap: 8 }}>
             <TextRow label="Name" value={form.name} />
@@ -40,6 +49,7 @@ export function ReviewForm({ form, logic, back }: ReviewFormProps) {
           </View>
         </WeedGrowFormSection>
 
+        {/* Navigation buttons: Back and Save */}
         <WeedGrowButtonRow>
           <Button mode="outlined" onPress={back} style={{ flex: 1 }}>
             Back
@@ -53,6 +63,7 @@ export function ReviewForm({ form, logic, back }: ReviewFormProps) {
   )
 }
 
+// Helper component for displaying a label-value row
 function TextRow({ label, value }: { label: string; value: any }) {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>

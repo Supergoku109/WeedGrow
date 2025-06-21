@@ -1,3 +1,7 @@
+// useStep5Media.ts
+// This hook manages the logic for the Media step in the Add Plant flow.
+// It handles image picking (camera/gallery), snackbar state, and updating the form with the selected image.
+
 import { useState } from 'react';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
@@ -6,6 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { BaseStepLogic } from '../types/StepLogic';
 import { useStepBackground } from './useStepBackground';
 
+// Interface for the logic returned by this hook
 export interface Step5MediaLogic extends BaseStepLogic {
   tint: string;
   snackVisible: boolean;
@@ -14,16 +19,20 @@ export interface Step5MediaLogic extends BaseStepLogic {
   setField(key: keyof PlantForm, value: any): void;
 }
 
+// Hook for managing the Media step logic
 export function useStep5Media(
   form: PlantForm,
   setField: (key: keyof PlantForm, value: any) => void
 ): Step5MediaLogic {
+  // Get background color and theme tint
   const backgroundColor = useStepBackground();
   const scheme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
   const tint = Colors[scheme].tint;
 
+  // Snackbar state for photo selection
   const [snackVisible, setSnackVisible] = useState(false)
 
+  // Pick image from camera or gallery
   const pickImage = async (fromCamera: boolean) => {
     const result = fromCamera
       ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images })
@@ -35,6 +44,7 @@ export function useStep5Media(
     }
   }
 
+  // Return logic and state for the step
   return {
     backgroundColor,
     tint,

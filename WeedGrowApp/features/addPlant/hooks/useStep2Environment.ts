@@ -1,4 +1,6 @@
-// features/addPlant/hooks/useStep3Environment.ts
+// features/addPlant/hooks/useStep2Environment.ts
+// This hook manages the logic for the Environment step in the Add Plant flow.
+// It handles environment selection, sensor profiles, pot/sunlight options, and dropdown menu state for the environment form step.
 
 import { useState, useEffect, useMemo } from 'react';
 import { useLocalSearchParams }        from 'expo-router';
@@ -12,56 +14,46 @@ import {
   fetchSensorProfiles,
 } from '../api/environmentApi';
 
-export interface Step3EnvironmentLogic extends BaseStepLogic {
+// Interface for the logic returned by this hook
+export interface Step2EnvironmentLogic extends BaseStepLogic {
   insetsTop: number;
-
-  // environment radios:
   environment: PlantForm['environment'];
   setField(key: keyof PlantForm, v: any): void;
-
-  // sensor menu state & options:
   sensorOptions: { label:string; value:string }[];
   loadingProfiles: boolean;
   sensorMenuVisible: boolean;
   openSensorMenu(): void;
   closeSensorMenu(): void;
-
-  // pot menu:
   potMenuVisible: boolean;
   openPotMenu(): void;
   closePotMenu(): void;
-
-  // sun menu:
   sunMenuVisible: boolean;
   openSunMenu(): void;
   closeSunMenu(): void;
-
-  // plantedIn button group:
   plantedIn: PlantForm['plantedIn'];
-
-  // raw options lists for dropdowns:
   potSizeOptions: string[];
   sunlightOptions: typeof sunlightOptions;
 }
 
-export function useStep3Environment(
+// Hook for managing the Environment step logic
+export function useStep2Environment(
   form: PlantForm,
   setField: (k: keyof PlantForm, v:any) => void
-): Step3EnvironmentLogic {
-  // theming & insets
+): Step2EnvironmentLogic {
+  // Theming & safe area insets
   const backgroundColor = useStepBackground();
   const { top: insetsTop } = useSafeAreaInsets();
 
-  // menus
+  // Dropdown menu state
   const [sensorMenuVisible, setSensorMenuVisible] = useState(false);
   const [potMenuVisible,    setPotMenuVisible]    = useState(false);
   const [sunMenuVisible,    setSunMenuVisible]    = useState(false);
 
-  // sensor profiles
+  // Sensor profiles for indoor/greenhouse
   const [sensorProfiles, setSensorProfiles] = useState<{ id:string; name:string }[]>([]);
   const [loadingProfiles, setLoadingProfiles] = useState(false);
 
-  // load when indoor/greenhouse
+  // Load sensor profiles when environment changes
   useEffect(() => {
     if (form.environment === 'indoor' || form.environment === 'greenhouse') {
       setLoadingProfiles(true);
@@ -71,7 +63,7 @@ export function useStep3Environment(
     }
   }, [form.environment]);
 
-  // handle deep-link newSensorProfileId
+  // Handle deep-link to new sensor profile
   const params = useLocalSearchParams();
   useEffect(() => {
     if (params.newSensorProfileId && params.newSensorProfileId !== form.sensorProfileId) {
@@ -79,33 +71,30 @@ export function useStep3Environment(
     }
   }, [params.newSensorProfileId]);
 
-  // build dropdown options
+  // Build dropdown options for sensor profiles
   const sensorOptions = useMemo(() => 
     sensorProfiles.map(p => ({ label: p.name, value: p.id })),
     [sensorProfiles]
-  ,);
+  );
 
+  // Return logic and state for the step
   return {
     backgroundColor,
     insetsTop,
     environment: form.environment,
     plantedIn:  form.plantedIn,
     setField,
-
     loadingProfiles,
     sensorMenuVisible,
     openSensorMenu:  () => setSensorMenuVisible(true),
     closeSensorMenu: () => setSensorMenuVisible(false),
     sensorOptions,
-
     potMenuVisible,
     openPotMenu:  () => setPotMenuVisible(true),
     closePotMenu: () => setPotMenuVisible(false),
-
     sunMenuVisible,
     openSunMenu:  () => setSunMenuVisible(true),
     closeSunMenu: () => setSunMenuVisible(false),
-
     potSizeOptions,
     sunlightOptions,
   };

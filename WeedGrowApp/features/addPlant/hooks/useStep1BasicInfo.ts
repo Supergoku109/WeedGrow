@@ -1,4 +1,6 @@
-// features/addPlant/hooks/useStep2BasicInfo.ts
+// features/addPlant/hooks/useStep1BasicInfo.ts
+// This hook manages the logic for the Basic Info step in the Add Plant flow.
+// It handles strain selection, filtering, and validation for the basic info form step.
 
 import { useState, useMemo } from 'react';
 import { getAvailableStrains } from '../api/basicInfoApi';
@@ -6,7 +8,8 @@ import type { PlantForm } from '@/features/plants/form/PlantForm';
 import { BaseStepLogic } from '../types/StepLogic';
 import { useStepBackground } from './useStepBackground';
 
-export interface Step2BasicInfoLogic extends BaseStepLogic {
+// Interface for the logic returned by this hook
+export interface Step1BasicInfoLogic extends BaseStepLogic {
   strainMenuVisible: boolean;
   openStrainMenu(): void;
   closeStrainMenu(): void;
@@ -17,21 +20,25 @@ export interface Step2BasicInfoLogic extends BaseStepLogic {
   setField(key: keyof PlantForm, value: any): void;
 }
 
-export function useStep2BasicInfo(
+// Hook for managing the Basic Info step logic
+export function useStep1BasicInfo(
   form: PlantForm,
   setField: (key: keyof PlantForm, value: any) => void
-): Step2BasicInfoLogic {
+): Step1BasicInfoLogic {
   const backgroundColor = useStepBackground();
 
+  // Get all available strains
   const strains = getAvailableStrains();
   const [strainMenuVisible, setStrainMenuVisible] = useState(false);
   const [strainSearch, setStrainSearch] = useState('');
 
+  // Filter strains by search input
   const filteredStrains = useMemo(
     () => strains.filter(s => s.toLowerCase().includes(strainSearch.toLowerCase())),
     [strains, strainSearch]
   );
 
+  // Validation: name required, age required for certain growth stages
   const isValid = useMemo(() => {
     const nameOk = form.name.trim().length > 0;
     const needAge = form.growthStage === 'vegetative' || form.growthStage === 'flowering';
@@ -39,12 +46,14 @@ export function useStep2BasicInfo(
     return nameOk && ageOk;
   }, [form.name, form.growthStage, form.ageDays]);
 
+  // Open/close strain dropdown menu
   const openStrainMenu = () => setStrainMenuVisible(true);
   const closeStrainMenu = () => {
     setStrainMenuVisible(false);
     setStrainSearch('');
   };
 
+  // Return logic and state for the step
   return {
     backgroundColor,
     strainMenuVisible,

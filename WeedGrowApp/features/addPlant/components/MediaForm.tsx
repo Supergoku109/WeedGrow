@@ -1,3 +1,7 @@
+// MediaForm.tsx
+// This component renders the Final Touches step of the Add Plant flow.
+// It allows the user to add a photo and notes for the plant before finishing the process.
+
 import React from 'react';
 import { View, ScrollView, Image } from 'react-native';
 import { Button, Snackbar } from 'react-native-paper';
@@ -9,13 +13,15 @@ import { WeedGrowButtonRow } from '@/ui/WeedGrowButtonRow';
 import type { PlantForm } from '@/features/plants/form/PlantForm';
 import type { Step5MediaLogic } from '../hooks/useStep5Media';
 
+// Props for the MediaForm component
 interface MediaFormProps {
-  form: PlantForm;
-  logic: Step5MediaLogic;
-  next(): void;
-  back(): void;
+  form: PlantForm; // Form state object
+  logic: Step5MediaLogic; // Logic handlers for media step
+  next(): void; // Callback to go to next step
+  back(): void; // Callback to go to previous step
 }
 
+// Title section for the form
 const TitleSection = () => (
   <>
     <ThemedText type="title" style={{ textAlign: 'center', fontSize: 24 }}>
@@ -27,17 +33,21 @@ const TitleSection = () => (
   </>
 );
 
+// Section for adding a photo (camera or gallery)
 const PhotoSection = ({ form, logic }: { form: PlantForm; logic: Step5MediaLogic }) => (
   <WeedGrowFormSection label="Photo">
     <View style={{ flexDirection: 'row', gap: 8, marginBottom: 18, justifyContent: 'center' }}>
+      {/* Button to take a photo */}
       <Button mode="outlined" icon="camera" onPress={() => logic.pickImage(true)}>
         Take Photo
       </Button>
+      {/* Button to choose from gallery */}
       <Button mode="outlined" icon="image" onPress={() => logic.pickImage(false)}>
         Choose from Gallery
       </Button>
     </View>
 
+    {/* Show selected image if available */}
     {form.imageUri && (
       <Image
         source={{ uri: form.imageUri }}
@@ -48,6 +58,7 @@ const PhotoSection = ({ form, logic }: { form: PlantForm; logic: Step5MediaLogic
   </WeedGrowFormSection>
 );
 
+// Section for adding notes/observations
 const NotesSection = ({ form, logic }: { form: PlantForm; logic: Step5MediaLogic }) => (
   <WeedGrowFormSection label="Notes">
     <View style={{ width: '100%', minHeight: 100 }}>
@@ -63,6 +74,7 @@ const NotesSection = ({ form, logic }: { form: PlantForm; logic: Step5MediaLogic
   </WeedGrowFormSection>
 );
 
+// Main form component for adding media and notes
 export function MediaForm({ form, logic, next, back }: MediaFormProps) {
   return (
     <WeedGrowCard style={{ width: '100%', maxWidth: 480 }}>
@@ -71,10 +83,12 @@ export function MediaForm({ form, logic, next, back }: MediaFormProps) {
         <PhotoSection form={form} logic={logic} />
         <NotesSection form={form} logic={logic} />
 
+        {/* Snackbar to show feedback when a photo is selected */}
         <Snackbar visible={logic.snackVisible} onDismiss={() => logic.setSnackVisible(false)}>
           Photo selected
         </Snackbar>
 
+        {/* Navigation buttons: Back and Next */}
         <WeedGrowButtonRow>
           <Button mode="outlined" onPress={back} style={{ flex: 1 }}>
             Back

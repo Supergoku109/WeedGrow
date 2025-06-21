@@ -1,13 +1,17 @@
-import { useState, useMemo, useRef } from 'react';
+// useStep3Location.ts
+// This hook manages the logic for the Location step in the Add Plant flow.
+// It handles geolocation permissions, fetching device location, and validation for the location form step.
+
+import { useState, useMemo } from 'react';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import type { PlantForm } from '@/features/plants/form/PlantForm';
 import * as Location from 'expo-location';
 import { Alert } from 'react-native';
-import type MapView from 'react-native-maps';
 import { BaseStepLogic } from '../types/StepLogic';
 import { useStepBackground } from './useStepBackground';
 
+// Interface for the logic returned by this hook
 export interface Step3LocationLogic extends BaseStepLogic {
   tint: string;
   loading: boolean;
@@ -16,19 +20,25 @@ export interface Step3LocationLogic extends BaseStepLogic {
   setField(key: keyof PlantForm, value: any): void;
 }
 
-export function useStep3Location(  form: PlantForm,
+// Hook for managing the Location step logic
+export function useStep3Location(
+  form: PlantForm,
   setField: (key: keyof PlantForm, value: any) => void
 ): Step3LocationLogic {
+  // Get background color and theme tint
   const backgroundColor = useStepBackground();
   const scheme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
   const tint = Colors[scheme].tint;
 
+  // Loading state for geolocation
   const [loading, setLoading] = useState(false)
 
+  // Valid if a location is set
   const isValid = useMemo(() => {
     return !!form.location
   }, [form.location])
 
+  // Request device location and update form
   const getLocation = async () => {
     try {
       setLoading(true)
@@ -38,6 +48,7 @@ export function useStep3Location(  form: PlantForm,
         return
       }
 
+      // Try last known location, fallback to current
       const lastKnown = await Location.getLastKnownPositionAsync()
       const coords = lastKnown?.coords
         ? lastKnown.coords
@@ -51,6 +62,7 @@ export function useStep3Location(  form: PlantForm,
     }
   }
 
+  // Return logic and state for the step
   return {
     backgroundColor,
     tint,

@@ -4,6 +4,7 @@ import { View, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, Container, useTheme } from '@/design-system';
 import { Spacing, BorderRadius } from '@/design-system/tokens';
+import { RipplePulse } from './RipplePulse';
 
 interface WeedGrowDropdownInputProps {
   icon?: string;
@@ -27,13 +28,26 @@ export function WeedGrowDropdownInput({
   const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState(options);
+  const [showRipple, setShowRipple] = useState(false);
 
   useEffect(() => {
     setItems(options);
   }, [options]);
 
+  // Show ripple when opening dropdown
+  const handleSetOpen = (val: boolean) => {
+    if (val && !open) {
+      setShowRipple(true);
+    }
+    setOpen(val);
+  };
+
   return (
-    <Container style={{ zIndex, marginBottom: Spacing.md }}>
+    <View style={{ zIndex, marginBottom: Spacing.md, position: 'relative' }}>
+      {/* Ripple overlay for debug - always above everything */}
+      <View style={{ position: 'absolute', left: 32, top: 54, zIndex: 9999, pointerEvents: 'none' }}>
+        <RipplePulse show={showRipple} color="rgba(255,0,0,0.4)" size={200} onAnimationEnd={() => setShowRipple(false)} />
+      </View>
       <Container direction="row" align="center" style={{ marginBottom: Spacing.xs }}>
         {icon && (
           <MaterialCommunityIcons
@@ -45,12 +59,11 @@ export function WeedGrowDropdownInput({
         )}
         <Text variant="label" color="primary">{label}</Text>
       </Container>
-
       <DropDownPicker
         open={open}
         value={value}
         items={items}
-        setOpen={setOpen}
+        setOpen={setOpen as any}
         setValue={(callback) => onSelect(callback(value))}
         setItems={setItems}
         placeholder={placeholder}
@@ -85,7 +98,7 @@ export function WeedGrowDropdownInput({
         )}
         listMode="SCROLLVIEW"
       />
-    </Container>
+    </View>
   );
 }
 

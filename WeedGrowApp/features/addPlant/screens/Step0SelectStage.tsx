@@ -1,7 +1,12 @@
+// Step0SelectStage.tsx
+// This screen renders the initial step of the Add Plant flow: selecting the plant's growth stage.
+// It displays selectable cards for each stage and navigation buttons for the flow.
+
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/ui/ThemedText';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import HomeBackground from '@/features/home/components/HomeBackground';
 
 const STAGES = [
   { key: 'germination', label: 'Germination', icon: 'seed' },
@@ -11,15 +16,18 @@ const STAGES = [
   { key: 'clone', label: 'Clone', icon: 'content-duplicate' },
 ];
 
-export default function Step1SelectStage({ selectedStage, onSelectStage, next, back }: {
+export default function Step0SelectStage({ selectedStage, onSelectStage, next, back }: {
   selectedStage: string | null;
   onSelectStage: (stage: string) => void;
   next: () => void;
   back: () => void;
 }) {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: 'transparent', position: 'relative' }]}> 
+      <HomeBackground />
+      {/* Title */}
       <ThemedText style={styles.title}>Select Plant Stage</ThemedText>
+      {/* Stage selection cards */}
       <View style={styles.cardRow}>
         {STAGES.map((stage) => (
           <TouchableOpacity
@@ -35,6 +43,7 @@ export default function Step1SelectStage({ selectedStage, onSelectStage, next, b
           </TouchableOpacity>
         ))}
       </View>
+      {/* Navigation buttons */}
       <View style={styles.buttonRow}>
         <TouchableOpacity style={[styles.button, styles.backButton]} onPress={back}>
           <ThemedText style={styles.buttonText}>Back</ThemedText>

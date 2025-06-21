@@ -35,7 +35,7 @@ export function StepIndicatorBar({ currentPosition }: { currentPosition: number 
   } as const;
 
   return (
-    <View style={{ marginBottom: 16 }}>
+    <View style={{ marginTop: 16, marginBottom: 16 }}>
       <StepIndicator
         customStyles={customStyles}
         currentPosition={currentPosition}

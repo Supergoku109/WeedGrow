@@ -4,6 +4,7 @@ import { View } from 'react-native';
 
 import { StepIndicatorBar } from './StepIndicatorBar';
 import { ScreenLayout } from './ScreenLayout';
+import HomeBackground from '@/features/home/components/HomeBackground';
 
 interface StepScreenProps {
   /**
@@ -39,8 +40,9 @@ export function StepScreen({
   // The step indicator bar is now rendered in the AddPlantFlow component
   // This component only handles the content that should be animated
   return (
-    <View style={{ flex: 1, backgroundColor }}>
-      <ScreenLayout backgroundColor={backgroundColor} paddingTopIndicator={paddingTopIndicator}>
+    <View style={{ flex: 1, backgroundColor: 'transparent', position: 'relative' }}>
+      <HomeBackground />
+      <ScreenLayout backgroundColor="transparent" paddingTopIndicator={paddingTopIndicator}>
         {children}
       </ScreenLayout>
     </View>

@@ -18,7 +18,7 @@ It helps Codex and other AI agents understand how your app stores and interacts 
   - `hasAcceptedTOS: boolean`
   - `profileImage: string | null`  // URL to profile photo or null
 
-### `/users/{userId}/settings/preferences`
+#### `/users/{userId}/settings/preferences`
 - Stores user preferences in a single document named “preferences.”
 - Fields:
   - `defaultEnvironment: string`  // e.g. “indoor” or “outdoor”
@@ -42,6 +42,7 @@ It helps Codex and other AI agents understand how your app stores and interacts 
   - `status: string`  // e.g. “active” or “archived”
   - `environment: string`  // “indoor” or “outdoor”
   - `plantedIn: string`  // e.g. “pot”, “ground”
+  - `sensorProfileId?: string` // reference to a sensor profile (see /sensorProfiles)
   - **Optional Fields:**
     - `potSize?: string`  // e.g. “20L”
     - `wateringFrequency?: string`  // e.g. “every 2 days”
@@ -59,6 +60,7 @@ It helps Codex and other AI agents understand how your app stores and interacts 
       - `timeOfDay?: string`  // e.g. “08:00”
       - `cronExpression?: string`  // if type == “cron”
     - `}`
+    - `waterLevel?: number` // current water level (if tracked)
   - **Timestamps:**
     - `createdAt: Timestamp`
     - `updatedAt: Timestamp`
@@ -70,62 +72,92 @@ It helps Codex and other AI agents understand how your app stores and interacts 
   - `type: string`  // e.g. “watering”, “note”, “fertilizing”, “training”
   - `description: string`
   - `updatedBy: string`  // `userId` of the user who created this log
+  - `mediaUri?: string`  // optional image or video
+  - `value?: number`  // e.g. amount watered, etc.
 
-### Weather Cache (per plant)
-Each plant has a `weatherCache` subcollection with one document per date.
-Path: `/plants/{plantId}/weatherCache/{YYYY-MM-DD}`
-Fields:
-- `date`: string ("YYYY-MM-DD")
-- `fetchedAt`: Timestamp
-- `forecasted`: boolean
-- `source`: string ("OpenWeatherMap")
-- `temperature`: number (°C)
-- `humidity`: number (percent)
-- `windSpeed`: number (km/h)
-- `rainfall`: number (mm)
-- `uvIndex`: number
-- `weatherSummary`: string
-- `hourlySummary` (optional): { peakTemp: number, rainHours: number }
-- `dewPoint` (optional): number
-- `cloudCoverage` (optional): number
-- `windGust` (optional): number
-- `sunrise` (optional): string
-- `sunset` (optional): string
-- `pop` (optional): number // Probability of precipitation
-- `detailedTemps` (optional): {
-    morn: number;
-    day: number;
-    eve: number;
-    night: number;
-    min: number;
-    max: number;
-  }
+### `/plants/{plantId}/weatherCache/{YYYY-MM-DD}`
+- Subcollection for daily weather data (per plant, per date).
+- Fields:
+  - `date`: string ("YYYY-MM-DD")
+  - `fetchedAt`: Timestamp
+  - `forecasted`: boolean
+  - `source`: string (e.g. "OpenWeatherMap")
+  - `temperature`: number (°C)
+  - `humidity`: number (percent)
+  - `windSpeed`: number (km/h)
+  - `rainfall`: number (mm)
+  - `uvIndex`: number
+  - `weatherSummary`: string
+  - `hourlySummary` (optional): { peakTemp: number, rainHours: number }
+  - `dewPoint` (optional): number
+  - `cloudCoverage` (optional): number
+  - `windGust` (optional): number
+  - `sunrise` (optional): string
+  - `sunset` (optional): string
+  - `pop` (optional): number // Probability of precipitation
+  - `detailedTemps` (optional): {
+      morn: number;
+      day: number;
+      eve: number;
+      night: number;
+      min: number;
+      max: number;
+    }
 
-### **`/plants/{plantId}/progressPics/{picId}`**  ← *NEW*
+### `/plants/{plantId}/progressPics/{picId}`
 - Subcollection for storing progress pictures of each plant.
 - Each document (identified by `picId`) contains:
   - `imageUrl: string`  // download URL from Firebase Storage
   - `timestamp: Timestamp`  // when the picture was uploaded
   - `caption?: string`  // optional caption or note
-- Common usage:
-  ```ts
-  // To list all progress pics for a plant:
-  const progressPicsRef = collection(db, "plants", plantId, "progressPics");
-  const snapshot = await getDocs(progressPicsRef);
-  snapshot.docs.forEach(doc => {
-    const { imageUrl, timestamp, caption } = doc.data();
-    // display each image with metadata in the app
-  });
+
+### `/groups/{groupId}`
+- Represents a group of plants (e.g. a grow tent, room, or outdoor patch).
+- Fields:
+  - `name: string`
+  - `ownerId: string` // userId of group creator
+  - `memberIds: string[]` // userIds with access
+  - `plantIds: string[]` // plants in this group
+  - `createdAt: Timestamp`
+  - `updatedAt: Timestamp`
+  - `notes?: string`
+
+### `/sensorProfiles/{sensorProfileId}`
+- Stores reusable sensor/environmental profiles for plants or groups.
+- Fields:
+  - `name: string`
+  - `ownerId: string` // userId of creator
+  - `targetTemperature: { min: number; max: number }`
+  - `targetHumidity: { min: number; max: number }`
+  - `targetLightHours: number`
+  - `targetSoilMoisture?: { min: number; max: number }`
+  - `notes?: string`
+  - `createdAt: Timestamp`
+  - `updatedAt: Timestamp`
 
 ### `/notifications/{userId}`
 - Stores push notification tokens and topics.
+- Fields:
+  - `tokens: string[]` // FCM tokens
+  - `topics: string[]` // notification topics
 
 ### `/analytics/{userId}_year_{year}`
 - Aggregated statistics per user for each year.
+- Fields:
+  - `year: number`
+  - `plantCount: number`
+  - `logCount: number`
+  - `activeDays: number`
+  - `lastActive: Timestamp`
 
 ### `/invites/{inviteId}`
 - Stores plant collaboration invites.
-- Fields: `invitedBy`, `invitedUserEmail`, `plantId`, `status`, `createdAt`
+- Fields:
+  - `invitedBy: string` // userId
+  - `invitedUserEmail: string`
+  - `plantId: string`
+  - `status: string` // e.g. "pending", "accepted", "declined"
+  - `createdAt: Timestamp`
 
 ---
 
@@ -146,6 +178,24 @@ collection(db, `plants/${plantId}/logs`)
 doc(db, `users/${userId}/settings/preferences`)
 ```
 
+### Get all groups for a user:
+```ts
+query(collection(db, "groups"), where("memberIds", "array-contains", userId))
+```
+
+### Get all plants in a group:
+```ts
+// Fetch group, then use group.plantIds to query plants
+const group = await getDoc(doc(db, "groups", groupId));
+const plantIds = group.data().plantIds;
+// Query plants by IDs
+```
+
+### Get all sensor profiles for a user:
+```ts
+query(collection(db, "sensorProfiles"), where("ownerId", "==", userId))
+```
+
 ---
 
 ## 🔹 Related Types
@@ -154,9 +204,22 @@ See `firestoreModels.ts` for full TypeScript interfaces for:
 - `PlantLog`
 - `UserSettings`
 - `WeatherCacheEntry`
+- `ProgressPic`
+- `Group`
+- `SensorProfile`
 - `NotificationProfile`
 - `UserAnalytics`
 - `Invite`
+
+---
+
+## 🔹 Notes & Best Practices
+- All timestamps are Firestore `Timestamp` objects unless otherwise noted.
+- Use array-contains queries for multi-user and group membership.
+- Use subcollections for logs, weather, and progress pictures to keep plant documents lean.
+- Use references (IDs) to link between collections (e.g., `sensorProfileId`, `plantIds`).
+- See `firestoreModels.ts` for up-to-date field types and usage.
+- The schema is designed for scalability, real-time collaboration, and efficient querying.
 
 ---
 

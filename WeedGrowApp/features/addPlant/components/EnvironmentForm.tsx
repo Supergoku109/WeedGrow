@@ -1,4 +1,6 @@
-// features/addPlant/components/EnvironmentForm.tsx
+// EnvironmentForm.tsx
+// This component renders the Environment step of the Add Plant flow.
+// It collects information about where and how the plant is growing (sensor profile, planted in, pot size, sunlight exposure).
 
 import React from 'react'
 import { View, ScrollView, TouchableOpacity, Text } from 'react-native'
@@ -10,17 +12,19 @@ import { WeedGrowButtonRow } from '@/ui/WeedGrowButtonRow'
 import { WeedGrowDropdownInput } from '@/ui/WeedGrowDropdownInput'
 import { SegmentedButtons } from 'react-native-paper'
 import { WeedGrowFormSection } from '@/ui/WeedGrowFormSection'
-import type { Step3EnvironmentLogic } from '../hooks/useStep3Environment'
+import type { Step2EnvironmentLogic } from '../hooks/useStep2Environment'
 import { PlantForm } from '@/features/plants/form/PlantForm'
 
+// Props for the EnvironmentForm component
 interface EnvironmentFormProps {
-  form: PlantForm
-  logic: Step3EnvironmentLogic
-  next(): void
-  back(): void
+  form: PlantForm // Form state object
+  logic: Step2EnvironmentLogic // Logic handlers for environment step
+  next(): void // Callback to go to next step
+  back(): void // Callback to go to previous step
 }
 
-const SensorProfileSection = ({ logic }: { logic: Step3EnvironmentLogic }) => (
+// Section for selecting a sensor profile (for indoor/greenhouse)
+const SensorProfileSection = ({ logic }: { logic: Step2EnvironmentLogic }) => (
   <WeedGrowFormSection label="Sensor Profile">
     <WeedGrowDropdownInput
       icon="chip"
@@ -34,7 +38,8 @@ const SensorProfileSection = ({ logic }: { logic: Step3EnvironmentLogic }) => (
   </WeedGrowFormSection>
 )
 
-const PlantedInSection = ({ logic }: { logic: Step3EnvironmentLogic }) => (
+// Section for selecting if the plant is in a pot or in the ground
+const PlantedInSection = ({ logic }: { logic: Step2EnvironmentLogic }) => (
   <WeedGrowFormSection label="Planted In">
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
       {['pot', 'ground'].map((opt) => (
@@ -57,7 +62,8 @@ const PlantedInSection = ({ logic }: { logic: Step3EnvironmentLogic }) => (
   </WeedGrowFormSection>
 )
 
-const PotSizeSection = ({ form, logic }: { form: PlantForm; logic: Step3EnvironmentLogic }) => (
+// Section for selecting pot size (only if planted in a pot)
+const PotSizeSection = ({ form, logic }: { form: PlantForm; logic: Step2EnvironmentLogic }) => (
   <WeedGrowFormSection label="Pot Size">
     <WeedGrowDropdownInput
       icon="flower-pot"
@@ -71,7 +77,8 @@ const PotSizeSection = ({ form, logic }: { form: PlantForm; logic: Step3Environm
   </WeedGrowFormSection>
 )
 
-const SunlightExposureSection = ({ form, logic }: { form: PlantForm; logic: Step3EnvironmentLogic }) => (
+// Section for selecting sunlight exposure (for outdoor/greenhouse)
+const SunlightExposureSection = ({ form, logic }: { form: PlantForm; logic: Step2EnvironmentLogic }) => (
   <WeedGrowFormSection label="Sunlight Exposure">
     <WeedGrowDropdownInput
       icon="white-balance-sunny"
@@ -85,26 +92,33 @@ const SunlightExposureSection = ({ form, logic }: { form: PlantForm; logic: Step
   </WeedGrowFormSection>
 )
 
+// Main form component for entering environment details
 export function EnvironmentForm({ form, logic, next, back }: EnvironmentFormProps) {
   return (
     <WeedGrowCard style={{ width: '100%', maxWidth: 480 }} entering={FadeIn.duration(500)}>
       <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }} showsVerticalScrollIndicator={false}>
+        {/* Title */}
         <ThemedText type="title" style={{ textAlign: 'center', fontSize: 24 }}>
           🌿 Where is your plant growing?
         </ThemedText>
 
+        {/* Show sensor profile if indoor or greenhouse */}
         {(logic.environment === 'indoor' || logic.environment === 'greenhouse') && (
           <SensorProfileSection logic={logic} />
         )}
 
+        {/* Planted in pot or ground */}
         <PlantedInSection logic={logic} />
 
+        {/* Show pot size if planted in a pot */}
         {logic.plantedIn === 'pot' && <PotSizeSection form={form} logic={logic} />}
 
+        {/* Show sunlight exposure if outdoor or greenhouse */}
         {(logic.environment === 'outdoor' || logic.environment === 'greenhouse') && (
           <SunlightExposureSection form={form} logic={logic} />
         )}
 
+        {/* Navigation buttons: Back and Next */}
         <WeedGrowButtonRow>
           <Button onPress={back} mode="outlined" style={{ flex: 1 }}>
             Back

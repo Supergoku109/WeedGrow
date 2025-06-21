@@ -1,5 +1,7 @@
 /**
  * Modal component for editing group details
+ * This component renders a modal for editing group details, including the group name and plant membership.
+ * It provides form state, validation, and save/cancel actions.
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, View, StyleSheet, TextInput, Button, ScrollView } from 'react-native';
@@ -10,6 +12,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { GroupWithId } from '../api/groupApi';
 import { PlantWithId } from '../hooks/useGroupDetail';
 
+// Props for the EditGroupModal component
 interface EditGroupModalProps {
   visible: boolean;
   group: GroupWithId;
@@ -24,7 +27,7 @@ interface EditGroupModalProps {
 export default function EditGroupModal({ visible, group, allPlants, onClose, onSave }: EditGroupModalProps) {
   const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
   
-  // Form state
+  // Form state for group name and plant selection
   const [name, setName] = useState(group?.name || '');
   const [plantIds, setPlantIds] = useState<string[]>(group?.plantIds || []);
   const [nameError, setNameError] = useState<string | null>(null);
@@ -67,7 +70,7 @@ export default function EditGroupModal({ visible, group, allPlants, onClose, onS
       });
     }
     onClose();
-  }, [name, plantIds, group, onSave, onClose]);
+  }, [name, plantIds, onSave, group, onClose]);
 
   // Don't render anything if not visible
   if (!visible) return null;

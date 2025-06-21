@@ -1,3 +1,7 @@
+// GroupCard.tsx
+// This component displays a card summarizing a plant group, including its name, environment, plants, weather, and actions.
+// It supports navigation, editing, and watering all plants in the group.
+
 import React, { useEffect, useState, useLayoutEffect } from 'react';
 import {
   StyleSheet,
@@ -282,7 +286,7 @@ export default GroupCard;
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 14,
+    marginBottom: 2, // reduced from 14 for less space between group cards
     padding: 10,
     borderRadius: 16,
     // Add green left border to match PlantCard
