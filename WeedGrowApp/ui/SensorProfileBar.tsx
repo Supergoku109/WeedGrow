@@ -46,7 +46,8 @@ export default function SensorProfileBar({ sensorProfileId }: SensorProfileBarPr
   return (
     <View style={styles.row}>
       <MaterialCommunityIcons name="thermometer" color="#fff" size={18} />
-      <ThemedText style={styles.stat}>{profile.defaultTemp ?? '--'}°C</ThemedText>      <MaterialCommunityIcons name="water-percent" color="#fff" size={18} />
+      <ThemedText style={styles.stat}>{profile.defaultTemp ?? '--'}°C</ThemedText>
+      <MaterialCommunityIcons name="water-percent" color="#fff" size={18} />
       <ThemedText style={styles.stat}>{profile.defaultHumidity ?? '--'}%</ThemedText>
       <ThemedText style={styles.stat}>
         {profile.name ? `Sensor: ${profile.name}` : null}

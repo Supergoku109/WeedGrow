@@ -3,7 +3,7 @@ import { FlatList, View, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ActivityIndicator, Snackbar, Searchbar, IconButton, Chip } from 'react-native-paper';
 import { ThemedText } from '@/ui/ThemedText';
-import GroupCard from './GroupCard';
+import GroupCard from '../../groups/components/GroupCard';
 import type { Group, Plant } from '@/firestoreModels';
 
 interface GroupListProps {

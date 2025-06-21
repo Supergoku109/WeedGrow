@@ -6,7 +6,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { usePlants } from '../hooks/usePlants';
 import { PlantSelection } from '../components/PlantSelection';
-import HomeBackground from '@/features/groups/components/HomeBackground';
+import HomeBackground from '@/features/home/components/HomeBackground';
 import { WeedGrowTextInput } from '@/ui/WeedGrowTextInput';
 import { ThemedText } from '@/ui/ThemedText';
 import { SafeAreaView } from 'react-native-safe-area-context';

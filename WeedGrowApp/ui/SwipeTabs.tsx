@@ -11,19 +11,19 @@ interface SwipeTabsProps {
 }
 
 export default function SwipeTabs({ tabs, initialKey, index: controlledIndex, onIndexChange }: SwipeTabsProps) {
-  const layout = useWindowDimensions();
-  const [uncontrolledIndex, setUncontrolledIndex] = React.useState(
+  const layout = useWindowDimensions();  const [uncontrolledIndex, setUncontrolledIndex] = React.useState(
     initialKey ? Math.max(0, tabs.findIndex(t => t.key === initialKey)) : 0
   );
   const index = controlledIndex !== undefined ? controlledIndex : uncontrolledIndex;
   const setIndex = onIndexChange || setUncontrolledIndex;
   const routes = tabs.map(({ key, title }) => ({ key, title }));
-  const renderScene = SceneMap(
-    Object.fromEntries(tabs.map(tab => [tab.key, tab.render]))
+  // Memoize the scene map to prevent unnecessary re-renders
+  const renderScene = React.useMemo(
+    () => SceneMap(Object.fromEntries(tabs.map(tab => [tab.key, tab.render]))),
+    [tabs] // Only recreate if tabs change
   );
-
-  // Custom tab bar for pill-style tabs
-  const renderTabBar = ({ navigationState, position }: SceneRendererProps & { navigationState: NavigationState<{ key: string; title: string }> }) => (
+  // Custom tab bar for pill-style tabs - memoized to prevent re-renders
+  const renderTabBar = React.useCallback(({ navigationState, position }: SceneRendererProps & { navigationState: NavigationState<{ key: string; title: string }> }) => (
     <View style={styles.pillTabBarContainer}>
       {navigationState.routes.map((route: { key: string; title: string }, i: number) => {
         const active = index === i;
@@ -38,7 +38,7 @@ export default function SwipeTabs({ tabs, initialKey, index: controlledIndex, on
         );
       })}
     </View>
-  );
+  ), [index, setIndex]); // Only recreate if index or setIndex changes
 
   return (
     <TabView

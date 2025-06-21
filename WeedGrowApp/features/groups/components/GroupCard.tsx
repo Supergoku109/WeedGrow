@@ -132,28 +132,39 @@ const GroupCardComponent = function GroupCard({
     e.stopPropagation();
     onEdit?.();
   };
-
   // Animation for card mount
   const scaleAnim = React.useRef(new Animated.Value(0)).current;
   const opacityAnim = React.useRef(new Animated.Value(0)).current;
+  // Track if this is the initial mount
+  const initialMount = React.useRef(true);
+  
   // Set initial opacity and scale before rendering
   useLayoutEffect(() => {
-    scaleAnim.setValue(0); // Start scale at 0
-    opacityAnim.setValue(0); // Start opacity at 0
+    // Only animate on initial mount, not on re-renders
+    if (initialMount.current) {
+      scaleAnim.setValue(0); // Start scale at 0
+      opacityAnim.setValue(0); // Start opacity at 0
 
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        friction: 5, // Reduced friction for smoother bounce
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 800, // Reduced duration to 800ms for faster animation
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: true,
-      }),
-    ]).start();
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          friction: 5, // Reduced friction for smoother bounce
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 800, // Reduced duration to 800ms for faster animation
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        initialMount.current = false;
+      });
+    } else {
+      // For subsequent renders, just set the values to 1 immediately
+      scaleAnim.setValue(1);
+      opacityAnim.setValue(1);
+    }
   }, []);
 
   return (

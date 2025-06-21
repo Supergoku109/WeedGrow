@@ -7,19 +7,19 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import GroupList from '../components/GroupList';
+import GroupList from '@/features/home/components/GroupList';
 import EditGroupModal from '@/features/groups/components/EditGroupModal';
-import { useGroupList } from '@/features/groups/hooks/useGroupList';
+import { useGroupList } from '@/features/home/hooks/useGroupList';
 import PlantListScreen from '@/features/plants/screens/PlantListScreen';
 import SuggestionCatalog from '@/ui/SuggestionCatalog';
 import AppHeader from '@/ui/AppHeader';
-import FilterChips from '../components/FilterChips';
-import { useGroupListFilters } from '../hooks/useGroupListFilters';
-import { useGroupPlantsMap } from '../hooks/useGroupPlantsMap';
-import { useGroupListHandlers } from '../hooks/useGroupListHandlers';
+import FilterChips from '@/features/home/components/FilterChips';
+import { useGroupListFilters } from '@/features/groups/hooks/useGroupListFilters';
+import { useGroupPlantsMap } from '@/features/groups/hooks/useGroupPlantsMap';
+import { useGroupListHandlers } from '@/features/home/hooks/useGroupListHandlers';
 import { ThemedText } from '@/ui/ThemedText';
-import HomeBackground from '../components/HomeBackground';
-import { useHomeScreenState } from '../hooks/useHomeScreenState';
+import HomeBackground from '@/features/home/components/HomeBackground';
+import { useHomeScreenState } from '@/features/home/hooks/useHomeScreenState';
 import SwipeTabs from '@/ui/SwipeTabs';
 
 const styles = StyleSheet.create({
@@ -178,9 +178,9 @@ export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: 
       icon: '🌩',
       title: 'Storm incoming tomorrow',
       description: 'Severe weather forecasted for your area.',
-      affected: ['Greenhouse Group'],
-    },
-  ];  // TLC needed indicator
+      affected: ['Greenhouse Group'],    },
+  ];  
+  // TLC needed indicator
   const tlcCount = mockSuggestions.length;
 
   const renderGroupsTab = React.useCallback(() => (
@@ -230,6 +230,7 @@ export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: 
         setTrainingFilter={setTrainingFilter}
         filtersVisible={plantFiltersVisible}
         setFiltersVisible={setPlantFiltersVisible}
+        currentTabIndex={1}
       />
     </View>
   ), [plantSearchQuery, statusFilter, plantEnvFilter, plantedFilter, trainingFilter, plantFiltersVisible]);

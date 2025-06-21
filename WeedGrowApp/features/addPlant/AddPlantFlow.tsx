@@ -12,7 +12,11 @@ import { StepIndicatorBar } from './components/StepIndicatorBar';
 
 import { useAddPlantForm } from './hooks/useAddPlantForm';
 
+import { useLocalSearchParams, useRouter } from 'expo-router';
+
 export default function AddPlantFlow() {
+  const { tabIndex } = useLocalSearchParams<{ tabIndex: string }>();
+  const router = useRouter();
   const [step, setStep] = React.useState(1);
   const { form, setField } = useAddPlantForm();
   

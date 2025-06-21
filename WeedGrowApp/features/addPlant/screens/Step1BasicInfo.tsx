@@ -1,6 +1,6 @@
 // features/addPlant/screens/Step1BasicInfo.tsx
 import React from 'react';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 import { StepScreen } from '../components/StepScreen';
 import { BasicInfoForm } from '../components/BasicInfoForm';
@@ -12,9 +12,15 @@ export default function Step1BasicInfo({
 }: StepProps) {
   const logic = useStep1BasicInfo(form, setField);
   const router = useRouter();
-
+  const { tabIndex } = useLocalSearchParams<{ tabIndex: string }>();
   const navigateToHome = () => {
-    router.replace({ pathname: '/(tabs)', params: { tabIndex: 1 } });
+    // Navigate back to the home screen with the correct tab index
+    if (tabIndex) {
+      router.replace({ pathname: '/(tabs)', params: { tabIndex } });
+    } else {
+      // If no tabIndex is provided, default to the plants tab (index 1)
+      router.replace({ pathname: '/(tabs)', params: { tabIndex: '1' } });
+    }
   };
 
   return (

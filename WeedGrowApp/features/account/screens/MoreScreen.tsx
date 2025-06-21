@@ -7,7 +7,7 @@ import { ThemedText } from '@/ui/ThemedText';
 import { ThemedView } from '@/ui/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import HomeBackground from '@/features/groups/components/HomeBackground';
+import HomeBackground from '@/features/home/components/HomeBackground';
 
 const SECTIONS = [
   {

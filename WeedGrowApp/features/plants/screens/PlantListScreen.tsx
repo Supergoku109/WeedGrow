@@ -23,9 +23,10 @@ interface PlantListScreenProps {
   envFilter: string | null;
   setEnvFilter: (v: string | null) => void;
   plantedFilter: string | null;
-  setPlantedFilter: (v: string | null) => void;
-  trainingFilter: string | null;
+  setPlantedFilter: (v: string | null) => void;  trainingFilter: string | null;
   setTrainingFilter: (v: string | null) => void;
+  // Optional tab index for navigation
+  currentTabIndex?: number;
 }
 
 export default function PlantListScreen({
@@ -41,6 +42,7 @@ export default function PlantListScreen({
   setPlantedFilter,
   trainingFilter,
   setTrainingFilter,
+  currentTabIndex,
 }: PlantListScreenProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -48,6 +50,14 @@ export default function PlantListScreen({
   const {
     plants, loading, error, weatherMap
   } = usePlantList();
+
+  // Function to navigate to add plant with current tab index
+  const navigateToAddPlant = () => {
+    router.push({
+      pathname: '/add-plant',
+      params: { tabIndex: currentTabIndex || 1 }
+    });
+  };
 
   // Filter plants using props
   const filteredPlants = plants.filter(
@@ -76,7 +86,7 @@ export default function PlantListScreen({
                   <View style={{ alignItems: 'center', marginTop: 16 }}>
                     <TouchableOpacity
                       accessibilityLabel="Add Plant"
-                      onPress={() => router.push('/add-plant')}
+                      onPress={navigateToAddPlant}
                       style={styles.addPlantButton}
                     >
                       <MaterialCommunityIcons name="plus" size={24} color="#fff" style={{ marginRight: 4 }} />
@@ -92,7 +102,7 @@ export default function PlantListScreen({
           <View style={{ alignItems: 'center', marginTop: 32 }}>
             <TouchableOpacity
               accessibilityLabel="Add Plant"
-              onPress={() => router.push('/add-plant')}
+              onPress={navigateToAddPlant}
               style={styles.addPlantButton}
             >
               <MaterialCommunityIcons name="plus" size={24} color="#fff" style={{ marginRight: 4 }} />
