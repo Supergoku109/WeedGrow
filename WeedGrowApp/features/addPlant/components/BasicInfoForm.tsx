@@ -1,7 +1,7 @@
 // features/addPlant/components/BasicInfoForm.tsx
 
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Button } from 'react-native-paper';
 import { ThemedText } from '@/ui/ThemedText';
 import { WeedGrowCard } from '@/ui/WeedGrowCard';
@@ -10,6 +10,8 @@ import { WeedGrowButtonRow } from '@/ui/WeedGrowButtonRow';
 import { WeedGrowTextInput } from '@/ui/WeedGrowTextInput';
 import { WeedGrowDropdownInput } from '@/ui/WeedGrowDropdownInput';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
+import { AnimatedMakikoInput } from '@/components/ui/AnimatedMakikoInput';
 
 import type { PlantForm } from '@/features/plants/form/PlantForm';
 import type { Step1BasicInfoLogic } from '@/features/addPlant/hooks/useStep1BasicInfo';
@@ -21,6 +23,35 @@ interface BasicInfoFormProps {
   back(): void;
 }
 
+const styles = StyleSheet.create({
+  iconBg: {
+    position: 'absolute',
+    left: 0,
+    top: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    zIndex: 1,
+  },
+  icon: {
+    position: 'absolute',
+    left: 8,
+    top: 16,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  input: {
+    flex: 1,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: '#232a25',
+    paddingVertical: 0,
+    fontWeight: '500',
+  },
+});
+
 export function BasicInfoForm({ form, logic, next, back }: BasicInfoFormProps) {
   return (
     <WeedGrowCard style={{ width: '100%', maxWidth: 480 }}>
@@ -30,11 +61,16 @@ export function BasicInfoForm({ form, logic, next, back }: BasicInfoFormProps) {
         </ThemedText>
 
         <WeedGrowFormSection label="Plant Details">
-          <WeedGrowTextInput
-            label="Plant Name"
-            value={form.name}
+          <AnimatedMakikoInput
+            label={"Plant Name"}
+            iconClass={FontAwesomeIcon}
+            iconName={"leaf"}
+            iconColor={form.name ? '#4caf50' : '#8bc34a'}
+            inputPadding={16}
+            inputStyle={{ color: '#db786d', fontSize: 16 }}
+            value={form.name ? ('' + form.name) : ''}
             onChangeText={(val: string) => logic.setField('name', val)}
-            icon="sprout"
+            style={{ marginBottom: 16 }}
           />
 
           <WeedGrowDropdownInput
