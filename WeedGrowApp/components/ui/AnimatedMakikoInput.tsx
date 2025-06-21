@@ -77,24 +77,25 @@ export const AnimatedMakikoInput = ({
         onLayout={onInputLayout}
       >
         {/* Icon scales up and is clipped by border radius */}
-        <Animated.View style={iconAnimatedStyle} pointerEvents="none">
+        <Animated.View style={[iconAnimatedStyle, { zIndex: 1 }]} pointerEvents="none">
           <Icon name={iconName} size={24} color={iconColor} />
         </Animated.View>
-        {/* TextInput overlays the icon */}
-        <TextInput
-          style={[
-            StyleSheet.absoluteFill,
-            { paddingLeft: 56, paddingRight: 12, color: '#db786d', fontSize: 16, fontWeight: '500', borderRadius: 12 },
-            inputStyle,
-          ]}
-          value={value}
-          onChangeText={onChangeText}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder={label}
-          placeholderTextColor="#8bc34a"
-          {...rest}
-        />
+        {/* TextInput overlays the icon and is always on top */}
+        <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 2, justifyContent: 'center' }} pointerEvents="box-none">
+          <TextInput
+            style={[
+              { paddingLeft: 56, paddingRight: 12, color: '#fff', fontSize: 16, fontWeight: '500', borderRadius: 12 },
+              inputStyle,
+            ]}
+            value={value}
+            onChangeText={onChangeText}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            placeholder={label}
+            placeholderTextColor="#8bc34a"
+            {...rest}
+          />
+        </View>
       </Animated.View>
     </View>
   );
