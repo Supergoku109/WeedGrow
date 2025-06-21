@@ -11,7 +11,7 @@ const STAGES = [
   { key: 'clone', label: 'Clone', icon: 'content-duplicate' },
 ];
 
-export default function Step1SelectStage({ selectedStage, onSelectStage, next, back }: {
+export default function Step0SelectStage({ selectedStage, onSelectStage, next, back }: {
   selectedStage: string | null;
   onSelectStage: (stage: string) => void;
   next: () => void;

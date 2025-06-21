@@ -2,14 +2,14 @@
 import React, { useRef } from 'react';
 import { Animated, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Step2BasicInfo   from './screens/Step2BasicInfo';
-import Step3Environment from './screens/Step3Environment';
+import Step1BasicInfo   from './screens/Step1BasicInfo';
+import Step2Environment from './screens/Step2Environment';
 import Step3Location    from './screens/Step3Location';
 import Step4Care        from './screens/Step4Care';
 import Step5Media       from './screens/Step5Media';
 import Step6Review      from './screens/Step6Review';
 import { StepIndicatorBar } from './components/StepIndicatorBar';
-import Step1SelectStage from './screens/Step1SelectStage';
+import Step0SelectStage from './screens/Step0SelectStage';
 
 import { useAddPlantForm } from './hooks/useAddPlantForm';
 
@@ -59,9 +59,9 @@ export default function AddPlantFlow() {
   // Determine the current step component
   let StepComponent;
   switch (step) {
-    case 1: StepComponent = Step1SelectStage; break;
-    case 2: StepComponent = Step2BasicInfo; break;
-    case 3: StepComponent = Step3Environment; break;
+    case 1: StepComponent = Step0SelectStage; break;
+    case 2: StepComponent = Step1BasicInfo; break;
+    case 3: StepComponent = Step2Environment; break;
     case 4: StepComponent = Step3Location; break;
     case 5: StepComponent = Step4Care; break;
     case 6: StepComponent = Step5Media; break;
@@ -110,7 +110,7 @@ export default function AddPlantFlow() {
     switch (step) {
       case 1:
         return (
-          <Step1SelectStage
+          <Step0SelectStage
             selectedStage={form.growthStage || null}
             onSelectStage={(stage) => setField('growthStage', stage)}
             next={goNext}
@@ -118,9 +118,9 @@ export default function AddPlantFlow() {
           />
         );
       case 2:
-        return <Step2BasicInfo form={form} setField={setField} next={goNext} back={goBack} step={2} />;
+        return <Step1BasicInfo form={form} setField={setField} next={goNext} back={goBack} step={2} />;
       case 3:
-        return <Step3Environment form={form} setField={setField} next={goNext} back={goBack} step={3} />;
+        return <Step2Environment form={form} setField={setField} next={goNext} back={goBack} step={3} />;
       case 4:
         return <Step3Location form={form} setField={setField} next={goNext} back={goBack} step={4} />;
       case 5:

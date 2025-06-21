@@ -1,4 +1,4 @@
-// features/addPlant/hooks/useStep2BasicInfo.ts
+// features/addPlant/hooks/useStep1BasicInfo.ts
 
 import { useState, useMemo } from 'react';
 import { getAvailableStrains } from '../api/basicInfoApi';
@@ -6,7 +6,7 @@ import type { PlantForm } from '@/features/plants/form/PlantForm';
 import { BaseStepLogic } from '../types/StepLogic';
 import { useStepBackground } from './useStepBackground';
 
-export interface Step2BasicInfoLogic extends BaseStepLogic {
+export interface Step1BasicInfoLogic extends BaseStepLogic {
   strainMenuVisible: boolean;
   openStrainMenu(): void;
   closeStrainMenu(): void;
@@ -17,10 +17,10 @@ export interface Step2BasicInfoLogic extends BaseStepLogic {
   setField(key: keyof PlantForm, value: any): void;
 }
 
-export function useStep2BasicInfo(
+export function useStep1BasicInfo(
   form: PlantForm,
   setField: (key: keyof PlantForm, value: any) => void
-): Step2BasicInfoLogic {
+): Step1BasicInfoLogic {
   const backgroundColor = useStepBackground();
 
   const strains = getAvailableStrains();
