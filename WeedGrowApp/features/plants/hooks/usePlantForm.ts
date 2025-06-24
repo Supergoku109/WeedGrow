@@ -9,7 +9,7 @@ const initialState: PlantForm = {
   name: '',
   strain: '',
   growthStage: 'germination',
-  ageDays: '0',
+  ageDays: '', // changed from '0' to ''
   environment: 'outdoor',
   plantedIn: 'pot',
   sensorProfileId: null,

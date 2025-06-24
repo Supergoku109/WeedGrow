@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useRef, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { Animated, View, TouchableOpacity, StyleSheet, Text, ScrollView, TextInput, Platform, BackHandler } from 'react-native';
 import type { TextStyle } from 'react-native';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
@@ -9,19 +9,20 @@ interface Option {
   value: string;
 }
 
-interface AnimatedMakikoDropdownInputProps {
+export interface AnimatedMakikoDropdownInputProps {
   label: string;
   iconName: string;
   iconColor?: string;
-  iconClass?: any; // add iconClass prop
+  iconClass?: any;
   value: string;
   options: Option[];
   onSelect: (val: string) => void;
   placeholder?: string;
   style?: any;
+  onFocusInput?: () => void;
 }
 
-export const AnimatedMakikoDropdownInput: React.FC<AnimatedMakikoDropdownInputProps> = ({
+export const AnimatedMakikoDropdownInput = forwardRef<TextInput, AnimatedMakikoDropdownInputProps>(({
   label,
   iconName,
   iconColor = '#4caf50',
@@ -29,18 +30,23 @@ export const AnimatedMakikoDropdownInput: React.FC<AnimatedMakikoDropdownInputPr
   value,
   options,
   onSelect,
-  placeholder = '', // default to empty string
+  placeholder = '',
   style,
-}) => {
+  onFocusInput,
+}, ref) => {
+  const inputRef = useRef<TextInput>(null);
+  useImperativeHandle(ref, () => inputRef.current as TextInput);
+
   const [focused, setFocused] = useState(false);
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [inputValue, setInputValue] = useState(value || '');
+
   const labelAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
   const dropdownAnim = useRef(new Animated.Value(0)).current;
   const arrowAnim = useRef(new Animated.Value(0)).current;
 
   // Animate label up/down
-  React.useEffect(() => {
+  useEffect(() => {
     Animated.timing(labelAnim, {
       toValue: focused || inputValue ? 1 : 0,
       duration: 200,
@@ -49,7 +55,7 @@ export const AnimatedMakikoDropdownInput: React.FC<AnimatedMakikoDropdownInputPr
   }, [focused, inputValue]);
 
   // Animate dropdown open/close
-  React.useEffect(() => {
+  useEffect(() => {
     Animated.timing(dropdownAnim, {
       toValue: dropdownVisible ? 1 : 0,
       duration: 200,
@@ -62,7 +68,7 @@ export const AnimatedMakikoDropdownInput: React.FC<AnimatedMakikoDropdownInputPr
     }).start();
   }, [dropdownVisible]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setInputValue(value || '');
   }, [value]);
 
@@ -72,51 +78,35 @@ export const AnimatedMakikoDropdownInput: React.FC<AnimatedMakikoDropdownInputPr
     if (!focused) return;
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
       setFocused(false);
-      // If dropdown is open, close it
       if (dropdownVisible) {
         setDropdownVisible(false);
-        return true; // Prevent default back action
+        return true;
       }
-      return false; // Let default back action occur
+      return false;
     });
     return () => {
       subscription.remove();
     };
   }, [focused, dropdownVisible]);
 
-  const labelStyle: (TextStyle | object)[] = [
-    {
-      position: 'absolute',
-      left: 48,
-      backgroundColor: 'transparent',
-      zIndex: 2,
-      fontWeight: '600',
-      paddingHorizontal: 2,
-    },
-    {
-      top: labelAnim.interpolate({
-        inputRange: [0, 1],
-        outputRange: [10, -8], // was [18, -8] for better alignment with Plant Name
-      }),
-      fontSize: labelAnim.interpolate({
-        inputRange: [0, 1],
-        outputRange: [16, 12],
-      }),
-      color: labelAnim.interpolate({
-        inputRange: [0, 1],
-        outputRange: ['#aaa', iconColor],
-      }),
-    },
-  ];
+  const labelStyle = {
+    position: 'absolute' as const,
+    left: labelAnim.interpolate({ inputRange: [0, 1], outputRange: [48, 16] }),
+    backgroundColor: 'transparent',
+    zIndex: 2,
+    fontWeight: '600' as const,
+    paddingHorizontal: 2,
+    top: labelAnim.interpolate({ inputRange: [0, 1], outputRange: [10, -24] }),
+    fontSize: labelAnim.interpolate({ inputRange: [0, 1], outputRange: [16, 12] }),
+    color: labelAnim.interpolate({ inputRange: [0, 1], outputRange: ['#aaa', iconColor] }),
+  };
 
-  // Dropdown animated style
   const dropdownStyle = {
     opacity: dropdownAnim,
     maxHeight: dropdownAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 220] }),
     transform: [{ scaleY: dropdownAnim }],
   };
 
-  // Arrow animated style
   const arrowStyle = {
     transform: [
       {
@@ -128,19 +118,16 @@ export const AnimatedMakikoDropdownInput: React.FC<AnimatedMakikoDropdownInputPr
     ],
   };
 
-  // Filter options based on input
   const filteredOptions = options.filter(opt =>
     opt.label.toLowerCase().includes(inputValue.toLowerCase())
   );
-
-  // Check if inputValue is in options
   const isCustomValue =
     inputValue && !options.some(opt => opt.label.toLowerCase() === inputValue.toLowerCase());
 
   return (
     <View style={[styles.container, style]}>
       {/* Icon */}
-      <View style={styles.iconBg}>
+      <View style={styles.iconBg} pointerEvents="none">
         {iconClass ? (
           React.createElement(iconClass, { name: iconName, size: 24, color: iconColor })
         ) : (
@@ -152,6 +139,7 @@ export const AnimatedMakikoDropdownInput: React.FC<AnimatedMakikoDropdownInputPr
       {/* Input with arrow */}
       <View style={styles.inputRow}>
         <TextInput
+          ref={inputRef}
           style={[
             styles.input,
             {
@@ -165,6 +153,7 @@ export const AnimatedMakikoDropdownInput: React.FC<AnimatedMakikoDropdownInputPr
           onFocus={() => {
             setFocused(true);
             setDropdownVisible(true);
+            if (typeof onFocusInput === 'function') onFocusInput();
           }}
           onBlur={() => {
             setFocused(false);
@@ -174,7 +163,7 @@ export const AnimatedMakikoDropdownInput: React.FC<AnimatedMakikoDropdownInputPr
             setInputValue(text);
             setDropdownVisible(true);
           }}
-          placeholder={''} // remove placeholder text
+          placeholder={''}
           placeholderTextColor="#aaa"
           returnKeyType="done"
           onSubmitEditing={() => {
@@ -230,12 +219,10 @@ export const AnimatedMakikoDropdownInput: React.FC<AnimatedMakikoDropdownInputPr
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
-  container: {
-    // Remove width, minWidth, alignSelf. Let parent control width.
-  },
+  container: {},
   iconBg: {
     position: 'absolute',
     left: 7,
@@ -244,33 +231,33 @@ const styles = StyleSheet.create({
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 10, // ensure icon is above input
+    zIndex: 10,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     height: 48,
     borderWidth: 1,
-    borderRadius: 12, // match input
+    borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
     zIndex: 1,
-    backgroundColor: '#232a25', // match input
-    borderColor: '#232a25', // match input
+    backgroundColor: '#232a25',
+    borderColor: '#232a25',
   },
   input: {
     flex: 1,
-    paddingLeft: 45, // match Plant Name
-    paddingRight: 12, // match Plant Name
-    paddingVertical: 0, // match Plant Name
+    paddingLeft: 45,
+    paddingRight: 12,
+    paddingVertical: 0,
     fontSize: 16,
-    borderColor: 'transparent', // match Plant Name
-    borderRadius: 12, // match Plant Name
-    backgroundColor: 'transparent', // match Plant Name
-    color: '#fff', // match Plant Name
-    fontWeight: '500', // match Plant Name
-    margin: 0, // match Plant Name
-    borderWidth: 0, // match Plant Name
+    borderColor: 'transparent',
+    borderRadius: 12,
+    backgroundColor: 'transparent',
+    color: '#fff',
+    fontWeight: '500',
+    margin: 0,
+    borderWidth: 0,
   },
   arrowTouchable: {
     width: 48,

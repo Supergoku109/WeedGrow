@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, TextInput, StyleSheet, TextInputProps, LayoutChangeEvent, Platform, BackHandler, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { View, TextInput, StyleSheet, TextInputProps, LayoutChangeEvent, Platform, BackHandler, Keyboard } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolate } from 'react-native-reanimated';
 import { Animated as RNAnimated } from 'react-native';
 
@@ -13,9 +13,10 @@ interface AnimatedMakikoInputProps extends Omit<TextInputProps, 'onChangeText' |
   style?: any;
   iconClass: any;
   inputPadding?: number;
+  iconZoom?: number; // NEW: controls max zoom/scale of icon
 }
 
-export const AnimatedMakikoInput = ({
+export const AnimatedMakikoInput = forwardRef<TextInput, AnimatedMakikoInputProps>(({
   label,
   iconName,
   iconColor = '#8bc34a',
@@ -25,17 +26,20 @@ export const AnimatedMakikoInput = ({
   style,
   iconClass: Icon,
   inputPadding = 16,
+  iconZoom = 100, // NEW: default to 100
   ...rest
-}: AnimatedMakikoInputProps) => {
+}, ref) => {
   const [focused, setFocused] = useState(false);
   const progress = useSharedValue(0);
   const [inputWidth, setInputWidth] = useState(0);
   const [inputHeight, setInputHeight] = useState(56);
   const inputRef = useRef<TextInput>(null);
 
-  const labelAnim = React.useRef(new RNAnimated.Value(value ? 1 : 0)).current;
+  useImperativeHandle(ref, () => inputRef.current as TextInput);
 
-  React.useEffect(() => {
+  const labelAnim = useRef(new RNAnimated.Value(value ? 1 : 0)).current;
+
+  useEffect(() => {
     RNAnimated.timing(labelAnim, {
       toValue: focused || value ? 1 : 0,
       duration: 200,
@@ -43,12 +47,12 @@ export const AnimatedMakikoInput = ({
     }).start();
   }, [focused, value]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     progress.value = withTiming(focused ? 1 : 0, { duration: 350 });
   }, [focused]);
 
   // Android hardware back button handling for blur
-  React.useEffect(() => {
+  useEffect(() => {
     if (Platform.OS !== 'android') return;
     if (!focused) return;
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -66,12 +70,11 @@ export const AnimatedMakikoInput = ({
 
   // Animated icon style: scale up to fill input, clipped by border radius
   const iconAnimatedStyle = useAnimatedStyle(() => {
-    // Scale from 1 to 4 (400%)
-    const scale = interpolate(progress.value, [0, 1], [1, 100]);
+    const scale = interpolate(progress.value, [0, 1], [1, iconZoom]); // use iconZoom
     return {
-      position: 'absolute',
+      position: 'absolute' as const,
       left: 8,
-      top: 16,
+      top: 12,
       width: 24,
       height: 24,
       alignItems: 'center',
@@ -88,35 +91,30 @@ export const AnimatedMakikoInput = ({
     setInputHeight(e.nativeEvent.layout.height);
   };
 
-  const labelStyle = [
-    {
-      position: 'absolute',
-      left: 48, // match dropdown
-      zIndex: 3,
-      backgroundColor: 'transparent',
-      fontWeight: '600',
-      paddingHorizontal: 2,
-    } as const,
-    {
-      top: labelAnim.interpolate({ inputRange: [0, 1], outputRange: [18, -8] }),
-      fontSize: labelAnim.interpolate({ inputRange: [0, 1], outputRange: [16, 12] }),
-      color: labelAnim.interpolate({ inputRange: [0, 1], outputRange: ['#aaa', iconColor] }), // Use grey for placeholder
-    },
-  ];
+  // Animated label style
+  const labelStyle = {
+    position: 'absolute' as const,
+    left: labelAnim.interpolate({ inputRange: [0, 1], outputRange: [48, 16] }),
+    backgroundColor: 'transparent',
+    zIndex: 3,
+    fontWeight: '600' as const,
+    paddingHorizontal: 2,
+    top: labelAnim.interpolate({ inputRange: [0, 1], outputRange: [12, -24] }),
+    fontSize: labelAnim.interpolate({ inputRange: [0, 1], outputRange: [16, 12] }),
+    color: labelAnim.interpolate({ inputRange: [0, 1], outputRange: ['#aaa', iconColor] }),
+  };
 
   return (
-    <TouchableWithoutFeedback
-      onPress={() => {
-        if (focused) {
-          inputRef.current?.blur();
-        }
-        Keyboard.dismiss();
-      }}
-      accessible={false}
-    >
-      <View style={[{ height: inputHeight, marginBottom: 16, position: 'relative' }, style]}>
+    <View style={{ position: 'relative' }}>
+      <View
+        style={[{ height: inputHeight, marginBottom: 16, position: 'relative' }, style]}
+        onTouchEnd={() => {
+          inputRef.current?.focus();
+        }}
+        pointerEvents="box-none"
+      >
         {/* Floating label (outside input box, can float above) */}
-        <RNAnimated.Text style={labelStyle}>{label}</RNAnimated.Text>
+        <RNAnimated.Text style={labelStyle} pointerEvents="none">{label}</RNAnimated.Text>
         <Animated.View
           style={[
             styles.input,
@@ -124,7 +122,7 @@ export const AnimatedMakikoInput = ({
               width: inputWidth || '100%',
               height: inputHeight,
               borderRadius: 12,
-              overflow: 'hidden', // keep icon animation clipped
+              overflow: 'hidden',
               backgroundColor: '#232a25',
               position: 'relative',
               justifyContent: 'center',
@@ -155,9 +153,9 @@ export const AnimatedMakikoInput = ({
           </View>
         </Animated.View>
       </View>
-    </TouchableWithoutFeedback>
+    </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   input: {
@@ -167,7 +165,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#232a25',
     paddingVertical: 0,
     fontWeight: '500',
-    overflow: 'visible', // allow label to float outside
+    overflow: 'visible',
   },
   textInput: {
     paddingLeft: 52,
@@ -179,5 +177,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     margin: 0,
     borderWidth: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
 });

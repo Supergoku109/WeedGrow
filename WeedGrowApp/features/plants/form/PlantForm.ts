@@ -23,4 +23,9 @@ export interface PlantForm {
   location?: Location | null;
   locationNickname?: string;
   sensorProfileId?: string | null;
+  soilType?: string;
+  soilPh?: string;
+  permanentProtection?: string;
+  companionPlants?: string[];
+  environmentNotes?: string;
 }

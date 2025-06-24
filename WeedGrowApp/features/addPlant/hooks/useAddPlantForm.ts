@@ -5,7 +5,7 @@ const initialForm: PlantForm = {
   name: '',
   strain: '', // set to empty string by default
   growthStage: 'germination',
-  ageDays: '0',
+  ageDays: '', // changed from '0' to ''
   environment: 'outdoor',
   plantedIn: 'pot',
   potSize: '',
