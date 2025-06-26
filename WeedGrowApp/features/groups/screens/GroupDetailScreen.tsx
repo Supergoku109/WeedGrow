@@ -1,19 +1,18 @@
 /**
  * Screen component for viewing and managing a specific plant group
  */
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import EditGroupModal from '@/features/groups/components/EditGroupModal';
 import GroupHeader from '@/features/groups/components/GroupHeader';
 import GroupPlantList from '@/features/groups/components/GroupPlantList';
 import GroupScreenLayout from '@/features/groups/components/GroupScreenLayout';
 import { useGroupDetail } from '@/features/groups/hooks/useGroupDetail';
-import { deleteGroup } from '../api/groupApi';
 
 /**
  * Group detail screen showing group information and plants
  */
-export default function GroupDetailScreen() {
+const GroupDetailScreen = memo(function GroupDetailScreen() {
   // Get the group ID from URL params
   const { id } = useLocalSearchParams<{ id: string }>();
   
@@ -28,6 +27,12 @@ export default function GroupDetailScreen() {
     handleDeleteGroup,
     refreshGroup,
   } = useGroupDetail(id);
+
+  const handleEditClose = useCallback(() => setEditVisible(false), [setEditVisible]);
+  const handleEditSave = useCallback(() => {
+    setEditVisible(false);
+    refreshGroup();
+  }, [setEditVisible, refreshGroup]);
 
   return (
     <GroupScreenLayout loading={loading} groupExists={!!group}>
@@ -51,11 +56,8 @@ export default function GroupDetailScreen() {
             visible={editVisible}
             group={group}
             allPlants={plants}
-            onClose={() => setEditVisible(false)}
-            onSave={(updatedGroup) => {
-              setEditVisible(false);
-              refreshGroup();
-            }}
+            onClose={handleEditClose}
+            onSave={handleEditSave}
             // Force re-render of modal with updated data
             key={editVisible ? group.id : 'hidden'}
           />
@@ -63,4 +65,6 @@ export default function GroupDetailScreen() {
       )}
     </GroupScreenLayout>
   );
-}
+});
+
+export default GroupDetailScreen;

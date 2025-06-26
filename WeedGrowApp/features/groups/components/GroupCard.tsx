@@ -2,7 +2,7 @@
 // This component displays a card summarizing a plant group, including its name, environment, plants, weather, and actions.
 // It supports navigation, editing, and watering all plants in the group.
 
-import React, { useEffect, useState, useLayoutEffect } from 'react';
+import React, { useEffect, useState, useLayoutEffect, useCallback, useRef } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
@@ -11,14 +11,11 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { Button, Snackbar } from 'react-native-paper';
+import { Snackbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-
 import { ThemedView } from '@/ui/ThemedView';
 import { ThemedText } from '@/ui/ThemedText';
-import { calendarGreen } from '@/constants/Colors';
 import { db } from '@/services/firebase';
 import type { Group, Plant } from '@/firestoreModels';
 import { WeedGrowEnvBadge } from '@/ui/WeedGrowEnvBadge';
@@ -36,7 +33,7 @@ export interface GroupCardProps {
   onEdit?: () => void;
 }
 
-const GroupCardComponent = function GroupCard({
+const GroupCard = React.memo(function GroupCard({
   group,
   plants: _plants = [],
   weatherData,
@@ -71,7 +68,6 @@ const GroupCardComponent = function GroupCard({
     return () => { ignore = true; };
   }, [group.environment, group.plantIds]);
 
-  // Sensor profile readings for indoor/greenhouse
   const [sensorReadings, setSensorReadings] = useState<{ temp?: number; humidity?: number; missing?: boolean; name?: string }>({});
   useEffect(() => {
     if (group.environment === 'indoor' || group.environment === 'greenhouse') {
@@ -79,6 +75,8 @@ const GroupCardComponent = function GroupCard({
       async function fetchSensorProfile() {
         if (group.sensorProfileId) {
           try {
+            const { doc, getDoc } = await import('firebase/firestore');
+            const { db } = await import('@/services/firebase');
             const snap = await getDoc(doc(db, 'sensorProfiles', group.sensorProfileId));
             if (snap.exists()) {
               const data = snap.data();
@@ -100,24 +98,21 @@ const GroupCardComponent = function GroupCard({
     }
   }, [group.environment, group.sensorProfileId]);
 
-  // Use the plants prop directly
   const previewPlants = _plants.slice(0, 3);
   const moreCount = _plants.length - 3;
 
-  // Long press for quick actions (optional)
-  const handleLongPress = () => {
-    // You can implement an ActionSheet/modal here for Edit, Delete, Share
+  const handleLongPress = useCallback(() => {
     if (onEdit) onEdit();
-  };
+  }, [onEdit]);
 
-  const handlePress = () =>
+  const handlePress = useCallback(() => {
     router.push({ pathname: '/group/[id]', params: { id: group.id } });
+  }, [router, group.id]);
 
-  // Local state for water button loading
   const [watering, setWatering] = useState(false);
   const [snackVisible, setSnackVisible] = useState(false);
   const [snackMessage, setSnackMessage] = useState('');
-  const handleWaterAll = async (e: any) => {
+  const handleWaterAll = useCallback(async (e: any) => {
     e.stopPropagation();
     setWatering(true);
     try {
@@ -130,34 +125,25 @@ const GroupCardComponent = function GroupCard({
     } finally {
       setWatering(false);
     }
-  };
+  }, [group.id]);
 
-  const handleEdit = (e: any) => {
-    e.stopPropagation();
-    onEdit?.();
-  };
   // Animation for card mount
-  const scaleAnim = React.useRef(new Animated.Value(0)).current;
-  const opacityAnim = React.useRef(new Animated.Value(0)).current;
-  // Track if this is the initial mount
-  const initialMount = React.useRef(true);
-  
-  // Set initial opacity and scale before rendering
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const initialMount = useRef(true);
   useLayoutEffect(() => {
-    // Only animate on initial mount, not on re-renders
     if (initialMount.current) {
-      scaleAnim.setValue(0); // Start scale at 0
-      opacityAnim.setValue(0); // Start opacity at 0
-
+      scaleAnim.setValue(0);
+      opacityAnim.setValue(0);
       Animated.parallel([
         Animated.spring(scaleAnim, {
           toValue: 1,
           useNativeDriver: true,
-          friction: 5, // Reduced friction for smoother bounce
+          friction: 5,
         }),
         Animated.timing(opacityAnim, {
           toValue: 1,
-          duration: 800, // Reduced duration to 800ms for faster animation
+          duration: 800,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
@@ -165,11 +151,10 @@ const GroupCardComponent = function GroupCard({
         initialMount.current = false;
       });
     } else {
-      // For subsequent renders, just set the values to 1 immediately
       scaleAnim.setValue(1);
       opacityAnim.setValue(1);
     }
-  }, []);
+  }, [scaleAnim, opacityAnim]);
 
   return (
     <>
@@ -279,17 +264,15 @@ const GroupCardComponent = function GroupCard({
       </Snackbar>
     </>
   );
-}
+});
 
-const GroupCard = React.memo(GroupCardComponent);
 export default GroupCard;
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 2, // reduced from 14 for less space between group cards
+    marginBottom: 2,
     padding: 10,
     borderRadius: 16,
-    // Add green left border to match PlantCard
     borderLeftWidth: 5,
     borderLeftColor: '#00c853',
     position: 'relative',

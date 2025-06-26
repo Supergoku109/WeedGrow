@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { Snackbar, Searchbar, IconButton } from 'react-native-paper';
+import React, { useState, useMemo, useCallback, memo } from 'react';
+import { View, StyleSheet } from 'react-native';
+import { Snackbar, Searchbar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -9,14 +9,9 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import GroupList from '@/features/home/components/GroupList';
 import EditGroupModal from '@/features/groups/components/EditGroupModal';
-import { useGroupList } from '@/features/home/hooks/useGroupList';
 import PlantListScreen from '@/features/plants/screens/PlantListScreen';
 import SuggestionCatalog from '@/ui/SuggestionCatalog';
 import AppHeader from '@/ui/AppHeader';
-import FilterChips from '@/features/home/components/FilterChips';
-import { useGroupListFilters } from '@/features/groups/hooks/useGroupListFilters';
-import { useGroupPlantsMap } from '@/features/groups/hooks/useGroupPlantsMap';
-import { useGroupListHandlers } from '@/features/home/hooks/useGroupListHandlers';
 import { ThemedText } from '@/ui/ThemedText';
 import HomeBackground from '@/features/home/components/HomeBackground';
 import { useHomeScreenState } from '@/features/home/hooks/useHomeScreenState';
@@ -112,16 +107,52 @@ const styles = StyleSheet.create({
   },
 });
 
+const mockSuggestions = [
+  {
+    key: 'watering',
+    icon: '💧',
+    title: 'Plants that need watering today',
+    description: 'Based on your weather, logs, and schedule.',
+    affected: ['Blue Dream', 'OG Kush', 'Greenhouse Group'],
+    onExpand: () => {},
+  },
+  {
+    key: 'mildew',
+    icon: '🧫',
+    title: 'Powdery mildew risk detected',
+    description: 'High humidity and temp swings detected.',
+    affected: ['Sour Diesel'],
+  },
+  {
+    key: 'fertilizer',
+    icon: '🧪',
+    title: 'Fertilizer due soon',
+    description: 'Based on your fertilizer schedule.',
+    affected: ['Blue Dream', 'OG Kush', 'Sour Diesel', 'Northern Lights'],
+    onExpand: () => {},
+  },
+  {
+    key: 'weather',
+    icon: '🌩',
+    title: 'Storm incoming tomorrow',
+    description: 'Severe weather forecasted for your area.',
+    affected: ['Greenhouse Group'],
+  },
+];
+
+const TLCIndicator = memo(function TLCIndicator({ count }: { count: number }) {
+  return (
+    <View style={{ alignItems: 'flex-start', marginBottom: 0, marginLeft: 20, flexDirection: 'row', gap: 0 }}>
+      <MaterialCommunityIcons name="heart-pulse" size={15} color="#ff6b81" style={{ marginRight: 1, marginTop: 6 }} />
+      <ThemedText style={{ color: '#ff6b81', fontWeight: '600', fontSize: 13 }}>({count}) TLC Needed</ThemedText>
+    </View>
+  );
+});
+
 export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: number }) {
   const router = useRouter();
   const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
-
-  // Memoize the initial key to prevent unnecessary re-renders
-  const initialKey = useMemo(() => {
-    return initialTabIndex === 0 ? 'groups' : 'plants';
-  }, [initialTabIndex]);
-
-  // State and handlers from the custom hook
+  const initialKey = useMemo(() => (initialTabIndex === 0 ? 'groups' : 'plants'), [initialTabIndex]);
   const {
     state,
     searchQuery,
@@ -134,56 +165,18 @@ export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: 
     handleEditGroup,
     handleWaterAll,
   } = useHomeScreenState();
-
-  // Tab state
   const [tabIndex, setTabIndex] = useState(initialTabIndex);
-
-  const tabKeys = ['groups', 'plants'];
-
-  // Plant tab filter state (local, not shared with group tab)
   const [plantSearchQuery, setPlantSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [plantEnvFilter, setPlantEnvFilter] = useState<string | null>(null);
   const [plantedFilter, setPlantedFilter] = useState<string | null>(null);
   const [trainingFilter, setTrainingFilter] = useState<string | null>(null);
   const [plantFiltersVisible, setPlantFiltersVisible] = useState(false);
-
-  // Mock suggestions data
-  const mockSuggestions = [
-    {
-      key: 'watering',
-      icon: '💧',
-      title: 'Plants that need watering today',
-      description: 'Based on your weather, logs, and schedule.',
-      affected: ['Blue Dream', 'OG Kush', 'Greenhouse Group'],
-      onExpand: () => {},
-    },
-    {
-      key: 'mildew',
-      icon: '🧫',
-      title: 'Powdery mildew risk detected',
-      description: 'High humidity and temp swings detected.',
-      affected: ['Sour Diesel'],
-    },
-    {
-      key: 'fertilizer',
-      icon: '🧪',
-      title: 'Fertilizer due soon',
-      description: 'Based on your fertilizer schedule.',
-      affected: ['Blue Dream', 'OG Kush', 'Sour Diesel', 'Northern Lights'],
-      onExpand: () => {},
-    },
-    {
-      key: 'weather',
-      icon: '🌩',
-      title: 'Storm incoming tomorrow',
-      description: 'Severe weather forecasted for your area.',
-      affected: ['Greenhouse Group'],    },
-  ];  
-  // TLC needed indicator
   const tlcCount = mockSuggestions.length;
 
-  const renderGroupsTab = React.useCallback(() => (
+  const handleAddGroup = useCallback(() => router.push('/add-group'), [router]);
+
+  const renderGroupsTab = useCallback(() => (
     <View style={{ flex: 1 }}>
       <View style={styles.searchRow}>
         <Searchbar
@@ -200,13 +193,13 @@ export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: 
         loading={state.loading}
         error={state.error}
         onEditGroup={handleEditGroup}
-        onAddGroup={() => router.push('/add-group')}
+        onAddGroup={handleAddGroup}
         theme={theme}
       />
     </View>
-  ), [searchQuery, filteredGroups, groupPlantsMap, state.loading, state.error, handleEditGroup, theme, router]);
+  ), [searchQuery, filteredGroups, groupPlantsMap, state.loading, state.error, handleEditGroup, handleAddGroup, theme]);
 
-  const renderPlantsTab = React.useCallback(() => (
+  const renderPlantsTab = useCallback(() => (
     <View style={{ flex: 1 }}>
       <View style={styles.searchRow}>
         <Searchbar
@@ -235,19 +228,9 @@ export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: 
     </View>
   ), [plantSearchQuery, statusFilter, plantEnvFilter, plantedFilter, trainingFilter, plantFiltersVisible]);
 
-
-  // Create stable tabs array with static keys
   const tabs = useMemo(() => [
-    {
-      key: 'groups',
-      title: 'Groups',
-      render: renderGroupsTab,
-    },
-    {
-      key: 'plants',
-      title: 'Plants',
-      render: renderPlantsTab,
-    },
+    { key: 'groups', title: 'Groups', render: renderGroupsTab },
+    { key: 'plants', title: 'Plants', render: renderPlantsTab },
   ], [renderGroupsTab, renderPlantsTab]);
 
   return (
@@ -257,10 +240,7 @@ export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: 
         {/* Modern App Header */}
         <AppHeader />
         {/* TLC needed indicator */}
-        <View style={{ alignItems: 'flex-start', marginBottom: 0, marginLeft: 20, flexDirection: 'row', gap: 0 }}>
-          <MaterialCommunityIcons name="heart-pulse" size={15} color="#ff6b81" style={{ marginRight: 1, marginTop: 6 }} />
-          <ThemedText style={{ color: '#ff6b81', fontWeight: '600', fontSize: 13 }}>({tlcCount}) TLC Needed</ThemedText>
-        </View>
+        <TLCIndicator count={tlcCount} />
 
         {/* Suggestion Catalog */}
         <SuggestionCatalog suggestions={mockSuggestions} />

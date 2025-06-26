@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Chip } from 'react-native-paper';
 import { ThemedText } from '@/ui/ThemedText';
@@ -10,19 +10,29 @@ interface FilterChipsProps {
   setValue: (v: string | null) => void;
 }
 
-export default function FilterChips({ label, options, value, setValue }: FilterChipsProps) {
+const FilterChips = memo(function FilterChips({ label, options, value, setValue }: FilterChipsProps) {
+  const handleSelect = useCallback((opt: string | null) => setValue(opt), [setValue]);
   return (
     <>
       <ThemedText style={styles.filterLabel}>{label}</ThemedText>
       <View style={styles.chipRow}>
-        <Chip selected={!value} onPress={() => setValue(null)}>All</Chip>
+        <Chip selected={!value} onPress={() => handleSelect(null)} accessibilityState={{ selected: !value }}>All</Chip>
         {options.map((opt) => (
-          <Chip key={opt} selected={value === opt} onPress={() => setValue(opt)}>{opt}</Chip>
+          <Chip
+            key={opt}
+            selected={value === opt}
+            onPress={() => handleSelect(opt)}
+            accessibilityState={{ selected: value === opt }}
+          >
+            {opt}
+          </Chip>
         ))}
       </View>
     </>
   );
-}
+});
+
+export default FilterChips;
 
 const styles = StyleSheet.create({
   filterLabel: { marginBottom: 4 },

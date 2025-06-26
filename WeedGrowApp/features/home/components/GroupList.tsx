@@ -1,7 +1,7 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, memo } from 'react';
 import { FlatList, View, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ActivityIndicator, Snackbar, Searchbar, IconButton, Chip } from 'react-native-paper';
+import { ActivityIndicator } from 'react-native-paper';
 import { ThemedText } from '@/ui/ThemedText';
 import GroupCard from '../../groups/components/GroupCard';
 import type { Group, Plant } from '@/firestoreModels';
@@ -16,7 +16,7 @@ interface GroupListProps {
   theme: string;
 }
 
-export default function GroupList({
+const GroupList = memo(function GroupList({
   groups,
   groupPlantsMap,
   loading,
@@ -25,7 +25,6 @@ export default function GroupList({
   onAddGroup,
   theme,
 }: GroupListProps) {
-  // Memoize handlers per group
   const getOnEditGroup = useCallback(
     (group: Group & { id: string }) => () => onEditGroup(group),
     [onEditGroup]
@@ -39,45 +38,44 @@ export default function GroupList({
     [groupPlantsMap, getOnEditGroup]
   );
 
+  const renderEmpty = useCallback(() => {
+    if (loading) return <ActivityIndicator style={styles.loading} />;
+    if (error) return <ThemedText>❌ {error}</ThemedText>;
+    return (
+      <View style={styles.emptyContainer}>
+        <ThemedText style={styles.emptyText}>
+          No groups yet.{"\n"}Tap "Add Group" below to get started!
+        </ThemedText>
+      </View>
+    );
+  }, [loading, error]);
+
+  const renderFooter = useCallback(() => (
+    <View style={styles.footerContainer}>
+      <TouchableOpacity
+        accessibilityLabel="Add Group"
+        onPress={onAddGroup}
+        style={styles.addGroupButton}
+      >
+        <MaterialCommunityIcons name="plus" size={24} color="#fff" style={{ marginRight: 4 }} />
+        <ThemedText style={styles.addGroupText}>Add Group</ThemedText>
+      </TouchableOpacity>
+    </View>
+  ), [onAddGroup]);
+
   return (
     <FlatList
       data={groups}
       keyExtractor={item => item.id}
       renderItem={renderItem}
-      ListEmptyComponent={
-        loading ? (
-          <ActivityIndicator style={styles.loading} />
-        ) : error ? (
-          <ThemedText>❌ {error}</ThemedText>
-        ) : (
-          <View style={{ alignItems: 'center', marginTop: 40 }}>
-            <ThemedText style={{ fontSize: 16, opacity: 0.7, textAlign: 'center' }}>
-              No groups yet.{'\n'}Tap "Add Group" below to get started!
-            </ThemedText>
-          </View>
-        )
-      }
-      ListFooterComponent={
-        <View style={{ alignItems: 'center', marginTop: 16, marginBottom: 24 }}>
-          <TouchableOpacity
-            accessibilityLabel="Add Group"
-            onPress={onAddGroup}
-            style={[styles.addGroupButton]}
-          >
-            <MaterialCommunityIcons name="plus" size={24} color="#fff" style={{ marginRight: 4 }} />
-            <ThemedText style={styles.addGroupText}>Add Group</ThemedText>
-          </TouchableOpacity>
-        </View>
-      }
-      contentContainerStyle={{
-        paddingHorizontal: 16,
-        paddingTop: 4,
-        gap: 12,
-        flexGrow: 1,
-      }}
+      ListEmptyComponent={renderEmpty}
+      ListFooterComponent={renderFooter}
+      contentContainerStyle={styles.contentContainer}
     />
   );
-}
+});
+
+export default GroupList;
 
 const styles = StyleSheet.create({
   loading: { marginTop: 20 },
@@ -90,7 +88,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     marginTop: -20,
     marginBottom: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.09)', // Glassy white
+    backgroundColor: 'rgba(255, 255, 255, 0.09)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.03)',
     shadowColor: '#000',
@@ -105,5 +103,25 @@ const styles = StyleSheet.create({
     fontSize: 17,
     marginLeft: 10,
     letterSpacing: 0.5,
+  },
+  contentContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    gap: 12,
+    flexGrow: 1,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    opacity: 0.7,
+    textAlign: 'center',
+  },
+  footerContainer: {
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 24,
   },
 });
