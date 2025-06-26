@@ -2,12 +2,12 @@
 // This hook manages the logic for the Environment step in the Add Plant flow.
 // It handles environment selection, sensor profiles, pot/sunlight options, and dropdown menu state for the environment form step.
 
-import { useState, useEffect, useMemo } from 'react';
-import { useLocalSearchParams }        from 'expo-router';
-import { useSafeAreaInsets }          from 'react-native-safe-area-context';
-import type { PlantForm }             from '@/features/plants/form/PlantForm';
-import { BaseStepLogic }              from '../types/StepLogic';
-import { useStepBackground }          from './useStepBackground';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { PlantForm } from '@/features/plants/form/PlantForm';
+import { BaseStepLogic } from '../types/StepLogic';
+import { useStepBackground } from './useStepBackground';
 import {
   potSizeOptions,
   sunlightOptions,
@@ -18,18 +18,18 @@ import {
 export interface Step2EnvironmentLogic extends BaseStepLogic {
   insetsTop: number;
   environment: PlantForm['environment'];
-  setField(key: keyof PlantForm, v: any): void;
-  sensorOptions: { label:string; value:string }[];
+  setField: (key: keyof PlantForm, v: any) => void;
+  sensorOptions: { label: string; value: string }[];
   loadingProfiles: boolean;
   sensorMenuVisible: boolean;
-  openSensorMenu(): void;
-  closeSensorMenu(): void;
+  openSensorMenu: () => void;
+  closeSensorMenu: () => void;
   potMenuVisible: boolean;
-  openPotMenu(): void;
-  closePotMenu(): void;
+  openPotMenu: () => void;
+  closePotMenu: () => void;
   sunMenuVisible: boolean;
-  openSunMenu(): void;
-  closeSunMenu(): void;
+  openSunMenu: () => void;
+  closeSunMenu: () => void;
   plantedIn: PlantForm['plantedIn'];
   potSizeOptions: string[];
   sunlightOptions: typeof sunlightOptions;
@@ -38,7 +38,7 @@ export interface Step2EnvironmentLogic extends BaseStepLogic {
 // Hook for managing the Environment step logic
 export function useStep2Environment(
   form: PlantForm,
-  setField: (k: keyof PlantForm, v:any) => void
+  setField: (k: keyof PlantForm, v: any) => void
 ): Step2EnvironmentLogic {
   // Theming & safe area insets
   const backgroundColor = useStepBackground();
@@ -46,21 +46,25 @@ export function useStep2Environment(
 
   // Dropdown menu state
   const [sensorMenuVisible, setSensorMenuVisible] = useState(false);
-  const [potMenuVisible,    setPotMenuVisible]    = useState(false);
-  const [sunMenuVisible,    setSunMenuVisible]    = useState(false);
+  const [potMenuVisible, setPotMenuVisible] = useState(false);
+  const [sunMenuVisible, setSunMenuVisible] = useState(false);
 
   // Sensor profiles for indoor/greenhouse
-  const [sensorProfiles, setSensorProfiles] = useState<{ id:string; name:string }[]>([]);
+  const [sensorProfiles, setSensorProfiles] = useState<{ id: string; name: string }[]>([]);
   const [loadingProfiles, setLoadingProfiles] = useState(false);
 
   // Load sensor profiles when environment changes
   useEffect(() => {
+    let isMounted = true;
     if (form.environment === 'indoor' || form.environment === 'greenhouse') {
       setLoadingProfiles(true);
       fetchSensorProfiles()
-        .then(profiles => setSensorProfiles(profiles))
-        .finally(() => setLoadingProfiles(false));
+        .then(profiles => { if (isMounted) setSensorProfiles(profiles); })
+        .finally(() => { if (isMounted) setLoadingProfiles(false); });
+    } else {
+      setSensorProfiles([]);
     }
+    return () => { isMounted = false; };
   }, [form.environment]);
 
   // Handle deep-link to new sensor profile
@@ -69,32 +73,41 @@ export function useStep2Environment(
     if (params.newSensorProfileId && params.newSensorProfileId !== form.sensorProfileId) {
       setField('sensorProfileId', params.newSensorProfileId);
     }
-  }, [params.newSensorProfileId]);
+  }, [params.newSensorProfileId, form.sensorProfileId, setField]);
 
   // Build dropdown options for sensor profiles
-  const sensorOptions = useMemo(() => 
-    sensorProfiles.map(p => ({ label: p.name, value: p.id })),
+  const sensorOptions = useMemo(
+    () => sensorProfiles.map(p => ({ label: p.name, value: p.id })),
     [sensorProfiles]
   );
+
+  // Memoize menu handlers for stability
+  const openSensorMenu = useCallback(() => setSensorMenuVisible(true), []);
+  const closeSensorMenu = useCallback(() => setSensorMenuVisible(false), []);
+  const openPotMenu = useCallback(() => setPotMenuVisible(true), []);
+  const closePotMenu = useCallback(() => setPotMenuVisible(false), []);
+  const openSunMenu = useCallback(() => setSunMenuVisible(true), []);
+  const closeSunMenu = useCallback(() => setSunMenuVisible(false), []);
+  const stableSetField = useCallback(setField, [setField]);
 
   // Return logic and state for the step
   return {
     backgroundColor,
     insetsTop,
     environment: form.environment,
-    plantedIn:  form.plantedIn,
-    setField,
+    plantedIn: form.plantedIn,
+    setField: stableSetField,
     loadingProfiles,
     sensorMenuVisible,
-    openSensorMenu:  () => setSensorMenuVisible(true),
-    closeSensorMenu: () => setSensorMenuVisible(false),
+    openSensorMenu,
+    closeSensorMenu,
     sensorOptions,
     potMenuVisible,
-    openPotMenu:  () => setPotMenuVisible(true),
-    closePotMenu: () => setPotMenuVisible(false),
+    openPotMenu,
+    closePotMenu,
     sunMenuVisible,
-    openSunMenu:  () => setSunMenuVisible(true),
-    closeSunMenu: () => setSunMenuVisible(false),
+    openSunMenu,
+    closeSunMenu,
     potSizeOptions,
     sunlightOptions,
   };

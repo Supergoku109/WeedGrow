@@ -2,26 +2,23 @@
 // This component renders the Environment step of the Add Plant flow.
 // It collects information about where and how the plant is growing (sensor profile, planted in, pot size, sunlight exposure).
 
-import React, { useState, useRef } from 'react'
-import { View, TouchableOpacity, Text } from 'react-native'
-import { Button, Tooltip } from 'react-native-paper'
-import { FadeIn } from 'react-native-reanimated'
-import { ThemedText } from '@/ui/ThemedText'
-import { WeedGrowCard } from '@/ui/WeedGrowCard'
-import { WeedGrowButtonRow } from '@/ui/WeedGrowButtonRow'
-import { WeedGrowDropdownInput } from '@/ui/WeedGrowDropdownInput'
-import { SegmentedButtons } from 'react-native-paper'
-import { WeedGrowFormSection } from '@/ui/WeedGrowFormSection'
-import type { Step2EnvironmentLogic } from '../hooks/useStep2Environment'
-import { PlantForm } from '@/features/plants/form/PlantForm'
-import { AnimatedMakikoDropdownInput } from '@/components/ui/AnimatedMakikoDropdownInput'
-import { AnimatedMakikoInput } from '@/components/ui/AnimatedMakikoInput'
-import { AnimatedMakikoChipInput } from '@/components/ui/AnimatedMakikoChipInput'
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
-import { LinearGradient } from 'expo-linear-gradient'
-import { WeedGrowTextInput } from '@/ui/WeedGrowTextInput'
+import React, { memo, useRef, useState, useCallback } from 'react';
+import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { Button, Tooltip } from 'react-native-paper';
+import { FadeIn } from 'react-native-reanimated';
+import { ThemedText } from '@/ui/ThemedText';
+import { WeedGrowCard } from '@/ui/WeedGrowCard';
+import { WeedGrowButtonRow } from '@/ui/WeedGrowButtonRow';
+import { WeedGrowDropdownInput } from '@/ui/WeedGrowDropdownInput';
+import { WeedGrowFormSection } from '@/ui/WeedGrowFormSection';
+import type { Step2EnvironmentLogic } from '../hooks/useStep2Environment';
+import { PlantForm } from '@/features/plants/form/PlantForm';
+import { AnimatedMakikoDropdownInput } from '@/components/ui/AnimatedMakikoDropdownInput';
+import { AnimatedMakikoInput } from '@/components/ui/AnimatedMakikoInput';
+import { AnimatedMakikoChipInput } from '@/components/ui/AnimatedMakikoChipInput';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { WeedGrowCardBackground } from '@/components/ui/WeedGrowCardBackground';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { WeedGrowCardBackground } from '@/components/ui/WeedGrowCardBackground'
 
 // Props for the EnvironmentForm component
 interface EnvironmentFormProps {
@@ -32,77 +29,82 @@ interface EnvironmentFormProps {
 }
 
 // Section for selecting a sensor profile (for indoor/greenhouse)
-const SensorProfileSection = ({ logic }: { logic: Step2EnvironmentLogic }) => (
-  <WeedGrowFormSection label="Sensor Profile" style={{ marginBottom: 16 }}>
-    <WeedGrowDropdownInput
-      icon="chip"
-      label={logic.loadingProfiles ? 'Loading…' : 'Sensor Profile'}
-      value={logic.sensorOptions.find((o) => o.value === logic.environment)?.label || ''}
-      options={logic.sensorOptions.map((o) => ({ label: o.label, value: o.value }))}
-      onSelect={(v) => logic.setField('sensorProfileId', v)}
-      placeholder="Select profile"
-      zIndex={3000}
-    />
-  </WeedGrowFormSection>
-)
+const SensorProfileSection = memo(function SensorProfileSection({ logic }: { logic: Step2EnvironmentLogic }) {
+  return (
+    <WeedGrowFormSection label="Sensor Profile" style={styles.section}>
+      <WeedGrowDropdownInput
+        icon="chip"
+        label={logic.loadingProfiles ? 'Loading…' : 'Sensor Profile'}
+        value={logic.sensorOptions.find((o) => o.value === logic.environment)?.label || ''}
+        options={logic.sensorOptions}
+        onSelect={v => logic.setField('sensorProfileId', v)}
+        placeholder="Select profile"
+        zIndex={3000}
+      />
+    </WeedGrowFormSection>
+  );
+});
 
 // Section for selecting if the plant is in a pot or in the ground
-const PlantedInSection = ({ logic }: { logic: Step2EnvironmentLogic }) => (
-  <WeedGrowFormSection label="Planted In" style={{ marginBottom: 16 }}>
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-      {['pot', 'ground'].map((opt) => (
-        <TouchableOpacity
-          key={opt}
-          style={{
-            flex: 1,
-            margin: 4,
-            paddingVertical: 10,
-            borderRadius: 8,
-            backgroundColor: logic.plantedIn === opt ? '#4CAF50' : '#232a25',
-            alignItems: 'center',
-          }}
-          onPress={() => logic.setField('plantedIn', opt)}
-        >
-          <Text style={{ fontWeight: '600', color: '#FFFFFF' }}>{opt === 'pot' ? 'Pot' : 'Ground'}</Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  </WeedGrowFormSection>
-)
+const PlantedInSection = memo(function PlantedInSection({ logic }: { logic: Step2EnvironmentLogic }) {
+  const handleSelect = useCallback((opt: string) => logic.setField('plantedIn', opt), [logic]);
+  return (
+    <WeedGrowFormSection label="Planted In" style={styles.section}>
+      <View style={styles.plantedInRow}>
+        {['pot', 'ground'].map(opt => (
+          <TouchableOpacity
+            key={opt}
+            style={[styles.plantedInButton, logic.plantedIn === opt && styles.plantedInButtonSelected]}
+            onPress={() => handleSelect(opt)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: logic.plantedIn === opt }}
+            accessibilityLabel={`Planted in ${opt}`}
+          >
+            <Text style={styles.plantedInButtonText}>{opt === 'pot' ? 'Pot' : 'Ground'}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </WeedGrowFormSection>
+  );
+});
 
 // Section for selecting pot size (only if planted in a pot)
-const PotSizeSection = ({ form, logic }: { form: PlantForm; logic: Step2EnvironmentLogic }) => (
-  <WeedGrowFormSection style={{ marginBottom: 16 }}>
-    <AnimatedMakikoDropdownInput
-      label="Pot Size"
-      iconName="flower-pot"
-      iconClass={MaterialCommunityIcons}
-      iconColor="#4caf50"
-      value={form.potSize || ''}
-      options={logic.potSizeOptions.map((p) => ({ label: p, value: p }))}
-      onSelect={(v) => logic.setField('potSize', v)}
-      placeholder="Select pot size"
-      style={{ marginBottom: 0 }}
-    />
-  </WeedGrowFormSection>
-)
+const PotSizeSection = memo(function PotSizeSection({ form, logic }: { form: PlantForm; logic: Step2EnvironmentLogic }) {
+  return (
+    <WeedGrowFormSection style={styles.section}>
+      <AnimatedMakikoDropdownInput
+        label="Pot Size"
+        iconName="flower-pot"
+        iconClass={MaterialCommunityIcons}
+        iconColor="#4caf50"
+        value={form.potSize || ''}
+        options={logic.potSizeOptions.map(p => ({ label: p, value: p }))}
+        onSelect={v => logic.setField('potSize', v)}
+        placeholder="Select pot size"
+        style={styles.dropdown}
+      />
+    </WeedGrowFormSection>
+  );
+});
 
 // Section for selecting sunlight exposure (for outdoor/greenhouse)
-const SunlightExposureSection = ({ form, logic }: { form: PlantForm; logic: Step2EnvironmentLogic }) => (
-  <WeedGrowFormSection style={{ marginBottom: 16 }}>
-    <AnimatedMakikoDropdownInput
-      label="Sunlight Exposure"
-      iconName="white-balance-sunny"
-      iconClass={MaterialCommunityIcons}
-      iconColor="#4caf50"
-      value={form.sunlightExposure || ''}
-      options={logic.sunlightOptions.map((opt) => ({ label: opt.label, value: opt.value }))}
-      onSelect={(v) => logic.setField('sunlightExposure', v)}
-      placeholder="Select sunlight"
-      style={{ marginBottom: 0 }}
-    />
-  </WeedGrowFormSection>
-)
+const SunlightExposureSection = memo(function SunlightExposureSection({ form, logic }: { form: PlantForm; logic: Step2EnvironmentLogic }) {
+  return (
+    <WeedGrowFormSection style={styles.section}>
+      <AnimatedMakikoDropdownInput
+        label="Sunlight Exposure"
+        iconName="white-balance-sunny"
+        iconClass={MaterialCommunityIcons}
+        iconColor="#4caf50"
+        value={form.sunlightExposure || ''}
+        options={logic.sunlightOptions.map(opt => ({ label: opt.label, value: opt.value }))}
+        onSelect={v => logic.setField('sunlightExposure', v)}
+        placeholder="Select sunlight"
+        style={styles.dropdown}
+      />
+    </WeedGrowFormSection>
+  );
+});
 
 // Section for selecting soil type
 const soilTypeOptions = [
@@ -112,21 +114,23 @@ const soilTypeOptions = [
   { label: 'Custom mix', value: 'custom' },
 ];
 
-const SoilTypeSection = ({ form, logic }: { form: PlantForm; logic: Step2EnvironmentLogic }) => (
-  <WeedGrowFormSection style={{ marginBottom: 16 }}>
-    <AnimatedMakikoDropdownInput
-      label="Soil Type"
-      iconName="shovel"
-      iconClass={MaterialCommunityIcons}
-      iconColor="#4caf50"
-      value={form.soilType || ''}
-      options={soilTypeOptions}
-      onSelect={(v) => logic.setField('soilType', v)}
-      placeholder="Select soil type"
-      style={{ marginBottom: 0 }}
-    />
-  </WeedGrowFormSection>
-)
+const SoilTypeSection = memo(function SoilTypeSection({ form, logic }: { form: PlantForm; logic: Step2EnvironmentLogic }) {
+  return (
+    <WeedGrowFormSection style={styles.section}>
+      <AnimatedMakikoDropdownInput
+        label="Soil Type"
+        iconName="shovel"
+        iconClass={MaterialCommunityIcons}
+        iconColor="#4caf50"
+        value={form.soilType || ''}
+        options={soilTypeOptions}
+        onSelect={v => logic.setField('soilType', v)}
+        placeholder="Select soil type"
+        style={styles.dropdown}
+      />
+    </WeedGrowFormSection>
+  );
+});
 
 // Advanced options for Permanent Protection
 const protectionOptions = [
@@ -144,45 +148,39 @@ const companionOptions = [
 ];
 
 // Advanced Setup Section
-const AdvancedSetupSection = ({ form, logic, scrollRef }: { form: PlantForm; logic: Step2EnvironmentLogic; scrollRef?: any }) => {
+const AdvancedSetupSection = memo(function AdvancedSetupSection({ form, logic, scrollRef }: { form: PlantForm; logic: Step2EnvironmentLogic; scrollRef?: any }) {
   const [expanded, setExpanded] = useState(false);
   const [companionInput, setCompanionInput] = useState('');
   const companions = form.companionPlants || [];
 
-  const handleAddCompanion = (val: string) => {
+  const handleAddCompanion = useCallback((val: string) => {
     if (val && !companions.includes(val)) {
       logic.setField('companionPlants', [...companions, val]);
       setCompanionInput('');
     }
-  };
-  const handleRemoveCompanion = (val: string) => {
+  }, [companions, logic]);
+  const handleRemoveCompanion = useCallback((val: string) => {
     logic.setField('companionPlants', companions.filter((c: string) => c !== val));
-  };
+  }, [companions, logic]);
 
-  // Add a ref for the dropdown input
   const dropdownInputRef = useRef(null);
 
   return (
-    <View style={{ marginTop: 8 }}>
+    <View style={styles.advancedSection}>
       <TouchableOpacity
-        onPress={() => setExpanded((v) => !v)}
-        style={{
-          backgroundColor: '#355c3a',
-          borderRadius: 10,
-          padding: 12,
-          alignItems: 'center',
-          marginBottom: expanded ? 12 : 0,
-        }}
+        onPress={() => setExpanded(v => !v)}
+        style={[styles.advancedToggle, expanded && styles.advancedToggleExpanded]}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={expanded ? 'Hide Advanced Setup' : 'Show Advanced Setup'}
       >
-        <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
+        <Text style={styles.advancedToggleText}>
           {expanded ? 'Hide Advanced Setup' : 'Optional Advanced Setup'}
         </Text>
       </TouchableOpacity>
       {expanded && (
         <>
-          {/* Soil pH target */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+          <View style={styles.advancedRow}>
             <AnimatedMakikoInput
               label="Soil pH"
               iconName="flask"
@@ -191,13 +189,12 @@ const AdvancedSetupSection = ({ form, logic, scrollRef }: { form: PlantForm; log
               value={form.soilPh || ''}
               onChangeText={val => logic.setField('soilPh', val)}
               keyboardType="numeric"
-              inputStyle={{ width: 120 }}
+              inputStyle={styles.soilPhInput}
             />
             <Tooltip title="Only set if known — helps with nutrient advice">
               <MaterialCommunityIcons name="information-outline" size={22} color="#aaa" />
             </Tooltip>
           </View>
-          {/* Permanent protection */}
           <AnimatedMakikoDropdownInput
             ref={dropdownInputRef}
             label="Permanent Protection"
@@ -208,14 +205,13 @@ const AdvancedSetupSection = ({ form, logic, scrollRef }: { form: PlantForm; log
             options={protectionOptions}
             onSelect={v => logic.setField('permanentProtection', v)}
             placeholder="Select protection"
-            style={{ marginBottom: 24 }}
+            style={styles.dropdown}
             onFocusInput={() => {
               if (scrollRef && scrollRef.current && dropdownInputRef.current) {
                 scrollRef.current.scrollToFocusedInput(dropdownInputRef.current);
               }
             }}
           />
-          {/* Companion planting */}
           <AnimatedMakikoChipInput
             label="Companion Plants"
             iconName="leaf"
@@ -224,33 +220,33 @@ const AdvancedSetupSection = ({ form, logic, scrollRef }: { form: PlantForm; log
             value={companions}
             onChange={chips => logic.setField('companionPlants', chips)}
             suggestions={companionOptions}
-            style={{ marginBottom: 16 }}
+            style={styles.chipInput}
           />
         </>
       )}
     </View>
   );
-};
+});
 
 // Main form component for entering environment details
-export function EnvironmentForm({ form, logic, next, back }: EnvironmentFormProps) {
+export const EnvironmentForm = memo(function EnvironmentForm({ form, logic, next, back }: EnvironmentFormProps) {
   const scrollRef = useRef<any>(null);
   return (
-    <WeedGrowCard style={{ width: '100%', maxWidth: 480, overflow: 'hidden', padding: 0 }} entering={FadeIn.duration(500)}>
+    <WeedGrowCard style={styles.card} entering={FadeIn.duration(500)}>
       <WeedGrowCardBackground>
-        <View style={{ flex: 1, position: 'relative' }}>
+        <View style={styles.flex1}>
           <KeyboardAwareScrollView
             ref={scrollRef}
-            contentContainerStyle={{ position: 'relative', zIndex: 1 }}
+            contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             enableOnAndroid
             extraScrollHeight={120}
             keyboardShouldPersistTaps="handled"
             keyboardOpeningTime={0}
           >
-            <View style={{ padding: 16, gap: 16 }}>
+            <View style={styles.innerContent}>
               {/* Title */}
-              <ThemedText type="title" style={{ textAlign: 'center', fontSize: 24 }}>
+              <ThemedText type="title" style={styles.title}>
                 🌿 Where is your plant growing?
               </ThemedText>
 
@@ -276,10 +272,10 @@ export function EnvironmentForm({ form, logic, next, back }: EnvironmentFormProp
 
               {/* Navigation buttons: Back and Next */}
               <WeedGrowButtonRow>
-                <Button onPress={back} mode="outlined" style={{ flex: 1, marginRight: 8 }}>
+                <Button onPress={back} mode="outlined" style={styles.button}>
                   Back
                 </Button>
-                <Button onPress={next} mode="contained" style={{ flex: 1 }}>
+                <Button onPress={next} mode="contained" style={styles.button}>
                   Next
                 </Button>
               </WeedGrowButtonRow>
@@ -288,5 +284,50 @@ export function EnvironmentForm({ form, logic, next, back }: EnvironmentFormProp
         </View>
       </WeedGrowCardBackground>
     </WeedGrowCard>
-  )
-}
+  );
+});
+
+const styles = StyleSheet.create({
+  card: {
+    width: '100%',
+    maxWidth: 480,
+    overflow: 'hidden',
+    padding: 0,
+  },
+  flex1: { flex: 1, position: 'relative' },
+  scrollContent: { position: 'relative', zIndex: 1 },
+  innerContent: { padding: 16, gap: 16 },
+  title: { textAlign: 'center', fontSize: 24 },
+  section: { marginBottom: 16 },
+  dropdown: { marginBottom: 0 },
+  plantedInRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+  plantedInButton: {
+    flex: 1,
+    margin: 4,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#232a25',
+    alignItems: 'center',
+  },
+  plantedInButtonSelected: {
+    backgroundColor: '#4CAF50',
+  },
+  plantedInButtonText: {
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  advancedSection: { marginTop: 8 },
+  advancedToggle: {
+    backgroundColor: '#355c3a',
+    borderRadius: 10,
+    padding: 12,
+    alignItems: 'center',
+    marginBottom: 0,
+  },
+  advancedToggleExpanded: { marginBottom: 12 },
+  advancedToggleText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+  advancedRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  soilPhInput: { width: 120 },
+  chipInput: { marginBottom: 16 },
+  button: { flex: 1, marginRight: 8 },
+});

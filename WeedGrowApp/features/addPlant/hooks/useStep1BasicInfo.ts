@@ -2,7 +2,7 @@
 // This hook manages the logic for the Basic Info step in the Add Plant flow.
 // It handles strain selection, filtering, and validation for the basic info form step.
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { getAvailableStrains } from '../api/basicInfoApi';
 import type { PlantForm } from '@/features/plants/form/PlantForm';
 import { BaseStepLogic } from '../types/StepLogic';
@@ -11,13 +11,13 @@ import { useStepBackground } from './useStepBackground';
 // Interface for the logic returned by this hook
 export interface Step1BasicInfoLogic extends BaseStepLogic {
   strainMenuVisible: boolean;
-  openStrainMenu(): void;
-  closeStrainMenu(): void;
+  openStrainMenu: () => void;
+  closeStrainMenu: () => void;
   strainSearch: string;
-  setStrainSearch(value: string): void;
+  setStrainSearch: (value: string) => void;
   filteredStrains: string[];
   isValid: boolean;
-  setField(key: keyof PlantForm, value: any): void;
+  setField: (key: keyof PlantForm, value: any) => void;
 }
 
 // Hook for managing the Basic Info step logic
@@ -26,9 +26,7 @@ export function useStep1BasicInfo(
   setField: (key: keyof PlantForm, value: any) => void
 ): Step1BasicInfoLogic {
   const backgroundColor = useStepBackground();
-
-  // Get all available strains
-  const strains = getAvailableStrains();
+  const strains = useMemo(() => getAvailableStrains(), []);
   const [strainMenuVisible, setStrainMenuVisible] = useState(false);
   const [strainSearch, setStrainSearch] = useState('');
 
@@ -47,11 +45,13 @@ export function useStep1BasicInfo(
   }, [form.name, form.growthStage, form.ageDays]);
 
   // Open/close strain dropdown menu
-  const openStrainMenu = () => setStrainMenuVisible(true);
-  const closeStrainMenu = () => {
+  const openStrainMenu = useCallback(() => setStrainMenuVisible(true), []);
+  const closeStrainMenu = useCallback(() => {
     setStrainMenuVisible(false);
     setStrainSearch('');
-  };
+  }, []);
+
+  const stableSetField = useCallback(setField, [setField]);
 
   // Return logic and state for the step
   return {
@@ -63,6 +63,6 @@ export function useStep1BasicInfo(
     setStrainSearch,
     filteredStrains,
     isValid,
-    setField
+    setField: stableSetField,
   };
 }

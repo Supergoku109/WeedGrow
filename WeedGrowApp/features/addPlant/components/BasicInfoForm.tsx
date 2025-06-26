@@ -2,14 +2,13 @@
 // This component renders the first step of the Add Plant flow, allowing users to enter basic plant information.
 // It uses custom WeedGrow UI components and handles form state via props.
 
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Button } from 'react-native-paper';
 import { ThemedText } from '@/ui/ThemedText';
 import { WeedGrowCard } from '@/ui/WeedGrowCard';
 import { WeedGrowFormSection } from '@/ui/WeedGrowFormSection';
 import { WeedGrowButtonRow } from '@/ui/WeedGrowButtonRow';
-import { WeedGrowTextInput } from '@/ui/WeedGrowTextInput';
 import { AnimatedMakikoDropdownInput } from '@/components/ui/AnimatedMakikoDropdownInput';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
@@ -29,75 +28,120 @@ interface BasicInfoFormProps {
 
 // Styles for icons and input fields
 const styles = StyleSheet.create({
-  iconBg: {
-    position: 'absolute',
-    left: 0,
-    top: 8,
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+  card: {
+    width: '100%',
+    maxWidth: 480,
+    overflow: 'hidden',
+    padding: 0,
+  },
+  content: {
+    padding: 16,
+    gap: 16,
+    position: 'relative',
     zIndex: 1,
   },
-  icon: {
-    position: 'absolute',
-    left: 8,
-    top: 16,
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+  title: {
+    textAlign: 'center',
+    fontSize: 24,
   },
   input: {
-    flex: 1,
-    height: 56,
-    borderRadius: 12,
+    color: '#fff',
+    fontSize: 16,
+    paddingLeft: 45,
+    height: 48,
+    textAlignVertical: 'center',
+    paddingTop: 0,
+    paddingBottom: 0,
+  },
+  inputWrapper: {
+    marginBottom: 16,
+    height: 48,
+    justifyContent: 'center',
+  },
+  ageInputWrapper: {
+    marginTop: 16,
+    marginBottom: 8,
+    width: 155,
+    height: 48,
+    justifyContent: 'center',
+  },
+  envCardRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    marginTop: 8,
+  },
+  envCardWrapper: {
+    marginLeft: 0,
+    marginRight: 0,
+  },
+  envCard: {
     backgroundColor: '#232a25',
-    paddingVertical: 0,
-    fontWeight: '500',
+    borderColor: 'transparent',
+    borderWidth: 2,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 100,
+    height: 90,
+    marginHorizontal: 0,
+    elevation: 2,
+  },
+  envCardSelected: {
+    backgroundColor: '#4caf50',
+    borderColor: '#8bc34a',
+  },
+  envCardLabel: {
+    color: '#8bc34a',
+    fontWeight: '600',
+    fontSize: 15,
+    marginTop: 8,
+  },
+  envCardLabelSelected: {
+    color: '#fff',
+  },
+  button: {
+    flex: 1,
+    marginRight: 8,
+  },
+  buttonLabel: {
+    fontWeight: '600',
   },
 });
 
 // EnvironmentCard component
-function EnvironmentCard({ env, selected, onPress }: { env: string; selected: boolean; onPress: () => void }) {
+const EnvironmentCard = memo(function EnvironmentCard({ env, selected, onPress }: { env: string; selected: boolean; onPress: () => void }) {
   return (
     <TouchableOpacity
-      style={{
-        backgroundColor: selected ? '#4caf50' : '#232a25',
-        borderColor: selected ? '#8bc34a' : 'transparent',
-        borderWidth: 2,
-        borderRadius: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 100,
-        height: 90,
-        marginHorizontal: 0,
-        elevation: 2,
-      }}
+      style={[
+        styles.envCard,
+        selected && styles.envCardSelected,
+      ]}
       onPress={onPress}
       activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      accessibilityLabel={`Select ${env} environment`}
     >
       <MaterialCommunityIcons
         name={env === 'outdoor' ? 'weather-sunny' : env === 'greenhouse' ? 'greenhouse' : 'home'}
         size={32}
         color={selected ? '#fff' : '#8bc34a'}
       />
-      <ThemedText style={{
-        color: selected ? '#fff' : '#8bc34a',
-        fontWeight: '600',
-        fontSize: 15,
-        marginTop: 8,
-      }}>{env.charAt(0).toUpperCase() + env.slice(1)}</ThemedText>
+      <ThemedText style={[styles.envCardLabel, selected && styles.envCardLabelSelected]}>
+        {env.charAt(0).toUpperCase() + env.slice(1)}
+      </ThemedText>
     </TouchableOpacity>
   );
-}
+});
 
 // EnvironmentCardRow component
-function EnvironmentCardRow({ environment, setEnvironment }: { environment: string; setEnvironment: (env: string) => void }) {
+const EnvironmentCardRow = memo(function EnvironmentCardRow({ environment, setEnvironment }: { environment: string; setEnvironment: (env: string) => void }) {
   const envs = ['outdoor', 'greenhouse', 'indoor'];
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 8 }}>
-      {envs.map((env, idx, arr) => (
-        <View key={env} style={{ marginLeft: idx === 0 ? 12 : 0, marginRight: idx === arr.length - 1 ? 12 : 0 }}>
+    <View style={styles.envCardRow}>
+      {envs.map((env, idx) => (
+        <View key={env} style={styles.envCardWrapper}>
           <EnvironmentCard
             env={env}
             selected={environment === env}
@@ -107,22 +151,22 @@ function EnvironmentCardRow({ environment, setEnvironment }: { environment: stri
       ))}
     </View>
   );
-}
+});
 
 // BasicInfoFields component
-function BasicInfoFields({ form, logic }: { form: PlantForm; logic: Step1BasicInfoLogic }) {
+const BasicInfoFields = memo(function BasicInfoFields({ form, logic }: { form: PlantForm; logic: Step1BasicInfoLogic }) {
   return (
     <>
       <AnimatedMakikoInput
-        label={"Plant Name"}
+        label="Plant Name"
         iconClass={FontAwesomeIcon}
-        iconName={"leaf"}
+        iconName="leaf"
         iconColor="#4caf50"
         inputPadding={12}
-        inputStyle={{ color: '#fff', fontSize: 16, paddingLeft: 45, height: 48, textAlignVertical: 'center', paddingTop: 0, paddingBottom: 0 }}
-        value={form.name ? ('' + form.name) : ''}
-        onChangeText={(val: string) => logic.setField('name', val)}
-        style={{ marginBottom: 16, height: 48, justifyContent: 'center' }}
+        inputStyle={styles.input}
+        value={form.name || ''}
+        onChangeText={val => logic.setField('name', val)}
+        style={styles.inputWrapper}
       />
       <AnimatedMakikoDropdownInput
         label="Strain"
@@ -136,31 +180,32 @@ function BasicInfoFields({ form, logic }: { form: PlantForm; logic: Step1BasicIn
       />
       {(form.growthStage === 'vegetative' || form.growthStage === 'flowering' || form.growthStage === 'clone') && (
         <AnimatedMakikoInput
-          label={"Age in Days"}
+          label="Age in Days"
           iconClass={FontAwesomeIcon}
-          iconName={"calendar"}
+          iconName="calendar"
           iconColor="#4caf50"
           inputPadding={12}
-          inputStyle={{ color: '#fff', fontSize: 16, paddingLeft: 45, height: 48, textAlignVertical: 'center', paddingTop: 0, paddingBottom: 0 }}
-          value={form.ageDays ? String(form.ageDays) : ""}
-          onChangeText={(val: string) => logic.setField('ageDays', val)}
+          inputStyle={styles.input}
+          value={form.ageDays ? String(form.ageDays) : ''}
+          onChangeText={val => logic.setField('ageDays', val)}
           keyboardType="numeric"
-          style={{ marginTop: 16, marginBottom: 8, width: 155, height: 48, justifyContent: 'center' }}
+          style={styles.ageInputWrapper}
           iconZoom={500}
         />
       )}
     </>
   );
-}
+});
 
 // Main form component for entering basic plant info
-export function BasicInfoForm({ form, logic, next, back }: BasicInfoFormProps) {
+export const BasicInfoForm = memo(function BasicInfoForm({ form, logic, next, back }: BasicInfoFormProps) {
+  const handleSetEnvironment = useCallback((env: string) => logic.setField('environment', env), [logic]);
   return (
-    <WeedGrowCard style={{ width: '100%', maxWidth: 480, overflow: 'hidden', padding: 0 }}>
+    <WeedGrowCard style={styles.card}>
       <WeedGrowCardBackground>
-        <View style={{ padding: 16, gap: 16, position: 'relative', zIndex: 1 }}>
+        <View style={styles.content}>
           {/* Title */}
-          <ThemedText type="title" style={{ textAlign: 'center', fontSize: 24 }}>
+          <ThemedText type="title" style={styles.title}>
             🌱 Let’s start with the basics
           </ThemedText>
 
@@ -169,7 +214,7 @@ export function BasicInfoForm({ form, logic, next, back }: BasicInfoFormProps) {
 
           {/* Environment section with selectable cards */}
           <WeedGrowFormSection label="Environment">
-            <EnvironmentCardRow environment={form.environment} setEnvironment={env => logic.setField('environment', env)} />
+            <EnvironmentCardRow environment={form.environment} setEnvironment={handleSetEnvironment} />
           </WeedGrowFormSection>
 
           {/* Navigation buttons: Back and Next */}
@@ -177,8 +222,8 @@ export function BasicInfoForm({ form, logic, next, back }: BasicInfoFormProps) {
             <Button
               mode="outlined"
               onPress={back}
-              style={{ flex: 1, marginRight: 8 }}
-              labelStyle={{ fontWeight: '600' }}
+              style={styles.button}
+              labelStyle={styles.buttonLabel}
             >
               Back
             </Button>
@@ -186,8 +231,8 @@ export function BasicInfoForm({ form, logic, next, back }: BasicInfoFormProps) {
               mode="contained"
               onPress={next}
               disabled={!logic.isValid}
-              style={{ flex: 1 }}
-              labelStyle={{ fontWeight: '600' }}
+              style={styles.button}
+              labelStyle={styles.buttonLabel}
             >
               Next
             </Button>
@@ -196,4 +241,4 @@ export function BasicInfoForm({ form, logic, next, back }: BasicInfoFormProps) {
       </WeedGrowCardBackground>
     </WeedGrowCard>
   );
-}
+});

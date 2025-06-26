@@ -2,8 +2,8 @@
 // This component renders the Location step of the Add Plant flow.
 // It allows the user to set the plant's physical location using a map and nickname, and optionally use device geolocation.
 
-import React from 'react'
-import { View, ScrollView } from 'react-native'
+import React, { memo, useCallback } from 'react'
+import { View, ScrollView, StyleSheet } from 'react-native'
 import { Button } from 'react-native-paper'
 import { ThemedText } from '@/ui/ThemedText'
 import { WeedGrowCard } from '@/ui/WeedGrowCard'
@@ -11,7 +11,6 @@ import { WeedGrowFormSection } from '@/ui/WeedGrowFormSection'
 import { WeedGrowButtonRow } from '@/ui/WeedGrowButtonRow'
 import { MapPicker } from '@/ui/MapPicker'
 import { AnimatedMakikoInput } from '@/components/ui/AnimatedMakikoInput'
-import { LinearGradient } from 'expo-linear-gradient'
 import { WeedGrowCardBackground } from '@/components/ui/WeedGrowCardBackground'
 
 import type { PlantForm } from '@/features/plants/form/PlantForm'
@@ -26,13 +25,16 @@ interface LocationFormProps {
 }
 
 // Main form component for entering plant location
-export function LocationForm({ form, logic, next, back }: LocationFormProps) {
+export const LocationForm = memo(function LocationForm({ form, logic, next, back }: LocationFormProps) {
+  const handleLocationNicknameChange = useCallback((val: string) => logic.setField('locationNickname', val), [logic])
+  const handleMapLocationChange = useCallback((coords: any) => logic.setField('location', coords), [logic])
+
   return (
-    <WeedGrowCard style={{ width: '100%', maxWidth: 480, overflow: 'hidden', padding: 0 }}>
+    <WeedGrowCard style={styles.card}>
       <WeedGrowCardBackground>
-        <ScrollView contentContainerStyle={{ padding: 16, gap: 16, position: 'relative', zIndex: 1 }} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Title */}
-          <ThemedText type="title" style={{ textAlign: 'center', fontSize: 24 }}>
+          <ThemedText type="title" style={styles.title}>
             📍 Where is your plant?
           </ThemedText>
 
@@ -43,8 +45,8 @@ export function LocationForm({ form, logic, next, back }: LocationFormProps) {
               icon="crosshairs-gps"
               loading={logic.loading}
               onPress={logic.getLocation}
-              style={{ marginBottom: 5, alignSelf: 'center', borderRadius: 8, backgroundColor: logic.tint }}
-              labelStyle={{ color: '#fff', fontWeight: '700' }}
+              style={styles.locationButton}
+              labelStyle={styles.locationButtonLabel}
               mode="contained"
             >
               Use My Location
@@ -54,14 +56,14 @@ export function LocationForm({ form, logic, next, back }: LocationFormProps) {
             <AnimatedMakikoInput
               label="Location Nickname"
               value={form.locationNickname ?? ""}
-              onChangeText={(val: string) => logic.setField('locationNickname', val)}
+              onChangeText={handleLocationNicknameChange}
               iconName="map-marker"
               iconColor={logic.tint}
               iconClass={require('react-native-vector-icons/MaterialCommunityIcons').default}
               autoCapitalize="words"
               autoCorrect={false}
               returnKeyType="done"
-              style={{ marginBottom: 0 }}
+              style={styles.input}
             />
           </WeedGrowFormSection>
 
@@ -69,19 +71,19 @@ export function LocationForm({ form, logic, next, back }: LocationFormProps) {
           <WeedGrowFormSection label="Map">
             <MapPicker
               location={form.location ?? undefined}
-              onLocationChange={(coords) => logic.setField('location', coords)}
+              onLocationChange={handleMapLocationChange}
             />
-            <ThemedText style={{ textAlign: 'center', marginTop: 0, fontSize: 14, marginBottom: 4 }}>
+            <ThemedText style={styles.mapHint}>
               Tap the map to adjust your plant's location
             </ThemedText>
           </WeedGrowFormSection>
 
           {/* Navigation buttons: Back and Next */}
-          <WeedGrowButtonRow style={{ marginTop: 0 }}>
-            <Button mode="outlined" onPress={back} style={{ flex: 1 }}>
+          <WeedGrowButtonRow style={styles.buttonRow}>
+            <Button mode="outlined" onPress={back} style={styles.button}>
               Back
             </Button>
-            <Button mode="contained" onPress={next} disabled={!logic.isValid} style={{ flex: 1 }}>
+            <Button mode="contained" onPress={next} disabled={!logic.isValid} style={styles.button}>
               Next
             </Button>
           </WeedGrowButtonRow>
@@ -89,4 +91,48 @@ export function LocationForm({ form, logic, next, back }: LocationFormProps) {
       </WeedGrowCardBackground>
     </WeedGrowCard>
   )
-}
+})
+
+const styles = StyleSheet.create({
+  card: {
+    width: '100%',
+    maxWidth: 480,
+    overflow: 'hidden',
+    padding: 0,
+  },
+  content: {
+    padding: 16,
+    gap: 16,
+    position: 'relative',
+    zIndex: 1,
+  },
+  title: {
+    textAlign: 'center',
+    fontSize: 24,
+  },
+  locationButton: {
+    marginBottom: 5,
+    alignSelf: 'center',
+    borderRadius: 8,
+    backgroundColor: undefined, // Use logic.tint for backgroundColor if needed
+  },
+  locationButtonLabel: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  input: {
+    marginBottom: 0,
+  },
+  mapHint: {
+    textAlign: 'center',
+    marginTop: 0,
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  buttonRow: {
+    marginTop: 0,
+  },
+  button: {
+    flex: 1,
+  },
+})

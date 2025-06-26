@@ -2,7 +2,7 @@
 // This screen renders the first step of the Add Plant flow: entering basic plant information.
 // It uses the BasicInfoForm and step logic, and handles navigation between steps.
 
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 import { StepScreen } from '@/features/addPlant/components/StepScreen';
@@ -10,7 +10,7 @@ import { BasicInfoForm } from '@/features/addPlant/components/BasicInfoForm';
 import { useStep1BasicInfo } from '@/features/addPlant/hooks/useStep1BasicInfo';
 import { StepProps } from '@/features/addPlant/types/StepProps';
 
-export default function Step1BasicInfo({
+const Step1BasicInfo = memo(function Step1BasicInfo({
   form, setField, next, back, step
 }: StepProps) {
   // Get logic for this step
@@ -18,16 +18,10 @@ export default function Step1BasicInfo({
   const router = useRouter();
   const { tabIndex } = useLocalSearchParams<{ tabIndex: string }>();
 
-  // Helper to navigate to home with correct tab (not used in this step)
-  const navigateToHome = () => {
-    // Navigate back to the home screen with the correct tab index
-    if (tabIndex) {
-      router.replace({ pathname: '/(tabs)', params: { tabIndex } });
-    } else {
-      // If no tabIndex is provided, default to the plants tab (index 1)
-      router.replace({ pathname: '/(tabs)', params: { tabIndex: '1' } });
-    }
-  };
+  // Navigation helper (not used in this step, but kept for future-proofing)
+  const navigateToHome = useCallback(() => {
+    router.replace({ pathname: '/(tabs)', params: { tabIndex: tabIndex ?? '1' } });
+  }, [router, tabIndex]);
 
   // Render the step screen and form
   return (
@@ -40,8 +34,10 @@ export default function Step1BasicInfo({
         form={form}
         logic={logic}
         next={next}
-        back={back} // Use the step navigation back, not navigateToHome
+        back={back}
       />
     </StepScreen>
   );
-}
+});
+
+export default Step1BasicInfo;

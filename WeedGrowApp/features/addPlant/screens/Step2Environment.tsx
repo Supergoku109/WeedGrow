@@ -2,14 +2,14 @@
 // This screen renders the Environment step of the Add Plant flow: selecting environment, sensor profile, pot, and sunlight options.
 // It uses the EnvironmentForm and step logic, and handles navigation between steps.
 
-import React from 'react';
+import React, { memo } from 'react';
 
 import { StepScreen } from '../components/StepScreen';
 import { EnvironmentForm } from '../components/EnvironmentForm';
 import { useStep2Environment } from '../hooks/useStep2Environment';
 import { StepProps } from '../types/StepProps';
 
-export default function Step2Environment({ form, setField, next, back, step }: StepProps) {
+const Step2Environment = memo(function Step2Environment({ form, setField, next, back, step }: StepProps) {
   // Get logic for this step
   const logic = useStep2Environment(form, setField);
 
@@ -22,4 +22,6 @@ export default function Step2Environment({ form, setField, next, back, step }: S
       <EnvironmentForm form={form} logic={logic} next={next} back={back} />
     </StepScreen>
   );
-}
+});
+
+export default Step2Environment;
