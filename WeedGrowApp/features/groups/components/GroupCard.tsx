@@ -20,6 +20,7 @@ import { db } from '@/services/firebase';
 import type { Group, Plant } from '@/firestoreModels';
 import { WeedGrowEnvBadge } from '@/ui/WeedGrowEnvBadge';
 import { waterAllPlantsInGroup } from '@/features/groups/api/groupApi';
+import { useGroupWateredToday } from '../hooks/useGroupWateredToday';
 
 export interface GroupCardProps {
   group: Group & { id: string };
@@ -112,20 +113,29 @@ const GroupCard = React.memo(function GroupCard({
   const [watering, setWatering] = useState(false);
   const [snackVisible, setSnackVisible] = useState(false);
   const [snackMessage, setSnackMessage] = useState('');
-  const handleWaterAll = useCallback(async (e: any) => {
-    e.stopPropagation();
-    setWatering(true);
-    try {
-      await waterAllPlantsInGroup(group.id, 'demoUser');
-      setSnackMessage('All plants watered');
-      setSnackVisible(true);
-    } catch (err: any) {
-      setSnackMessage(err?.message || 'Failed to log');
-      setSnackVisible(true);
-    } finally {
-      setWatering(false);
+  // Add animated value for spinner
+  const loadingAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    let anim: Animated.CompositeAnimation | null = null;
+    if (watering) {
+      loadingAnim.setValue(0);
+      anim = Animated.loop(
+        Animated.timing(loadingAnim, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+          easing: Easing.linear,
+        })
+      );
+      anim.start();
+    } else {
+      loadingAnim.stopAnimation && loadingAnim.stopAnimation();
+      loadingAnim.setValue(0);
     }
-  }, [group.id]);
+    return () => {
+      anim && anim.stop();
+    };
+  }, [watering, loadingAnim]);
 
   // Animation for card mount
   const scaleAnim = useRef(new Animated.Value(0)).current;
@@ -156,6 +166,36 @@ const GroupCard = React.memo(function GroupCard({
     }
   }, [scaleAnim, opacityAnim]);
 
+  // Local state to optimistically mark as watered today
+  const [justWateredToday, setJustWateredToday] = useState(false);
+
+  // Handles watering all plants in the group
+  const handleWaterAll = useCallback(async () => {
+    setWatering(true);
+    try {
+      await waterAllPlantsInGroup(group.id, 'demoUser'); // TODO: Replace with real user ID
+      setSnackMessage('All plants watered!');
+      setJustWateredToday(true); // Optimistically mark as watered today
+    } catch (e) {
+      setSnackMessage('Failed to water plants.');
+    } finally {
+      setSnackVisible(true);
+      setWatering(false);
+    }
+  }, [group.id]);
+
+  // Use the new hook to check if all plants have been watered today
+  const { wateredToday, loading: wateredLoading } = useGroupWateredToday(group.id, group.plantIds || []);
+
+  // Determine if group has been watered today
+  let wateredTodayFinal = false;
+  if (lastWatered) {
+    // Try to match YYYY-MM-DD (or adjust if your format is different)
+    const todayStr = new Date().toISOString().split('T')[0];
+    wateredTodayFinal = lastWatered.startsWith(todayStr) || lastWatered.toLowerCase() === 'today';
+  }
+  if (justWateredToday) wateredTodayFinal = true;
+
   return (
     <>
       <TouchableOpacity onPress={handlePress} onLongPress={handleLongPress}>
@@ -170,14 +210,16 @@ const GroupCard = React.memo(function GroupCard({
               <ThemedText style={styles.groupName} numberOfLines={1}>{group.name}</ThemedText>
               <TouchableOpacity
                 onPress={handleWaterAll}
-                disabled={watering}
-                style={styles.waterButtonCompact}
+                disabled={watering || wateredToday}
+                style={[styles.waterButtonCompact, wateredToday && { backgroundColor: '#888' }]}
                 accessibilityLabel="Water all plants in group"
               >
                 {watering ? (
-                  <MaterialCommunityIcons name="loading" size={22} color="#fff" />
+                  <Animated.View style={{ transform: [{ rotate: loadingAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }}>
+                    <MaterialCommunityIcons name="loading" size={22} color="#fff" />
+                  </Animated.View>
                 ) : (
-                  <MaterialCommunityIcons name="water" size={22} color="#fff" />
+                  <MaterialCommunityIcons name="water" size={22} color={wateredToday ? '#ccc' : '#fff'} />
                 )}
               </TouchableOpacity>
             </View>

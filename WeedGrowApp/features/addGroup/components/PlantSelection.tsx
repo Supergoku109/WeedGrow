@@ -1,20 +1,27 @@
-import React from 'react';
-import { View, Image, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Image, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { PlantItem } from '../api/fetchPlants';
+import GroupLocationSelector from './GroupLocationSelector';
 
 interface PlantSelectionProps {
   plants: PlantItem[];
   selectedPlantIds: string[];
   onTogglePlant: (id: string) => void;
+  groupLocationPlantId?: string | null;
+  onSelectGroupLocationPlantId?: (id: string) => void;
 }
 
-export const PlantSelection: React.FC<PlantSelectionProps> = ({ plants, selectedPlantIds, onTogglePlant }) => {
+export const PlantSelection: React.FC<PlantSelectionProps> = ({ plants, selectedPlantIds, onTogglePlant, groupLocationPlantId, onSelectGroupLocationPlantId }) => {
   const theme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
 
+  const selectedPlants = plants.filter(p => selectedPlantIds.includes(p.id));
+  const selectableLocationPlants = selectedPlants.filter(p => p.location);
+  const hasOutdoor = selectedPlants.some(p => p.environment === 'outdoor');
+
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       {plants.map((plant) => {
         const isSelected = selectedPlantIds.includes(plant.id);
         const selectedEnv = selectedPlantIds.length > 0
@@ -28,6 +35,9 @@ export const PlantSelection: React.FC<PlantSelectionProps> = ({ plants, selected
             onPress={() => {
               if (isDisabled) return;
               onTogglePlant(plant.id);
+              if (onSelectGroupLocationPlantId && groupLocationPlantId === plant.id) {
+                onSelectGroupLocationPlantId(''); // Pass empty string instead of null
+              }
             }}
             style={[
               styles.card,
@@ -36,17 +46,35 @@ export const PlantSelection: React.FC<PlantSelectionProps> = ({ plants, selected
             ]}
             disabled={isDisabled}
           >
-            <Image source={{ uri: plant.imageUri }} style={styles.image} />
+            {plant.imageUri ? (
+              <Image source={{ uri: plant.imageUri }} style={styles.image} />
+            ) : (
+              <View style={[styles.image, { backgroundColor: '#ccc', alignItems: 'center', justifyContent: 'center' }]}> 
+                <Text style={{ fontSize: 32, color: '#fff' }}>{plant.name?.[0] || '?'}</Text>
+              </View>
+            )}
             <View style={styles.infoContainer}>
               <Text style={[styles.name, { color: Colors[theme].text }]}>{plant.name}</Text>
               <Text style={[styles.environment, { color: Colors[theme].gray }]}>
-                {plant.environment}
+                {plant.locationNickname || plant.environment}
               </Text>
             </View>
           </TouchableOpacity>
         );
       })}
-    </View>
+      {/* Location selection radio list */}
+      {selectedPlantIds.length >= 2 && hasOutdoor && (
+        <>
+          <Text style={{ fontWeight: 'bold', fontSize: 17, marginBottom: 12, color: Colors[theme].text, marginLeft: 2 }}>📍 Choose Location for Weather</Text>
+          <GroupLocationSelector
+            plants={selectableLocationPlants}
+            groupLocationPlantId={groupLocationPlantId}
+            onSelectGroupLocationPlantId={onSelectGroupLocationPlantId}
+            theme={theme}
+          />
+        </>
+      )}
+    </ScrollView>
   );
 };
 

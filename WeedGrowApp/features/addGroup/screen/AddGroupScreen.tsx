@@ -1,47 +1,47 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ScrollView, View } from 'react-native';
 import { Button } from 'react-native-paper';
-import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { usePlants } from '../hooks/usePlants';
 import { PlantSelection } from '../components/PlantSelection';
 import HomeBackground from '@/features/home/components/HomeBackground';
-import { WeedGrowTextInput } from '@/ui/WeedGrowTextInput';
+import { AnimatedMakikoInput } from '@/components/ui/AnimatedMakikoInput';
 import { ThemedText } from '@/ui/ThemedText';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAddGroup } from '../hooks/useAddGroup';
+import { useRouter } from 'expo-router';
 
 export default function AddGroupScreen() {
   const theme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
   const router = useRouter();
-
-  const { plants, loading, error } = usePlants();
-  const [selectedPlantIds, setSelectedPlantIds] = useState<string[]>([]);
-  const [groupName, setGroupName] = useState('');
-
-  const handleTogglePlant = (id: string) => {
-    setSelectedPlantIds((prev) =>
-      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
-    );
-  };
+  const {
+    plants,
+    loading,
+    error,
+    selectedPlantIds,
+    setSelectedPlantIds,
+    groupLocationPlantId,
+    setGroupLocationPlantId,
+    groupName,
+    setGroupName,
+    submitting,
+    handleTogglePlant,
+    handleCreateGroup,
+  } = useAddGroup();
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: Colors[theme].background }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
       <HomeBackground />
       <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <ThemedText
-          type="title"
-          style={{ textAlign: 'center', marginBottom: 16 }}
-        >
+        <ThemedText type="title" style={{ textAlign: 'center', marginBottom: 16 }}>
           Create Group
         </ThemedText>
-        <WeedGrowTextInput
+        <AnimatedMakikoInput
           label="Group Name"
+          iconName="users"
+          iconClass={require('react-native-vector-icons/Feather').default}
           value={groupName}
           onChangeText={setGroupName}
-          placeholder="Enter group name"
         />
         {loading && <Button loading>Loading Plants...</Button>}
         {error && <Button>{error}</Button>}
@@ -49,25 +49,23 @@ export default function AddGroupScreen() {
           plants={plants}
           selectedPlantIds={selectedPlantIds}
           onTogglePlant={handleTogglePlant}
+          groupLocationPlantId={groupLocationPlantId}
+          onSelectGroupLocationPlantId={setGroupLocationPlantId}
         />
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginTop: 16,
-          }}
-        >
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 }}>
           <Button
-            onPress={() => router.back()}
+            onPress={() => router.replace('/')}
             mode="outlined"
             style={{ flex: 1, marginRight: 8 }}
           >
             Back
           </Button>
           <Button
-            onPress={() => console.log('Next button pressed')}
+            onPress={handleCreateGroup}
             mode="contained"
             style={{ flex: 1 }}
+            loading={submitting}
+            disabled={submitting}
           >
             Next
           </Button>
