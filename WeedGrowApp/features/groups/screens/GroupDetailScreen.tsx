@@ -4,10 +4,11 @@
 import React, { memo, useCallback } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import EditGroupModal from '@/features/groups/components/EditGroupModal';
-import GroupHeader from '@/features/groups/components/GroupHeader';
+import GroupDetailHeader from '@/features/groups/components/GroupDetailHeader';
 import GroupPlantList from '@/features/groups/components/GroupPlantList';
 import GroupScreenLayout from '@/features/groups/components/GroupScreenLayout';
 import { useGroupDetail } from '@/features/groups/hooks/useGroupDetail';
+import { useGroupWeather } from '@/features/groups/hooks/useGroupWeather';
 
 /**
  * Group detail screen showing group information and plants
@@ -28,6 +29,9 @@ const GroupDetailScreen = memo(function GroupDetailScreen() {
     refreshGroup,
   } = useGroupDetail(id);
 
+  // Weather hook (if group has location)
+  const { weather } = useGroupWeather(group?.location?.lat, group?.location?.lng);
+
   const handleEditClose = useCallback(() => setEditVisible(false), [setEditVisible]);
   const handleEditSave = useCallback(() => {
     setEditVisible(false);
@@ -38,14 +42,22 @@ const GroupDetailScreen = memo(function GroupDetailScreen() {
     <GroupScreenLayout loading={loading} groupExists={!!group}>
       {group && (
         <>
-          {/* Group header with actions */}
-          <GroupHeader
-            group={group}
-            deleting={deleting}
-            onEdit={() => setEditVisible(true)}
-            onDelete={handleDeleteGroup}
+          {/* Custom group detail header with metadata */}
+          <GroupDetailHeader
+            name={group.name}
+            environment={group.environment}
+            weather={weather ? {
+              temperature: weather.temperature,
+              rain: weather.rain,
+              humidity: weather.humidity,
+            } : undefined}
+            totalPlants={plants.length}
+            onMoreOptions={(action) => {
+              if (action === 'edit') setEditVisible(true);
+              if (action === 'delete') handleDeleteGroup();
+            }}
           />
-          
+
           {/* List of plants in the group */}
           <GroupPlantList 
             plants={plants} 

@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { usePlants } from '../hooks/usePlants';
-import { createGroup } from '../api/groupApi';
+import { usePlants } from '@/features/addGroup/hooks/usePlants';
+import { createGroup } from '@/features/groups/api/groupApi'; // <-- Use the correct API
+
+// Use the same user ID as the home screen
+const CURRENT_USER_ID = 'demoUser';
 
 export function useAddGroup() {
   const router = useRouter();
@@ -24,7 +27,19 @@ export function useAddGroup() {
     }
     setSubmitting(true);
     try {
-      await createGroup({ name: groupName.trim(), plantIds: selectedPlantIds });
+      const environment = plants.find(p => p.id === selectedPlantIds[0])?.environment;
+      if (!environment) {
+        alert('Could not determine environment from selected plants.');
+        setSubmitting(false);
+        return;
+      }
+      await createGroup({
+        name: groupName.trim(),
+        plantIds: selectedPlantIds,
+        environment,
+        location: null, // or use groupLocationPlantId if you have location logic
+        createdBy: CURRENT_USER_ID,
+      });
       router.back();
     } catch (e) {
       alert('Failed to create group.');

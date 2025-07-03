@@ -139,30 +139,6 @@ export async function getGroupById(groupId: string): Promise<GroupWithId | null>
 }
 
 /**
- * @deprecated Use waterAllPlantsInGroup instead
- * Legacy method to add water logs to group plants
- */
-export async function addWaterLogsToGroupPlants(groupId: string): Promise<void> {
-  try {
-    const snap = await getDoc(doc(db, 'groups', groupId));
-    if (!snap.exists()) return;
-    const group = snap.data() as Group;
-    await Promise.all(
-      group.plantIds.map((pid) =>
-        addPlantLog(pid, {
-          type: 'watering',
-          description: `Watered via group ${group.name}`,
-          updatedBy: group.createdBy,
-        })
-      )
-    );
-  } catch (error) {
-    console.error('Error adding water logs to group plants:', error);
-    throw new Error('Failed to water plants. Please try again.');
-  }
-}
-
-/** 
  * Waters all plants in the group using the provided userId
  * @param groupId - ID of the group containing plants to water
  * @param userId - ID of the user performing the action
