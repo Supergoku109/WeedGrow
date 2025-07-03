@@ -15,7 +15,7 @@ export function useDeletePlant(id?: string, router = useRouter()) {
         onPress: async () => {
           try {
             await deletePlantAndSubcollections(id);
-            router.replace('/(tabs)/plants');
+            router.replace('/(tabs)?tabIndex=1'); // Go to home with plants tab active
           } catch (e) {
             console.error('Error deleting plant:', e);
           }

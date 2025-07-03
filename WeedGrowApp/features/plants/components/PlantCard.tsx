@@ -13,9 +13,10 @@ import { ThemedView } from '@/ui/ThemedView';
 
 export interface PlantCardProps {
   plant: Plant & { id: string };
+  onAddLog?: (type?: string) => void;
 }
 
-export function PlantCard({ plant }: PlantCardProps) {
+export function PlantCard({ plant, onAddLog }: PlantCardProps) {
   const router = useRouter();
   const [snackVisible, setSnackVisible] = React.useState(false);
   const [snackMessage, setSnackMessage] = React.useState('');
@@ -47,17 +48,9 @@ export function PlantCard({ plant }: PlantCardProps) {
 
   const handleWater = async (e: any) => {
     e.stopPropagation();
-    try {
-      await addPlantLog(plant.id, {
-        type: 'watering',
-        description: 'Watered the plant',
-        updatedBy: 'demoUser',
-      });
-      setSnackMessage('Watering logged');
-      setSnackVisible(true);
-    } catch (err: any) {
-      setSnackMessage(err.message || 'Failed to log');
-      setSnackVisible(true);
+    // Instead of logging directly, open the log type sheet/modal from parent via a callback
+    if (typeof onAddLog === 'function') {
+      onAddLog('watering');
     }
   };
 

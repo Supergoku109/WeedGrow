@@ -146,7 +146,7 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
     weather?: WeeklyDayData;
     logs: Array<{ type: string; description?: string; updatedBy?: string; timestamp?: any }>;
 
-    onAddLog: () => void;
+    onAddLog?: () => void; // Make optional
     onAddPic: () => void;
   }) {
     return (
@@ -207,22 +207,17 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
         </View>
         {/* FAB-style action buttons, bottom right inside card */}
         <View style={{ position: 'absolute', right: 18, bottom: 14, flexDirection: 'row', gap: 10 }}>
-          <TouchableOpacity
-            onPress={onAddLog}
-            style={{ backgroundColor: '#2563eb', borderRadius: 24, width: 44, height: 44, alignItems: 'center', justifyContent: 'center', shadowColor: '#2563eb', shadowOpacity: 0.18, shadowRadius: 6, elevation: 3, marginLeft: 2 }}
-            accessibilityLabel="Add Log"
-            activeOpacity={0.85}
-          >
-            <MaterialCommunityIcons name="plus" size={26} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={onAddPic}
-            style={{ backgroundColor: '#00c853', borderRadius: 24, width: 44, height: 44, alignItems: 'center', justifyContent: 'center', shadowColor: '#00c853', shadowOpacity: 0.18, shadowRadius: 6, elevation: 3 }}
-            accessibilityLabel="Add Progress Pic"
-            activeOpacity={0.85}
-          >
-            <MaterialCommunityIcons name="camera" size={24} color="#fff" />
-          </TouchableOpacity>
+          {/* Only show Add Log button if onAddLog is provided */}
+          {onAddLog && false && (
+            <TouchableOpacity
+              onPress={onAddLog}
+              style={{ backgroundColor: '#2563eb', borderRadius: 24, width: 44, height: 44, alignItems: 'center', justifyContent: 'center', shadowColor: '#2563eb', shadowOpacity: 0.18, shadowRadius: 6, elevation: 3, marginLeft: 2 }}
+              accessibilityLabel="Add Log"
+              activeOpacity={0.85}
+            >
+              <MaterialCommunityIcons name="plus" size={26} color="#fff" />
+            </TouchableOpacity>
+          )}
         </View>
       </RNAnimated.View>
     );
@@ -332,7 +327,7 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
           date={expandedLogDate}
           weather={weekData.find(d => d.date === expandedLogDate)}
           logs={uploading ? [] : (getLogsForDate ? getLogsForDate(expandedLogDate) : [])}
-          onAddLog={() => { setPendingLogDate(expandedLogDate); setLogTypeSheetVisible(true); setSelectedLogType(null); }}
+          onAddLog={undefined} // REMOVE blue add log button
           onAddPic={onAddPicture || (() => {})}
         />
       )}
