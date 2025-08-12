@@ -24,6 +24,7 @@ export function useGroupDetail(groupId?: string) {
   const [loading, setLoading] = useState(true);
   const [editVisible, setEditVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
   const router = useRouter();
 
   /**
@@ -71,41 +72,40 @@ export function useGroupDetail(groupId?: string) {
     }
   }, [groupId]);
 
-  // Fetch group data initially and when edit modal is closed
+  // Fetch group data initially and when the groupId changes
   useEffect(() => {
     fetchGroupData();
-  }, [fetchGroupData, editVisible]);
+  }, [fetchGroupData]);
 
   /**
-   * Handles group deletion with confirmation dialog
+   * Open delete confirmation
    */
-  const handleDeleteGroup = useCallback(async () => {
-    if (!group) return;
+  const handleDeleteGroup = useCallback(() => {
+    setConfirmDeleteVisible(true);
+  }, []);
 
-    Alert.alert(
-      'Delete Group',
-      'Are you sure you want to delete this group? This will NOT delete the plants, only the group.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            setDeleting(true);
-            try {
-              await deleteGroup(group.id);
-              router.replace('/(tabs)');
-            } catch (error) {
-              console.error('Error deleting group:', error);
-              Alert.alert('Error', 'Failed to delete group');
-            } finally {
-              setDeleting(false);
-            }
-          },
-        },
-      ]
-    );
+  /**
+   * Confirm deletion after user approves
+   */
+  const confirmDeleteGroup = useCallback(async () => {
+    if (!group) return;
+    setDeleting(true);
+    try {
+      await deleteGroup(group.id);
+      router.replace('/(tabs)');
+    } catch (error) {
+      console.error('Error deleting group:', error);
+      Alert.alert('Error', 'Failed to delete group');
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteVisible(false);
+    }
   }, [group, router]);
+
+  /**
+   * Cancel deletion
+   */
+  const cancelDeleteGroup = useCallback(() => setConfirmDeleteVisible(false), []);
 
   // Handle back button navigation
   useFocusEffect(
@@ -115,13 +115,17 @@ export function useGroupDetail(groupId?: string) {
           setEditVisible(false);
           return true; // Prevent default behavior
         }
+        if (confirmDeleteVisible) {
+          setConfirmDeleteVisible(false);
+          return true;
+        }
         router.replace('/');
         return true; // Prevent default behavior
       };
       
       const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
       return () => sub.remove();
-    }, [editVisible, router])
+    }, [editVisible, confirmDeleteVisible, router])
   );
   /**
    * Refreshes the group data
@@ -138,6 +142,9 @@ export function useGroupDetail(groupId?: string) {
     setEditVisible,
     deleting,
     handleDeleteGroup,
+    confirmDeleteGroup,
+    cancelDeleteGroup,
+    confirmDeleteVisible,
     refreshGroup,
   };
 }

@@ -39,16 +39,20 @@ const GroupList = memo(function GroupList({
   );
 
   const renderEmpty = useCallback(() => {
-    if (loading) return <ActivityIndicator style={styles.loading} />;
     if (error) return <ThemedText>❌ {error}</ThemedText>;
-    return (
-      <View style={styles.emptyContainer}>
-        <ThemedText style={styles.emptyText}>
-          No groups yet.{"\n"}Tap "Add Group" below to get started!
-        </ThemedText>
-      </View>
-    );
-  }, [loading, error]);
+    // Only show empty message if not loading and no groups
+    if (!loading) {
+      return (
+        <View style={styles.emptyContainer}>
+          <ThemedText style={styles.emptyText}>
+            No groups yet.{"\n"}Tap "Add Group" below to get started!
+          </ThemedText>
+        </View>
+      );
+    }
+    // Otherwise, render nothing (spinner is handled by overlay)
+    return null;
+  }, [error, loading]);
 
   const renderFooter = useCallback(() => (
     <View style={styles.footerContainer}>
@@ -64,14 +68,23 @@ const GroupList = memo(function GroupList({
   ), [onAddGroup]);
 
   return (
-    <FlatList
-      data={groups}
-      keyExtractor={item => item.id}
-      renderItem={renderItem}
-      ListEmptyComponent={renderEmpty}
-      ListFooterComponent={renderFooter}
-      contentContainerStyle={styles.contentContainer}
-    />
+    <View style={{ flex: 1, position: 'relative' }}>
+      <FlatList
+        data={groups}
+        keyExtractor={item => item.id}
+        renderItem={renderItem}
+        ListEmptyComponent={renderEmpty}
+        ListFooterComponent={renderFooter}
+        contentContainerStyle={styles.contentContainer}
+      />
+      {loading && (
+        <View style={styles.loadingOverlay} pointerEvents="auto">
+          <View style={styles.loadingSpinnerContainer}>
+            <ActivityIndicator size="large" color="#fff" />
+          </View>
+        </View>
+      )}
+    </View>
   );
 });
 
@@ -79,6 +92,19 @@ export default GroupList;
 
 const styles = StyleSheet.create({
   loading: { marginTop: 20 },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(24, 31, 27, 0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 100,
+    flex: 1,
+  },
+  loadingSpinnerContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   addGroupButton: {
     flexDirection: 'row',
     alignItems: 'center',

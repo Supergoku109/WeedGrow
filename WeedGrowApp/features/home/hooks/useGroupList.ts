@@ -24,6 +24,10 @@ export function useGroupList() {
   const [editGroup, setEditGroup] = useState<GroupWithId | null>(null);
   const [allPlants, setAllPlants] = useState<PlantWithId[]>([]);
 
+  // Track loading for both fetches
+  const [groupsLoaded, setGroupsLoaded] = useState(false);
+  const [plantsLoaded, setPlantsLoaded] = useState(false);
+
   // Optimization to prevent unnecessary re-renders
   const lastGroupsRef = useRef<string>('');
 
@@ -32,10 +36,10 @@ export function useGroupList() {
    */
   const fetchGroups = useCallback(async () => {
     setLoading(true);
+    setGroupsLoaded(false);
     try {
       const data = await getUserGroups(CURRENT_USER_ID);
       const dataHash = JSON.stringify(data);
-      
       // Only update state if data has changed
       if (dataHash !== lastGroupsRef.current) {
         setGroups(data);
@@ -45,7 +49,7 @@ export function useGroupList() {
       console.error('Error fetching groups', error);
       setError(error.message || 'Failed to load groups');
     } finally {
-      setLoading(false);
+      setGroupsLoaded(true);
     }
   }, []);
 
@@ -53,6 +57,7 @@ export function useGroupList() {
    * Fetches all plants for filtering and selection
    */
   const fetchAllPlants = useCallback(async () => {
+    setPlantsLoaded(false);
     try {
       const q = query(collection(db, 'plants'));
       const snap = await getDocs(q);
@@ -64,14 +69,26 @@ export function useGroupList() {
     } catch (error) {
       console.error('Error fetching plants:', error);
       // Non-critical error, don't show alert
+    } finally {
+      setPlantsLoaded(true);
     }
   }, []);
 
   // Initial data loading
   useEffect(() => {
+    setLoading(true);
+    setGroupsLoaded(false);
+    setPlantsLoaded(false);
     fetchGroups();
     fetchAllPlants();
   }, [fetchGroups, fetchAllPlants]);
+
+  // Only set loading to false when both are loaded
+  useEffect(() => {
+    if (groupsLoaded && plantsLoaded) {
+      setLoading(false);
+    }
+  }, [groupsLoaded, plantsLoaded]);
 
   /**
    * Water all plants in a group

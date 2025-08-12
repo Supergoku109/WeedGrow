@@ -11,9 +11,13 @@ interface PlantSelectionProps {
   onTogglePlant: (id: string) => void;
   groupLocationPlantId?: string | null;
   onSelectGroupLocationPlantId?: (id: string) => void;
+  // New: when provided, grey out plants that don't match this environment
+  allowedEnvironment?: 'outdoor' | 'indoor' | 'greenhouse';
+  // New: disable specific plant IDs (e.g., already in a group)
+  disabledIds?: string[];
 }
 
-export const PlantSelection: React.FC<PlantSelectionProps> = ({ plants, selectedPlantIds, onTogglePlant, groupLocationPlantId, onSelectGroupLocationPlantId }) => {
+export const PlantSelection: React.FC<PlantSelectionProps> = ({ plants, selectedPlantIds, onTogglePlant, groupLocationPlantId, onSelectGroupLocationPlantId, allowedEnvironment, disabledIds = [] }) => {
   const theme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
 
   const selectedPlants = plants.filter(p => selectedPlantIds.includes(p.id));
@@ -24,10 +28,13 @@ export const PlantSelection: React.FC<PlantSelectionProps> = ({ plants, selected
     <ScrollView contentContainerStyle={styles.container}>
       {plants.map((plant) => {
         const isSelected = selectedPlantIds.includes(plant.id);
-        const selectedEnv = selectedPlantIds.length > 0
+        // Prefer enforced environment if provided, else lock based on first selected plant
+        const selectedEnv = allowedEnvironment ?? (selectedPlantIds.length > 0
           ? plants.find(p => p.id === selectedPlantIds[0])?.environment
-          : null;
-        const isDisabled = Boolean(selectedEnv && plant.environment !== selectedEnv && !isSelected);
+          : null);
+        const envMismatch = Boolean(selectedEnv && plant.environment !== selectedEnv);
+        const isExplicitlyDisabled = disabledIds.includes(plant.id);
+        const isDisabled = Boolean((envMismatch || isExplicitlyDisabled) && !isSelected);
 
         return (
           <TouchableOpacity

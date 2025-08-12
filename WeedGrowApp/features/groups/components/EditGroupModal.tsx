@@ -6,11 +6,13 @@
 import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { Modal, View, StyleSheet, TextInput, ScrollView, Pressable } from 'react-native';
 import { ThemedText } from '@/ui/ThemedText';
-import { ThemedView } from '@/ui/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { GroupWithId } from '../api/groupApi';
 import { PlantWithId } from '../hooks/useGroupDetail';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
+import { ColorTokens, Typography, Spacing } from '@/design-system/tokens';
 
 // Props for the EditGroupModal component
 interface EditGroupModalProps {
@@ -31,15 +33,48 @@ const PlantRow = memo(function PlantRow({ plant, isMember, onToggle }: PlantRowP
   const handlePress = useCallback(() => onToggle(plant.id), [onToggle, plant.id]);
   return (
     <View style={styles.plantRow}>
-      <ThemedText accessibilityRole="text">{plant.name}</ThemedText>
-      <Pressable
-        onPress={handlePress}
-        accessibilityRole="button"
-        accessibilityLabel={isMember ? `Remove ${plant.name} from group` : `Add ${plant.name} to group`}
-        style={({ pressed }) => [styles.plantButton, isMember ? styles.removeBtn : styles.addBtn, pressed && styles.btnPressed]}
-      >
-        <ThemedText style={styles.plantButtonText}>{isMember ? 'Remove' : 'Add'}</ThemedText>
-      </Pressable>
+      <ThemedText accessibilityRole="text" style={styles.plantName}>{plant.name}</ThemedText>
+      {isMember ? (
+        <Pressable
+          onPress={handlePress}
+          accessibilityRole="button"
+          accessibilityLabel={`Remove ${plant.name} from group`}
+          style={({ pressed }) => [
+            styles.toggleChip,
+            styles.removeChip,
+            pressed && styles.btnPressed,
+          ]}
+        >
+          <MaterialCommunityIcons
+            name="minus-circle-outline"
+            size={16}
+            color="#fecaca"
+            style={{ marginRight: 6 }}
+          />
+          <ThemedText style={[styles.toggleText, styles.removeText]}>Remove</ThemedText>
+        </Pressable>
+      ) : (
+        <Pressable
+          onPress={handlePress}
+          accessibilityRole="button"
+          accessibilityLabel={`Add ${plant.name} to group`}
+          style={({ pressed }) => [
+            styles.toggleChip,
+            styles.toggleOff,
+            pressed && styles.btnPressed,
+          ]}
+        >
+          <MaterialCommunityIcons
+            name={'plus'}
+            size={16}
+            color={'#dbeafe'}
+            style={{ marginRight: 6 }}
+          />
+          <ThemedText style={[styles.toggleText, styles.toggleTextOff]}>
+            Add
+          </ThemedText>
+        </Pressable>
+      )}
     </View>
   );
 });
@@ -99,17 +134,39 @@ const EditGroupModal = memo(function EditGroupModal({ visible, group, allPlants,
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.overlay}>
-        <ThemedView style={styles.modal}>
-          <ThemedText type="title" style={styles.modalTitle} accessibilityRole="header">Edit Group</ThemedText>
+        <LinearGradient
+          colors={[ThemeColorsBgStart, ThemeColorsBgEnd] as any}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.modal, theme === 'dark' ? styles.modalDark : styles.modalLight]}
+        >
+          {/* Accent sweep */}
+          <LinearGradient
+            colors={['rgba(16,185,129,0.22)', 'rgba(59,130,246,0.16)', 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.accent}
+          />
+
+          {/* Header */}
+          <View style={styles.headerRow}>
+            <ThemedText type="title" style={styles.modalTitle} accessibilityRole="header">Edit Group</ThemedText>
+            <Pressable onPress={onClose} style={styles.iconBtn} accessibilityLabel="Close">
+              <Feather name="x" size={22} color={ColorTokens.text.secondary} />
+            </Pressable>
+          </View>
+
+          {/* Name input */}
           <TextInput
             value={name}
             onChangeText={handleNameChange}
             placeholder="Group Name"
             style={[
               styles.input,
-              { color: Colors[theme].text, borderColor: nameError ? '#ff6b6b' : Colors[theme].gray }
+              theme === 'dark' ? styles.inputDark : styles.inputLight,
+              { borderColor: nameError ? ColorTokens.status.error : 'rgba(255,255,255,0.08)' },
             ]}
-            placeholderTextColor={Colors[theme].gray}
+            placeholderTextColor={ColorTokens.text.secondary}
             accessibilityLabel="Group Name"
             accessibilityHint="Enter the group name"
             autoFocus
@@ -119,10 +176,14 @@ const EditGroupModal = memo(function EditGroupModal({ visible, group, allPlants,
           {nameError && (
             <ThemedText style={styles.errorText} accessibilityRole="alert">{nameError}</ThemedText>
           )}
+
+          {/* Members */}
           <ThemedText style={styles.sectionHeader} accessibilityRole="header">Plants in Group</ThemedText>
-          <ScrollView style={styles.plantList} keyboardShouldPersistTaps="handled">
+          <ScrollView style={styles.plantList} contentContainerStyle={{ paddingBottom: 8 }} keyboardShouldPersistTaps="handled">
             {plantRows}
           </ScrollView>
+
+          {/* Actions */}
           <View style={styles.buttonRow}>
             <Pressable
               onPress={onClose}
@@ -130,18 +191,27 @@ const EditGroupModal = memo(function EditGroupModal({ visible, group, allPlants,
               accessibilityRole="button"
               accessibilityLabel="Cancel editing group"
             >
-              <ThemedText style={styles.actionBtnText}>Cancel</ThemedText>
+              <ThemedText style={styles.cancelText}>Cancel</ThemedText>
             </Pressable>
-            <Pressable
-              onPress={handleSave}
-              style={({ pressed }) => [styles.actionBtn, styles.saveBtn, pressed && styles.btnPressed]}
-              accessibilityRole="button"
-              accessibilityLabel="Save group changes"
+
+            <LinearGradient
+              colors={[ColorTokens.brand.primary, ColorTokens.brand.primaryDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.saveGradient}
             >
-              <ThemedText style={styles.actionBtnText}>Save</ThemedText>
-            </Pressable>
+              <Pressable
+                onPress={handleSave}
+                style={({ pressed }) => [styles.actionBtn, styles.saveBtn, pressed && styles.btnPressed]}
+                accessibilityRole="button"
+                accessibilityLabel="Save group changes"
+              >
+                <MaterialCommunityIcons name="content-save" size={18} color="#fff" style={{ marginRight: 8 }} />
+                <ThemedText style={styles.saveText}>Save</ThemedText>
+              </Pressable>
+            </LinearGradient>
           </View>
-        </ThemedView>
+        </LinearGradient>
       </View>
     </Modal>
   );
@@ -149,105 +219,177 @@ const EditGroupModal = memo(function EditGroupModal({ visible, group, allPlants,
 
 export default EditGroupModal;
 
+// Compute solid gradient bases per theme
+const ThemeColorsBgStart = 'rgba(20, 24, 31, 1)';
+const ThemeColorsBgEnd = 'rgba(20, 24, 31, 1)';
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 16,
   },
   modal: {
-    width: '90%',
+    width: '100%',
     borderRadius: 16,
-    padding: 24,
+    padding: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
-    backgroundColor: '#fff',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  modalDark: {
+    backgroundColor: ColorTokens.background.card,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  modalLight: {
+    backgroundColor: '#ffffff',
+    borderColor: 'rgba(0,0,0,0.06)',
+  },
+  accent: {
+    position: 'absolute',
+    top: -60,
+    right: -80,
+    width: 280,
+    height: 220,
+    transform: [{ rotate: '20deg' }],
+    borderRadius: 140,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
   modalTitle: {
-    marginBottom: 16,
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    ...Typography.styles.h3,
+    color: ColorTokens.text.primary,
+  },
+  iconBtn: {
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   input: {
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     fontSize: 16,
-    marginBottom: 8,
+    marginBottom: 6,
+  },
+  inputDark: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    color: ColorTokens.text.primary,
+  },
+  inputLight: {
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    color: '#111827',
   },
   errorText: {
-    color: '#ff6b6b',
-    marginBottom: 12,
+    color: ColorTokens.status.error,
+    marginBottom: 8,
     fontSize: 14,
-    textAlign: 'left',
   },
   sectionHeader: {
-    marginTop: 16,
+    marginTop: 12,
     marginBottom: 8,
-    fontSize: 16,
-    fontWeight: '600',
+    ...Typography.styles.label,
+    color: ColorTokens.text.secondary,
   },
   plantList: {
-    maxHeight: 200,
-    marginBottom: 8,
+    maxHeight: 320,
+    marginBottom: 4,
   },
   plantRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 2,
-    borderRadius: 6,
+    marginBottom: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 8,
   },
-  plantButton: {
-    borderRadius: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    minWidth: 70,
+  plantName: {
+    ...Typography.styles.body,
+    color: ColorTokens.text.primary,
+  },
+  toggleChip: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
   },
-  addBtn: {
-    backgroundColor: '#e0f7e9',
+  toggleOn: {
+    backgroundColor: 'rgba(16,185,129,0.15)',
+    borderColor: 'rgba(16,185,129,0.25)',
   },
-  removeBtn: {
-    backgroundColor: '#ffeaea',
+  toggleOff: {
+    backgroundColor: 'rgba(59,130,246,0.14)',
+    borderColor: 'rgba(59,130,246,0.22)',
   },
-  btnPressed: {
-    opacity: 0.7,
+  // New explicit remove style for members
+  removeChip: {
+    backgroundColor: 'rgba(248,113,113,0.16)',
+    borderColor: 'rgba(248,113,113,0.28)',
   },
-  plantButtonText: {
-    fontSize: 15,
-    fontWeight: '500',
+  toggleText: {
+    ...Typography.styles.label,
+  },
+  toggleTextOn: {
+    color: '#d1fae5',
+  },
+  toggleTextOff: {
+    color: '#dbeafe',
+  },
+  removeText: {
+    color: '#fecaca',
   },
   buttonRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 24,
-    gap: 16,
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 16,
   },
   actionBtn: {
     flex: 1,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingVertical: 12,
+    paddingHorizontal: 16,
     alignItems: 'center',
-    marginHorizontal: 4,
+    justifyContent: 'center',
+    flexDirection: 'row',
   },
   cancelBtn: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+  },
+  cancelText: {
+    color: ColorTokens.text.primary,
+    fontWeight: '700',
+  },
+  saveGradient: {
+    flex: 1,
+    borderRadius: 12,
   },
   saveBtn: {
-    backgroundColor: '#4caf50',
+    backgroundColor: 'transparent',
   },
-  actionBtnText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#222',
+  saveText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  btnPressed: {
+    opacity: 0.8,
   },
 });
