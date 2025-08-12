@@ -9,10 +9,12 @@ import type { Plant } from '@/firestoreModels';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PlantCard } from '@/features/plants/components/PlantCard';
+import { Swipeable } from 'react-native-gesture-handler';
 
 interface GroupPlantListProps {
   plants: (Plant & { id: string })[];
   onAddPlant?: () => void;
+  onCreatePlant?: () => void;
   // Optional header to render above the list using ListHeaderComponent
   header?: React.ReactElement | null;
   // When true and header is provided, make the header sticky
@@ -21,24 +23,78 @@ interface GroupPlantListProps {
   showFooterAddButton?: boolean;
   // Additional bottom inset to avoid overlapping nav/tab bars
   bottomInset?: number;
+  // Pull-to-refresh
+  refreshing?: boolean;
+  onRefresh?: () => void;
+  // Actions
+  onRemovePlant?: (plantId: string) => void;
+  onQuickWater?: (plantId: string) => void;
+  onQuickFeed?: (plantId: string) => void;
+  onQuickNote?: (plantId: string) => void;
+  onMoveUp?: (plantId: string) => void;
+  onMoveDown?: (plantId: string) => void;
 }
 
-const GroupPlantList = memo(function GroupPlantList({ plants, onAddPlant, header, stickyHeader = false, showFooterAddButton = true, bottomInset = 0 }: GroupPlantListProps) {
+const RightActions = ({ onRemove, onQuickWater, onQuickFeed, onQuickNote }: { onRemove?: () => void; onQuickWater?: () => void; onQuickFeed?: () => void; onQuickNote?: () => void }) => (
+  <View style={styles.rightActionsContainer}>
+    <TouchableOpacity style={[styles.actionBtn, styles.removeBtn]} onPress={onRemove} accessibilityLabel="Remove from group">
+      <MaterialCommunityIcons name="trash-can-outline" size={20} color="#fecaca" />
+      <ThemedText style={styles.actionText}>Remove</ThemedText>
+    </TouchableOpacity>
+    <TouchableOpacity style={[styles.actionBtn, styles.waterBtn]} onPress={onQuickWater} accessibilityLabel="Quick water">
+      <MaterialCommunityIcons name="water" size={20} color="#dbeafe" />
+      <ThemedText style={styles.actionText}>Water</ThemedText>
+    </TouchableOpacity>
+    <TouchableOpacity style={[styles.actionBtn, styles.feedBtn]} onPress={onQuickFeed} accessibilityLabel="Quick feed">
+      <MaterialCommunityIcons name="leaf" size={20} color="#fde68a" />
+      <ThemedText style={styles.actionText}>Feed</ThemedText>
+    </TouchableOpacity>
+    <TouchableOpacity style={[styles.actionBtn, styles.noteBtn]} onPress={onQuickNote} accessibilityLabel="Quick note">
+      <MaterialCommunityIcons name="note-edit-outline" size={20} color="#e5e7eb" />
+      <ThemedText style={styles.actionText}>Note</ThemedText>
+    </TouchableOpacity>
+  </View>
+);
+
+const LeftActions = ({ onMoveUp, onMoveDown }: { onMoveUp?: () => void; onMoveDown?: () => void }) => (
+  <View style={styles.leftActionsContainer}>
+    <TouchableOpacity style={[styles.actionBtn, styles.reorderBtn]} onPress={onMoveUp} accessibilityLabel="Move up">
+      <MaterialCommunityIcons name="arrow-up" size={20} color="#d1fae5" />
+      <ThemedText style={styles.actionText}>Up</ThemedText>
+    </TouchableOpacity>
+    <TouchableOpacity style={[styles.actionBtn, styles.reorderBtn]} onPress={onMoveDown} accessibilityLabel="Move down">
+      <MaterialCommunityIcons name="arrow-down" size={20} color="#d1fae5" />
+      <ThemedText style={styles.actionText}>Down</ThemedText>
+    </TouchableOpacity>
+  </View>
+);
+
+const GroupPlantList = memo(function GroupPlantList({ plants, onAddPlant, onCreatePlant, header, stickyHeader = false, showFooterAddButton = true, bottomInset = 0, refreshing, onRefresh, onRemovePlant, onQuickWater, onQuickFeed, onQuickNote, onMoveUp, onMoveDown }: GroupPlantListProps) {
   const router = useRouter();
   const navigateToAddPlant = useCallback(() => {
     if (onAddPlant) return onAddPlant();
     router.push('/add-plant');
   }, [router, onAddPlant]);
+  const navigateToCreatePlant = useCallback(() => {
+    if (onCreatePlant) return onCreatePlant();
+    router.push('/add-plant');
+  }, [router, onCreatePlant]);
 
   if (!plants || plants.length === 0) {
     return (
       <View style={[styles.emptyContainer, { paddingBottom: 24 + bottomInset }]}> 
         {header}
         <ThemedText style={styles.emptyText}>No plants in this group yet.</ThemedText>
-        <TouchableOpacity accessibilityLabel="Add Plant" onPress={navigateToAddPlant} style={styles.addPlantButton}>
-          <MaterialCommunityIcons name="plus" size={24} color="#fff" style={{ marginRight: 4 }} />
-          <ThemedText style={styles.addPlantText}>Add Plant</ThemedText>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <TouchableOpacity accessibilityLabel="Add existing plants" onPress={navigateToAddPlant} style={styles.addPlantButton}>
+            <MaterialCommunityIcons name="plus" size={24} color="#fff" style={{ marginRight: 4 }} />
+            <ThemedText style={styles.addPlantText}>Add Plants</ThemedText>
+          </TouchableOpacity>
+          <TouchableOpacity accessibilityLabel="Create new plant" onPress={navigateToCreatePlant} style={[styles.addPlantButton, { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
+            <MaterialCommunityIcons name="sprout" size={24} color="#fff" style={{ marginRight: 4 }} />
+            <ThemedText style={styles.addPlantText}>Create Plant</ThemedText>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -48,8 +104,31 @@ const GroupPlantList = memo(function GroupPlantList({ plants, onAddPlant, header
       style={{ flex: 1 }}
       data={plants}
       keyExtractor={(item) => item.id}
-      renderItem={({ item }) => (
-        <PlantCard plant={item} />
+      renderItem={({ item, index }) => (
+        (onRemovePlant || onQuickWater || onQuickFeed || onQuickNote || onMoveUp || onMoveDown) ? (
+          <Swipeable
+            renderRightActions={() => (
+              <RightActions
+                onRemove={onRemovePlant ? () => onRemovePlant(item.id) : undefined}
+                onQuickWater={onQuickWater ? () => onQuickWater(item.id) : undefined}
+                onQuickFeed={onQuickFeed ? () => onQuickFeed(item.id) : undefined}
+                onQuickNote={onQuickNote ? () => onQuickNote(item.id) : undefined}
+              />
+            )}
+            renderLeftActions={() => (
+              <LeftActions
+                onMoveUp={onMoveUp ? () => onMoveUp(item.id) : undefined}
+                onMoveDown={onMoveDown ? () => onMoveDown(item.id) : undefined}
+              />
+            )}
+            overshootRight={false}
+            overshootLeft={false}
+          >
+            <PlantCard plant={item} onAddLog={onQuickWater ? () => onQuickWater(item.id) : undefined} />
+          </Swipeable>
+        ) : (
+          <PlantCard plant={item} />
+        )
       )}
       ListHeaderComponent={header ?? undefined}
       ListHeaderComponentStyle={header ? { backgroundColor: 'transparent' } : undefined}
@@ -66,6 +145,8 @@ const GroupPlantList = memo(function GroupPlantList({ plants, onAddPlant, header
       removeClippedSubviews
       initialNumToRender={8}
       windowSize={10}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
     />
   );
 });
@@ -93,7 +174,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    paddingHorizontal: 32,
+    paddingHorizontal: 24,
     borderRadius: 28,
     marginTop: -20,
     backgroundColor: 'rgba(255, 255, 255, 0.09)',
@@ -108,8 +189,56 @@ const styles = StyleSheet.create({
   addPlantText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 17,
+    fontSize: 15,
     marginLeft: 10,
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
+  },
+  rightActionsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: '90%',
+    alignSelf: 'center',
+    marginRight: 12,
+    gap: 8,
+  },
+  leftActionsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: '90%',
+    alignSelf: 'center',
+    marginLeft: 12,
+    gap: 8,
+  },
+  actionBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  removeBtn: {
+    backgroundColor: 'rgba(239,68,68,0.12)',
+    borderColor: 'rgba(239,68,68,0.25)',
+  },
+  waterBtn: {
+    backgroundColor: 'rgba(59,130,246,0.12)',
+    borderColor: 'rgba(59,130,246,0.25)',
+  },
+  feedBtn: {
+    backgroundColor: 'rgba(234,179,8,0.12)',
+    borderColor: 'rgba(234,179,8,0.25)',
+  },
+  noteBtn: {
+    backgroundColor: 'rgba(107,114,128,0.12)',
+    borderColor: 'rgba(107,114,128,0.25)',
+  },
+  reorderBtn: {
+    backgroundColor: 'rgba(16,185,129,0.12)',
+    borderColor: 'rgba(16,185,129,0.25)',
+  },
+  actionText: {
+    color: '#e5e7eb',
+    fontWeight: '700',
+    fontSize: 12,
+    marginTop: 2,
   },
 });

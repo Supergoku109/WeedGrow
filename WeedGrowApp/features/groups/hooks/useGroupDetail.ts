@@ -1,7 +1,7 @@
 /**
  * Hook for managing group details screen state and operations
  */
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Alert, BackHandler } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -77,6 +77,19 @@ export function useGroupDetail(groupId?: string) {
     fetchGroupData();
   }, [fetchGroupData]);
 
+  // Derived stats
+  const avgAgeDays = useMemo(() => {
+    if (!plants.length) return null;
+    const ages = plants.map((p) => (p.ageDays ?? 0)).filter((v) => typeof v === 'number');
+    if (!ages.length) return null;
+    return ages.reduce((a, b) => a + b, 0) / ages.length;
+  }, [plants]);
+
+  const needsWaterCount = useMemo(() => {
+    // Heuristic: count plants with waterLevel <= 0.25
+    return plants.reduce((acc, p: any) => acc + ((p.waterLevel ?? 1) <= 0.25 ? 1 : 0), 0);
+  }, [plants]);
+
   /**
    * Open delete confirmation
    */
@@ -146,5 +159,8 @@ export function useGroupDetail(groupId?: string) {
     cancelDeleteGroup,
     confirmDeleteVisible,
     refreshGroup,
+    // derived
+    avgAgeDays,
+    needsWaterCount,
   };
 }

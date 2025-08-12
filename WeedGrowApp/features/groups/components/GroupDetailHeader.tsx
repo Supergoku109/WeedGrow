@@ -30,6 +30,9 @@ interface GroupHeaderProps {
   weather?: { temperature: number; rain: number; humidity: number };
   totalPlants: number;
   onMoreOptions?: (action: 'edit' | 'delete') => void;
+  // New optional stats
+  avgAgeDays?: number | null;
+  needsWaterCount?: number | null;
 }
 
 const GroupDetailHeader: React.FC<GroupHeaderProps> = ({
@@ -38,6 +41,8 @@ const GroupDetailHeader: React.FC<GroupHeaderProps> = ({
   weather,
   totalPlants,
   onMoreOptions,
+  avgAgeDays,
+  needsWaterCount,
 }) => {
   const theme = (useColorScheme() ?? 'dark') as 'dark' | 'light';
   const { icon, label, color } = getEnvIconLabel(environment);
@@ -112,6 +117,20 @@ const GroupDetailHeader: React.FC<GroupHeaderProps> = ({
           <MaterialCommunityIcons name="sprout" size={14} color="#a7f3d0" />
           <ThemedText style={styles.statText}>{totalPlants} {totalPlants === 1 ? 'plant' : 'plants'}</ThemedText>
         </View>
+        {typeof avgAgeDays === 'number' && (
+          <View style={styles.chip}>
+            <Feather name="clock" size={13} color="#fde68a" />
+            <ThemedText style={[styles.chipText, { color: '#fef3c7' }]}>
+              Avg age {Math.round(avgAgeDays)}d
+            </ThemedText>
+          </View>
+        )}
+        {typeof needsWaterCount === 'number' && (
+          <View style={styles.chip}>
+            <Feather name="droplet" size={13} color="#93c5fd" />
+            <ThemedText style={styles.chipText}>{needsWaterCount} need water</ThemedText>
+          </View>
+        )}
         {weather && (
           <>
             <View style={styles.chip}>

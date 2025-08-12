@@ -5,6 +5,7 @@ import { Colors } from '@/constants/Colors';
 import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -25,11 +26,13 @@ export default function RootLayout() {
   };
 
   return (
-    <SafeAreaProvider>
-      <PaperProvider theme={theme}>
-          <Slot />
-          <StatusBar style="light" />
-      </PaperProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <PaperProvider theme={theme}>
+            <Slot />
+            <StatusBar style="light" />
+        </PaperProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
