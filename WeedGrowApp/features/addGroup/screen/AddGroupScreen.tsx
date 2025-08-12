@@ -55,10 +55,12 @@ export default function AddGroupScreen() {
 
   // Compute available plants in add-to-group mode (same env and not already in group)
   const availablePlants = React.useMemo(() => {
-    if (!isAddToGroupMode || !existingGroup) return plants;
+    // IMPORTANT: In add-to-group mode, don't expose any plants until the group is fully loaded to avoid UI flicker
+    if (!isAddToGroupMode) return plants;
+    if (groupLoading || !existingGroup) return [];
     const currentIds = new Set(existingGroup.plantIds || []);
     return plants.filter((p) => p.environment === existingGroup.environment && !currentIds.has(p.id));
-  }, [plants, existingGroup, isAddToGroupMode]);
+  }, [plants, existingGroup, isAddToGroupMode, groupLoading]);
 
   const onPrimaryAction = React.useCallback(async () => {
     if (isAddToGroupMode) {
@@ -103,19 +105,36 @@ export default function AddGroupScreen() {
         {(loading || groupLoading) && <Button loading>Loading Plants...</Button>}
         {error && <Button>{error}</Button>}
 
-        {/* Plant selection: filtered in add-to-group mode */}
-        <PlantSelection
-          plants={availablePlants}
-          selectedPlantIds={selectedPlantIds}
-          onTogglePlant={handleTogglePlant}
-          {...(!isAddToGroupMode
-            ? { groupLocationPlantId, onSelectGroupLocationPlantId: setGroupLocationPlantId }
-            : {
-                allowedEnvironment: existingGroup?.environment,
-                disabledIds: existingGroup?.plantIds || [],
-              }
-          )}
-        />
+        {/* Plant selection or empty-state message in add-to-group mode */}
+        {isAddToGroupMode ? (
+          // Defer rendering the list until the group AND plants are loaded to prevent brief flash of unfiltered items
+          (groupLoading || !existingGroup || loading) ? null : (
+            availablePlants.length === 0 ? (
+              <View style={{ alignItems: 'center', marginTop: 24 }}>
+                <ThemedText style={{ opacity: 0.8, textAlign: 'center' }}>
+                  No more available plants to add that match this group's environment.
+                </ThemedText>
+              </View>
+            ) : (
+              <PlantSelection
+                plants={availablePlants}
+                selectedPlantIds={selectedPlantIds}
+                onTogglePlant={handleTogglePlant}
+                {...{
+                  allowedEnvironment: existingGroup?.environment,
+                  disabledIds: existingGroup?.plantIds || [],
+                }}
+              />
+            )
+          )
+        ) : (
+          <PlantSelection
+            plants={availablePlants}
+            selectedPlantIds={selectedPlantIds}
+            onTogglePlant={handleTogglePlant}
+            {...{ groupLocationPlantId, onSelectGroupLocationPlantId: setGroupLocationPlantId }}
+          />
+        )}
 
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 }}>
           <Button
@@ -130,7 +149,7 @@ export default function AddGroupScreen() {
             mode="contained"
             style={{ flex: 1 }}
             loading={submitting || groupLoading}
-            disabled={(submitting || groupLoading) || (!isAddToGroupMode && selectedPlantIds.length === 0 && !groupName.trim())}
+            disabled={(submitting || groupLoading) || (isAddToGroupMode ? selectedPlantIds.length === 0 : (selectedPlantIds.length === 0 && !groupName.trim()))}
           >
             {primaryLabel}
           </Button>
