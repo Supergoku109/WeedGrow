@@ -155,4 +155,6 @@ export interface Group {
   updatedAt: FirebaseFirestore.Timestamp;
   /** Optional: sensor profile for indoor/greenhouse groups */
   sensorProfileId?: string;
+  /** Optional: which plant's location/weather to use for this group */
+  weatherSourcePlantId?: string;
 }

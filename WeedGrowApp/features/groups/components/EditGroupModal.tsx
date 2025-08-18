@@ -84,11 +84,14 @@ const EditGroupModal = memo(function EditGroupModal({ visible, group, allPlants,
   const [name, setName] = useState(group?.name || '');
   const [plantIds, setPlantIds] = useState<string[]>(group?.plantIds || []);
   const [nameError, setNameError] = useState<string | null>(null);
+  // New: selected plant whose weather/location to use
+  const [weatherSourcePlantId, setWeatherSourcePlantId] = useState<string | undefined>(group?.weatherSourcePlantId ?? undefined);
 
   useEffect(() => {
     setName(group?.name || '');
     setPlantIds(group?.plantIds || []);
     setNameError(null);
+    setWeatherSourcePlantId(group?.weatherSourcePlantId ?? undefined);
   }, [group]);
 
   const togglePlantInGroup = useCallback((plantId: string) => {
@@ -104,15 +107,22 @@ const EditGroupModal = memo(function EditGroupModal({ visible, group, allPlants,
       setNameError('Group name cannot be empty');
       return;
     }
+    // If chosen weather source is not in group anymore, clear it
+    const safeWeatherSource = weatherSourcePlantId && plantIds.includes(weatherSourcePlantId)
+      ? weatherSourcePlantId
+      : undefined;
+
     if (onSave && group) {
       onSave({
         ...group,
         name: name.trim(),
-        plantIds
+        plantIds,
+        // Persist new property
+        weatherSourcePlantId: safeWeatherSource,
       });
     }
     onClose();
-  }, [name, plantIds, onSave, group, onClose]);
+  }, [name, plantIds, onSave, group, onClose, weatherSourcePlantId]);
 
   const handleNameChange = useCallback((text: string) => {
     setName(text);
@@ -129,6 +139,9 @@ const EditGroupModal = memo(function EditGroupModal({ visible, group, allPlants,
       />
     )), [allPlants, plantIds, togglePlantInGroup]
   );
+
+  // Derived: only plants currently in the group can be chosen as weather source
+  const memberPlants = useMemo(() => allPlants.filter(p => plantIds.includes(p.id)), [allPlants, plantIds]);
 
   if (!visible) return null;
   return (
@@ -182,6 +195,33 @@ const EditGroupModal = memo(function EditGroupModal({ visible, group, allPlants,
           <ScrollView style={styles.plantList} contentContainerStyle={{ paddingBottom: 8 }} keyboardShouldPersistTaps="handled">
             {plantRows}
           </ScrollView>
+
+          {/* Weather source selector */}
+          <ThemedText style={styles.sectionHeader} accessibilityRole="header">Weather Source</ThemedText>
+          <View style={styles.weatherSourceWrap}>
+            {memberPlants.length === 0 ? (
+              <ThemedText style={styles.hintText}>Add at least one plant to choose a weather source.</ThemedText>
+            ) : (
+              memberPlants.map(mp => (
+                <Pressable
+                  key={mp.id}
+                  onPress={() => setWeatherSourcePlantId(mp.id)}
+                  style={({ pressed }) => [
+                    styles.radioRow,
+                    pressed && styles.btnPressed,
+                    weatherSourcePlantId === mp.id ? styles.radioRowActive : null,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Use ${mp.name} for weather`}
+                >
+                  <View style={[styles.radioOuter, weatherSourcePlantId === mp.id && styles.radioOuterActive]}>
+                    {weatherSourcePlantId === mp.id && <View style={styles.radioInner} />}
+                  </View>
+                  <ThemedText style={styles.radioLabel}>{mp.name}</ThemedText>
+                </Pressable>
+              ))
+            )}
+          </View>
 
           {/* Actions */}
           <View style={styles.buttonRow}>
@@ -305,7 +345,7 @@ const styles = StyleSheet.create({
     color: ColorTokens.text.secondary,
   },
   plantList: {
-    maxHeight: 320,
+    maxHeight: 220,
     marginBottom: 4,
   },
   plantRow: {
@@ -353,6 +393,54 @@ const styles = StyleSheet.create({
   },
   removeText: {
     color: '#fecaca',
+  },
+  // Weather source UI
+  weatherSourceWrap: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 12,
+    padding: 8,
+    backgroundColor: 'rgba(255,255,255,0.03)'
+  },
+  radioRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    marginBottom: 4,
+  },
+  radioRowActive: {
+    backgroundColor: 'rgba(59,130,246,0.12)'
+  },
+  radioOuter: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  radioOuterActive: {
+    borderColor: '#60a5fa',
+  },
+  radioInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#60a5fa',
+  },
+  radioLabel: {
+    ...Typography.styles.body,
+    color: ColorTokens.text.primary,
+  },
+  hintText: {
+    ...Typography.styles.body,
+    color: ColorTokens.text.secondary,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
   },
   buttonRow: {
     flexDirection: 'row',

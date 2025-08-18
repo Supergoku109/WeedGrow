@@ -1,8 +1,8 @@
 // GroupCard.tsx
-// This component displays a card summarizing a plant group, including its name, environment, plants, weather, and actions.
-// It supports navigation, editing, and watering all plants in the group.
+// This component displays a card summarizing a plant group with a distinct "collection" design.
+// It uses a larger overlapping avatar cluster and a clean content layout to reinforce the group identity.
 
-import React, { useEffect, useState, useLayoutEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useLayoutEffect, useCallback, useRef, useMemo } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
@@ -10,17 +10,17 @@ import {
   Image,
   Animated,
   Easing,
+  Alert,
 } from 'react-native';
 import { Snackbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ThemedView } from '@/ui/ThemedView';
-import { ThemedText } from '@/ui/ThemedText';
-import { db } from '@/services/firebase';
+import ThemedText from '@/ui/ThemedText';
 import type { Group, Plant } from '@/firestoreModels';
 import { WeedGrowEnvBadge } from '@/ui/WeedGrowEnvBadge';
 import { waterAllPlantsInGroup } from '@/features/groups/api/groupApi';
 import { useGroupWateredToday } from '../hooks/useGroupWateredToday';
+import { useGroupWeather } from '@/features/groups/hooks/useGroupWeather';
 
 export interface GroupCardProps {
   group: Group & { id: string };
@@ -34,73 +34,43 @@ export interface GroupCardProps {
   onEdit?: () => void;
 }
 
+// Minimal weather shape used in the badge for outdoor groups
+type WeatherInfo = { temperature?: number; humidity?: number; pop?: number } | null;
+
+const AVATAR_SIZE = 44;
+const AVATAR_BORDER = 2;
+const AVATAR_OVERLAP = 8; // reduced overlap for a softer stack
+
 const GroupCard = React.memo(function GroupCard({
   group,
   plants: _plants = [],
-  weatherData,
+  weatherData: _weatherData,
   lastWatered,
   onEdit,
 }: GroupCardProps) {
   const router = useRouter();
-  const [weather, setWeather] = useState<any>(null);
-  const [weatherLoading, setWeatherLoading] = useState(false);
-  useEffect(() => {
-    let ignore = false;
-    async function fetchWeather() {
-      if (group.environment !== 'outdoor' || !group.plantIds?.length) {
-        setWeather(null);
-        return;
-      }
-      setWeatherLoading(true);
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const { doc, getDoc } = await import('firebase/firestore');
-        const { db } = await import('@/services/firebase');
-        const ref = doc(db, 'plants', group.plantIds[0], 'weatherCache', today);
-        const snap = await getDoc(ref);
-        if (!ignore) setWeather(snap.exists() ? snap.data() : null);
-      } catch {
-        if (!ignore) setWeather(null);
-      } finally {
-        if (!ignore) setWeatherLoading(false);
-      }
-    }
-    fetchWeather();
-    return () => { ignore = true; };
-  }, [group.environment, group.plantIds]);
 
-  const [sensorReadings, setSensorReadings] = useState<{ temp?: number; humidity?: number; missing?: boolean; name?: string }>({});
-  useEffect(() => {
-    if (group.environment === 'indoor' || group.environment === 'greenhouse') {
-      let ignore = false;
-      async function fetchSensorProfile() {
-        if (group.sensorProfileId) {
-          try {
-            const { doc, getDoc } = await import('firebase/firestore');
-            const { db } = await import('@/services/firebase');
-            const snap = await getDoc(doc(db, 'sensorProfiles', group.sensorProfileId));
-            if (snap.exists()) {
-              const data = snap.data();
-              if (!ignore) setSensorReadings({ temp: data.defaultTemp, humidity: data.defaultHumidity, name: data.name });
-            } else {
-              if (!ignore) setSensorReadings({ missing: true });
-            }
-          } catch {
-            if (!ignore) setSensorReadings({ missing: true });
-          }
-        } else {
-          setSensorReadings({});
-        }
-      }
-      fetchSensorProfile();
-      return () => { ignore = true; };
-    } else {
-      setSensorReadings({});
+  // Determine which location to use for weather: selected plant > group location > first plant with a location
+  const weatherLatLng = useMemo(() => {
+    const sourceId = group.weatherSourcePlantId;
+    if (sourceId) {
+      const p = _plants.find(pl => pl.id === sourceId);
+      if (p?.location) return { lat: p.location.lat, lng: p.location.lng };
     }
-  }, [group.environment, group.sensorProfileId]);
+    if (group.location && typeof group.location.lat === 'number' && typeof group.location.lng === 'number') {
+      return { lat: group.location.lat, lng: group.location.lng };
+    }
+    const firstWithLoc = _plants.find(pl => pl.location);
+    if (firstWithLoc?.location) return { lat: firstWithLoc.location.lat, lng: firstWithLoc.location.lng };
+    return undefined;
+  }, [group.weatherSourcePlantId, group.location, _plants]);
 
-  const previewPlants = _plants.slice(0, 3);
-  const moreCount = _plants.length - 3;
+  const { weather: groupWeather, loading: weatherLoading } = useGroupWeather(weatherLatLng?.lat, weatherLatLng?.lng);
+
+  // Avatar data (bigger, emphasize group). Show up to 5, then +N badge.
+  const maxAvatars = 5;
+  const avatars = useMemo(() => _plants.slice(0, maxAvatars), [_plants]);
+  const moreCount = Math.max(0, _plants.length - maxAvatars);
 
   const handleLongPress = useCallback(() => {
     if (onEdit) onEdit();
@@ -113,7 +83,8 @@ const GroupCard = React.memo(function GroupCard({
   const [watering, setWatering] = useState(false);
   const [snackVisible, setSnackVisible] = useState(false);
   const [snackMessage, setSnackMessage] = useState('');
-  // Add animated value for spinner
+
+  // Spinner animation for water action
   const loadingAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     let anim: Animated.CompositeAnimation | null = null;
@@ -137,7 +108,7 @@ const GroupCard = React.memo(function GroupCard({
     };
   }, [watering, loadingAnim]);
 
-  // Animation for card mount
+  // Mount animation
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const initialMount = useRef(true);
@@ -166,17 +137,17 @@ const GroupCard = React.memo(function GroupCard({
     }
   }, [scaleAnim, opacityAnim]);
 
-  // Local state to optimistically mark as watered today
+  // Optimistic watered flag
   const [justWateredToday, setJustWateredToday] = useState(false);
+  const { wateredToday, loading: wateredLoading } = useGroupWateredToday(group.id, group.plantIds || []);
 
-  // Handles watering all plants in the group
   const handleWaterAll = useCallback(async () => {
     setWatering(true);
     try {
-      await waterAllPlantsInGroup(group.id, 'demoUser'); // TODO: Replace with real user ID
+      await waterAllPlantsInGroup(group.id, 'demoUser'); // TODO: replace with real user ID
       setSnackMessage('All plants watered!');
-      setJustWateredToday(true); // Optimistically mark as watered today
-    } catch (e) {
+      setJustWateredToday(true);
+    } catch {
       setSnackMessage('Failed to water plants.');
     } finally {
       setSnackVisible(true);
@@ -184,124 +155,121 @@ const GroupCard = React.memo(function GroupCard({
     }
   }, [group.id]);
 
-  // Use the new hook to check if all plants have been watered today
-  const { wateredToday, loading: wateredLoading } = useGroupWateredToday(group.id, group.plantIds || []);
+  const confirmWaterAll = useCallback(() => {
+    const count = group.plantIds?.length ?? _plants.length;
+    Alert.alert(
+      'Water all plants',
+      `Water all ${count} plants in ${group.name}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Water', onPress: handleWaterAll },
+      ]
+    );
+  }, [group.name, group.plantIds, _plants.length, handleWaterAll]);
 
-  // Determine if group has been watered today
-  let wateredTodayFinal = false;
-  if (lastWatered) {
-    // Try to match YYYY-MM-DD (or adjust if your format is different)
-    const todayStr = new Date().toISOString().split('T')[0];
-    wateredTodayFinal = lastWatered.startsWith(todayStr) || lastWatered.toLowerCase() === 'today';
-  }
-  if (justWateredToday) wateredTodayFinal = true;
+  // Determine watered status (use hook, prop, or optimistic)
+  const isWatered = useMemo(() => {
+    let finalFlag = false;
+    if (lastWatered) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      finalFlag = lastWatered.startsWith(todayStr) || lastWatered.toLowerCase() === 'today';
+    }
+    if (justWateredToday) return true;
+    return wateredToday || finalFlag;
+  }, [lastWatered, justWateredToday, wateredToday]);
+
+  // Weather display values with optional prop fallback
+  const displayTemp = useMemo(() => {
+    const t = groupWeather?.temperature ?? _weatherData?.temperature;
+    return typeof t === 'number' ? Math.round(t) : undefined;
+  }, [groupWeather?.temperature, _weatherData?.temperature]);
 
   return (
     <>
-      <TouchableOpacity onPress={handlePress} onLongPress={handleLongPress}>
-        <Animated.View style={{
-          transform: [{ scale: scaleAnim }],
-          opacity: opacityAnim,
-        }}>
-          <ThemedView style={[styles.card, { flexDirection: 'column', minHeight: 90, padding: 10 }]}> 
-            {/* Top Row: Env badge, group name, water button */}
+      <TouchableOpacity onPress={handlePress} onLongPress={handleLongPress} activeOpacity={0.92}>
+        <Animated.View style={{ transform: [{ scale: scaleAnim }], opacity: opacityAnim }}>
+          <View style={styles.card}>
+            {/* Header: Env + Name + CTA */}
             <View style={styles.topRow}>
-              <WeedGrowEnvBadge environment={group.environment} size={16} style={{ marginRight: 8 }} />
+              <WeedGrowEnvBadge environment={group.environment} size={18} style={{ marginRight: 8 }} />
               <ThemedText style={styles.groupName} numberOfLines={1}>{group.name}</ThemedText>
               <TouchableOpacity
-                onPress={handleWaterAll}
-                disabled={watering || wateredToday}
-                style={[styles.waterButtonCompact, wateredToday && { backgroundColor: '#888' }]}
+                onPress={confirmWaterAll}
+                disabled={watering || isWatered || wateredLoading}
+                style={[styles.waterButtonPrimary, (watering || isWatered) && styles.waterButtonDisabled]}
                 accessibilityLabel="Water all plants in group"
               >
                 {watering ? (
                   <Animated.View style={{ transform: [{ rotate: loadingAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }}>
-                    <MaterialCommunityIcons name="loading" size={22} color="#fff" />
+                    <MaterialCommunityIcons name="loading" size={18} color="#fff" />
                   </Animated.View>
                 ) : (
-                  <MaterialCommunityIcons name="water" size={22} color={wateredToday ? '#ccc' : '#fff'} />
+                  <>
+                    <MaterialCommunityIcons name="water" size={18} color="#fff" />
+                    <ThemedText style={styles.waterButtonText}>{isWatered ? 'Watered' : 'Water all'}</ThemedText>
+                  </>
                 )}
               </TouchableOpacity>
             </View>
-            {/* Plant images row under env/name/water */}
-            <View style={styles.plantImagesRow}>
-              {previewPlants.map((p) =>
-                p.imageUri ? (
-                  <Image
-                    key={p.id}
-                    source={{ uri: p.imageUri }}
-                    style={styles.plantImage}
-                    accessibilityLabel={`${p.name} image`}
-                  />
-                ) : (
-                  <View key={p.id} style={styles.plantPlaceholder}>
-                    <ThemedText style={styles.plantPlaceholderText}>{p.name}</ThemedText>
-                  </View>
-                )
-              )}
-              {moreCount > 0 && (
-                <ThemedText style={styles.moreText}>+{moreCount}</ThemedText>
-              )}
-            </View>
-            {/* Weather info (outdoor only) */}
-            {group.environment === 'outdoor' && (
-              <View style={styles.weatherRow}>
-                {weatherLoading ? (
-                  <ThemedText>Loading weather...</ThemedText>
-                ) : weather ? (
-                  <>
-                    <ThemedText style={styles.weatherStat}>
-                      🌡️ {weather.temperature}°C
-                    </ThemedText>
-                    <ThemedText style={styles.weatherStat}>
-                      💧 {weather.humidity}%
-                    </ThemedText>
-                    <ThemedText style={styles.weatherStat}>
-                      ☔ {Math.round((weather.pop ?? 0) * 100)}%
-                    </ThemedText>
-                  </>
-                ) : (
-                  <ThemedText>No weather data</ThemedText>
-                )}
-              </View>
-            )}
-            {/* Sensor profile readings for indoor/greenhouse */}
-            {(group.environment === 'indoor' || group.environment === 'greenhouse') && (
-              <View style={styles.weatherRow}>
-                {group.sensorProfileId ? (
-                  sensorReadings.missing ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
-                      <MaterialCommunityIcons name="alert-circle-outline" color="#fff" size={16} />
-                      <ThemedText style={styles.weatherStat}> No profile </ThemedText>
-                    </View>
+
+            {/* Avatar cluster crest */}
+            <View style={styles.clusterWrapper}>
+              {/* removed light ring */}
+              {/* <View style={styles.clusterRing} /> */}
+              <View style={styles.avatarsRow}>
+                {avatars.map((p, idx) => {
+                  const style = [
+                    styles.avatar,
+                    idx > 0 && { marginLeft: -AVATAR_OVERLAP },
+                  ];
+                  return p.imageUri ? (
+                    <Image key={p.id} source={{ uri: p.imageUri }} style={style as unknown as any} />
                   ) : (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
-                      <MaterialCommunityIcons name="thermometer" color="#fff" size={16} />
-                      <ThemedText style={styles.weatherStat}> {sensorReadings.temp ?? '--'}°C </ThemedText>
-                      <MaterialCommunityIcons name="water-percent" color="#fff" size={16} />
-                      <ThemedText style={styles.weatherStat}> {sensorReadings.humidity ?? '--'}%</ThemedText>
-                      <ThemedText style={styles.weatherStat}>
-                        Sensor: {sensorReadings.missing ? '--' : (sensorReadings.name || 'Profile')}
-                      </ThemedText>
-                    </View>
-                  )
-                ) : (
-                  <ThemedText>No sensor profile linked</ThemedText>
+                    <View key={p.id} style={[styles.avatarPlaceholder, idx > 0 && { marginLeft: -AVATAR_OVERLAP }]} />
+                  );
+                })}
+                {moreCount > 0 && (
+                  <View style={[styles.moreCircle, avatars.length > 0 && { marginLeft: -AVATAR_OVERLAP }]}>
+                    <ThemedText style={styles.moreText}>+{moreCount}</ThemedText>
+                  </View>
                 )}
               </View>
+            </View>
+
+            {/* Weather summary line (condensed, single-row) */}
+            {group.environment === 'outdoor' && (
+              <View style={styles.weatherLine}>
+                <View style={styles.segment}>
+                  <MaterialCommunityIcons name="thermometer" size={12} color="#fff" />
+                  <ThemedText style={styles.segmentText}>
+                    {weatherLoading ? '—°' : `${displayTemp ?? '—'}°`}
+                  </ThemedText>
+                  <ThemedText style={styles.segmentSubtext}>
+                    {groupWeather?.dayMax != null && groupWeather?.dayMin != null ? `(${groupWeather.dayMax}°/${groupWeather.dayMin}°)` : ''}
+                  </ThemedText>
+                </View>
+                <ThemedText style={styles.separator}>•</ThemedText>
+                <View style={styles.segment}>
+                  <MaterialCommunityIcons name="weather-rainy" size={12} color="#fff" />
+                  <ThemedText style={styles.segmentText}>{groupWeather?.dailyRainMm != null ? `${groupWeather.dailyRainMm}mm` : '0mm'}</ThemedText>
+                </View>
+                <ThemedText style={styles.separator}>•</ThemedText>
+                <View style={styles.segment}>
+                  <MaterialCommunityIcons name="water-percent" size={12} color="#fff" />
+                  <ThemedText style={styles.segmentText}>{groupWeather?.humidity != null ? `${groupWeather.humidity}%` : '—%'}</ThemedText>
+                </View>
+              </View>
             )}
+
             {/* Last watered info */}
             {lastWatered && (
               <ThemedText style={styles.lastWatered}>Last watered: {lastWatered}</ThemedText>
             )}
-          </ThemedView>
+          </View>
         </Animated.View>
       </TouchableOpacity>
-      <Snackbar
-        visible={snackVisible}
-        onDismiss={() => setSnackVisible(false)}
-        duration={3000}
-      >
+
+      <Snackbar visible={snackVisible} onDismiss={() => setSnackVisible(false)} duration={3000}>
         {snackMessage}
       </Snackbar>
     </>
@@ -313,92 +281,179 @@ export default GroupCard;
 const styles = StyleSheet.create({
   card: {
     marginBottom: 2,
-    padding: 10,
-    borderRadius: 16,
-    borderLeftWidth: 5,
-    borderLeftColor: '#00c853',
-    position: 'relative',
-    elevation: 2,
-    minHeight: 90,
+    borderRadius: 18,
+    overflow: 'hidden',
+    padding: 14,
+    minHeight: 160,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.04)',
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 2,
     gap: 8,
   },
   groupName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
     flexShrink: 1,
     marginRight: 8,
   },
-  waterButtonCompact: {
+  waterButtonPrimary: {
     marginLeft: 'auto',
     backgroundColor: '#1e90ff',
-    borderRadius: 20,
-    width: 36,
-    height: 36,
+    borderRadius: 18,
+    paddingHorizontal: 10,
+    height: 34,
+    minWidth: 110,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
+    flexDirection: 'row',
+    gap: 6,
   },
+  waterButtonDisabled: {
+    backgroundColor: '#6b7280',
+  },
+  waterButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  clusterWrapper: {
+    marginTop: 12,
+    paddingVertical: 10,
+    alignItems: 'flex-start', // moved from center to left
+    justifyContent: 'center',
+  },
+  avatarsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start', // left align avatars
+  },
+  avatar: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
+    borderWidth: AVATAR_BORDER,
+    borderColor: 'rgba(30,144,255,0.65)',
+    backgroundColor: 'rgba(255,255,255,0.12)'
+  },
+  avatarPlaceholder: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: AVATAR_BORDER,
+    borderColor: 'rgba(255,255,255,0.16)',
+  },
+  moreCircle: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
+    backgroundColor: 'rgba(255,255,255,0.09)',
+    borderWidth: AVATAR_BORDER,
+    borderColor: 'rgba(255,255,255,0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moreText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  badgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+  },
+  // Reuse chip base for weather items
   weatherRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 6,
-  },
-  weatherStat: {
-    color: '#fff',
-    fontSize: 14,
-    marginRight: 8,
-  },
-  plantsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-    marginBottom: 4,
-  },
-  plantImagesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-    marginBottom: 4,
     gap: 4,
-  },
-  plantImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 4,
-  },
-  plantPlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 4,
-    alignItems: 'center',
+    marginTop: 12,
     justifyContent: 'center',
-    backgroundColor: '#ccc',
+    flexWrap: 'wrap',
   },
-  plantPlaceholderText: {
-    fontSize: 10,
-    textAlign: 'center',
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
-  moreText: {
-    marginLeft: 4,
+  badgeInfo: {
+    backgroundColor: 'rgba(59,130,246,0.25)',
+    borderColor: 'rgba(59,130,246,0.35)'
+  },
+  weatherChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  badgePrimary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(30, 144, 255, 0.25)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(30, 144, 255, 0.35)',
+  },
+  badgeText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '600',
   },
   lastWatered: {
-    marginTop: 4,
+    marginTop: 8,
     color: '#fff',
-    fontSize: 13,
+    fontSize: 12,
+    opacity: 0.85,
+  },
+  // New compact weather styles
+  weatherLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 12,
+    justifyContent: 'center',
+    flexWrap: 'nowrap',
+    overflow: 'hidden',
+  },
+  segment: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  segmentText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  segmentSubtext: {
+    color: '#fff',
+    opacity: 0.8,
+    fontSize: 12,
+    marginLeft: 2,
+  },
+  separator: {
+    color: '#fff',
+    opacity: 0.6,
+    marginHorizontal: 2,
   },
 });

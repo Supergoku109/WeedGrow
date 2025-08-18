@@ -115,7 +115,18 @@ const GroupDetailScreen = memo(function GroupDetailScreen() {
     needsWaterCount,
   } = useGroupDetail(id);
 
-  const { weather } = useGroupWeather(group?.location?.lat, group?.location?.lng);
+  // Determine which location to use for weather: selected plant > group location
+  const weatherLatLng = useMemo(() => {
+    const sourceId = group?.weatherSourcePlantId;
+    if (sourceId) {
+      const p = plants.find(pl => pl.id === sourceId);
+      if (p?.location) return { lat: p.location.lat, lng: p.location.lng };
+    }
+    if (group?.location) return { lat: group.location.lat, lng: group.location.lng };
+    return undefined;
+  }, [group?.weatherSourcePlantId, group?.location, plants]);
+
+  const { weather } = useGroupWeather(weatherLatLng?.lat, weatherLatLng?.lng);
 
   // Search state (filtering only)
   const [query, setQuery] = useState('');
@@ -129,7 +140,7 @@ const GroupDetailScreen = memo(function GroupDetailScreen() {
   const handleEditClose = useCallback(() => setEditVisible(false), [setEditVisible]);
   const handleEditSave = useCallback(async (updated: GroupWithId) => {
     try {
-      await updateGroup(updated.id, { name: updated.name, plantIds: updated.plantIds });
+      await updateGroup(updated.id, { name: updated.name, plantIds: updated.plantIds, weatherSourcePlantId: updated.weatherSourcePlantId });
       setEditVisible(false);
       refreshGroup();
     } catch (e) {
