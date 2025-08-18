@@ -12,15 +12,15 @@ const getEnvIconLabel = (env: string) => {
   switch (env) {
     case 'outdoor':
     case 'Outdoor':
-      return { icon: 'weather-sunny', label: 'Outdoor', color: ColorTokens.environment.outdoor };
+      return { icon: 'weather-sunny' as const, label: 'Outdoor', color: ColorTokens.environment.outdoor };
     case 'greenhouse':
     case 'Greenhouse':
-      return { icon: 'greenhouse', label: 'Greenhouse', color: ColorTokens.environment.greenhouse };
+      return { icon: 'greenhouse' as const, label: 'Greenhouse', color: ColorTokens.environment.greenhouse };
     case 'indoor':
     case 'Indoor':
-      return { icon: 'home-city', label: 'Indoor', color: ColorTokens.environment.indoor };
+      return { icon: 'home-city' as const, label: 'Indoor', color: ColorTokens.environment.indoor };
     default:
-      return { icon: 'help-circle-outline', label: env, color: ColorTokens.text.secondary };
+      return { icon: 'help-circle-outline' as const, label: env, color: ColorTokens.text.secondary };
   }
 };
 
@@ -75,7 +75,7 @@ const GroupDetailHeader: React.FC<GroupHeaderProps> = ({
       {/* Top row: env pill + menu */}
       <Row justify="space-between" align="center" style={{ marginBottom: Spacing.xs }}>
         <View style={styles.envPill}>
-          <MaterialCommunityIcons name={icon as any} size={16} color={color} />
+          <MaterialCommunityIcons name={icon} size={16} color={color} />
           <ThemedText style={[styles.envPillText, { color }]}>{label}</ThemedText>
         </View>
         <TouchableOpacity onPress={() => setMenuVisible((v) => !v)} style={styles.moreBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>

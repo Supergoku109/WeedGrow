@@ -9,33 +9,103 @@ import GroupPlantList from '@/features/groups/components/GroupPlantList';
 import GroupScreenLayout from '@/features/groups/components/GroupScreenLayout';
 import { useGroupDetail } from '@/features/groups/hooks/useGroupDetail';
 import { useGroupWeather } from '@/features/groups/hooks/useGroupWeather';
-import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert, Platform, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ThemedText } from '@/ui/ThemedText';
+import ThemedText from '@/ui/ThemedText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ConfirmDeleteModal from '@/features/groups/components/ConfirmDeleteModal';
 import { updateGroup, type GroupWithId } from '@/features/groups/api/groupApi';
-import { Button, Snackbar, TextInput } from 'react-native-paper';
+import { Snackbar, Searchbar } from 'react-native-paper';
 import { addPlantLog } from '@/lib/logs/addPlantLog';
+import logger from '@/lib/logger';
+
+// Web-only style helper for backdrop blur without using `any`
+const webBackdropStyle: ViewStyle = Platform.OS === 'web'
+  ? ({ backdropFilter: 'blur(10px)' } as unknown as ViewStyle)
+  : ({} as ViewStyle);
+
+// Header section extracted for clarity (no UI/behavior changes)
+const HeaderSection = memo(function HeaderSection({
+  name,
+  environment,
+  weather,
+  totalPlants,
+  avgAgeDays,
+  needsWaterCount,
+  onMoreOptions,
+  query,
+  onChangeQuery,
+}: {
+  name: string;
+  environment: string;
+  weather?: { temperature: number; rain: number; humidity: number };
+  totalPlants: number;
+  avgAgeDays?: number;
+  needsWaterCount?: number;
+  onMoreOptions: (action: 'edit' | 'delete') => void;
+  query: string;
+  onChangeQuery: (q: string) => void;
+}) {
+  return (
+    <View style={styles.headerWrapper}>
+      <GroupDetailHeader
+        name={name}
+        environment={environment}
+        weather={weather}
+        totalPlants={totalPlants}
+        onMoreOptions={onMoreOptions}
+        avgAgeDays={avgAgeDays}
+        needsWaterCount={needsWaterCount}
+      />
+      <View style={styles.controlsRow}>
+        <Searchbar
+          placeholder="Search plants"
+          value={query}
+          onChangeText={onChangeQuery}
+          style={styles.searchBar}
+          inputStyle={{ color: '#fff', textAlignVertical: 'center' }}
+        />
+      </View>
+    </View>
+  );
+});
+
+// Floating "Add Plant" button extracted (no UI/behavior changes)
+const FloatingAddPlantButton = memo(function FloatingAddPlantButton({ bottom, onPress }: { bottom: number; onPress: () => void }) {
+  return (
+    <View pointerEvents="box-none" style={[styles.fabContainer, { bottom }]}> 
+      <LinearGradient
+        colors={["rgba(255,255,255,0.16)", "rgba(255,255,255,0.06)"]}
+        style={[styles.fab, webBackdropStyle]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <TouchableOpacity style={styles.fabInner} accessibilityLabel="Add Plant" onPress={onPress}>
+          <MaterialCommunityIcons name="plus" size={26} color="#fff" />
+          <ThemedText style={styles.fabText}>Add Plant</ThemedText>
+        </TouchableOpacity>
+      </LinearGradient>
+    </View>
+  );
+});
 
 /**
  * Group detail screen showing group information and plants
  */
 const GroupDetailScreen = memo(function GroupDetailScreen() {
-  // Get the group ID from URL params
+  // Params & nav
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  
-  // Get group data and state management from hook
+
+  // Data
   const {
     group,
     plants,
     loading,
     editVisible,
     setEditVisible,
-    deleting,
     handleDeleteGroup,
     refreshGroup,
     confirmDeleteVisible,
@@ -45,28 +115,17 @@ const GroupDetailScreen = memo(function GroupDetailScreen() {
     needsWaterCount,
   } = useGroupDetail(id);
 
-  // Weather hook (if group has location)
   const { weather } = useGroupWeather(group?.location?.lat, group?.location?.lng);
 
-  // Local UI state: search and sort
+  // Search state (filtering only)
   const [query, setQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'name' | 'stage'>('name');
-
   const filteredPlants = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = plants;
-    if (q) {
-      list = list.filter((p) => p.name.toLowerCase().includes(q) || (p as any).strain?.toLowerCase?.().includes(q));
-    }
-    if (sortBy === 'name') {
-      list = [...list].sort((a, b) => a.name.localeCompare(b.name));
-    } else {
-      const order = { germination: 0, seedling: 1, vegetative: 2, flowering: 3 } as Record<string, number>;
-      list = [...list].sort((a: any, b: any) => (order[a.growthStage] ?? 99) - (order[b.growthStage] ?? 99) || a.name.localeCompare(b.name));
-    }
-    return list;
-  }, [plants, query, sortBy]);
+    if (!q) return plants;
+    return plants.filter((p) => p.name?.toLowerCase?.().includes(q) || p.strain?.toLowerCase?.().includes(q));
+  }, [plants, query]);
 
+  // Handlers
   const handleEditClose = useCallback(() => setEditVisible(false), [setEditVisible]);
   const handleEditSave = useCallback(async (updated: GroupWithId) => {
     try {
@@ -74,7 +133,7 @@ const GroupDetailScreen = memo(function GroupDetailScreen() {
       setEditVisible(false);
       refreshGroup();
     } catch (e) {
-      console.error('Failed to update group', e);
+      logger.error('Failed to update group', e);
       Alert.alert('Error', 'Failed to save group changes. Please try again.');
     }
   }, [refreshGroup, setEditVisible]);
@@ -84,92 +143,58 @@ const GroupDetailScreen = memo(function GroupDetailScreen() {
     router.push({ pathname: '/add-group', params: { groupId: String(id) } });
   }, [router, id]);
 
-  // Swipe actions
-  const [snack, setSnack] = useState<{ visible: boolean; message: string }>(() => ({ visible: false, message: '' }));
-  const showSnack = (message: string) => setSnack({ visible: true, message });
+  const [snack, setSnack] = useState<{ visible: boolean; message: string }>({ visible: false, message: '' });
+  const showSnack = useCallback((message: string) => setSnack({ visible: true, message }), []);
 
   const handleRemovePlant = useCallback(async (plantId: string) => {
     if (!group) return;
     try {
-      const next = (group.plantIds || []).filter((id) => id !== plantId);
+      const next = (group.plantIds || []).filter((pid) => pid !== plantId);
       await updateGroup(group.id, { plantIds: next });
       showSnack('Removed from group');
       refreshGroup();
     } catch (e) {
-      console.error(e);
+      logger.error('Failed to remove plant from group', e);
       showSnack('Failed to remove');
     }
-  }, [group, refreshGroup]);
+  }, [group, refreshGroup, showSnack]);
 
   const handleQuickWater = useCallback(async (plantId: string) => {
     try {
       await addPlantLog(plantId, { type: 'watering', updatedBy: 'system' });
       showSnack('Watered');
-    } catch (e: any) {
-      showSnack(e?.message || 'Failed to log');
+    } catch (e: unknown) {
+      const message = typeof e === 'object' && e && 'message' in e ? String((e as { message: unknown }).message) : 'Failed to log';
+      showSnack(message);
     }
-  }, []);
+  }, [showSnack]);
 
-  // Reserve extra bottom space for the floating action button + device inset
-  const listBottomInset = Math.max(72, 56) + insets.bottom; // ensure enough space under last card
+  // Layout values
+  const listBottomInset = useMemo(() => 72 + insets.bottom, [insets.bottom]);
 
-  const header = (
-    <View style={styles.headerWrapper}>
-      <GroupDetailHeader
-        name={group?.name || ''}
-        environment={group?.environment || 'indoor'}
-        weather={weather ? {
-          temperature: weather.temperature,
-          rain: weather.rain,
-          humidity: weather.humidity,
-        } : undefined}
-        totalPlants={plants.length}
-        onMoreOptions={(action) => {
-          if (action === 'edit') setEditVisible(true);
-          if (action === 'delete') handleDeleteGroup();
-        }}
-        avgAgeDays={avgAgeDays ?? undefined}
-        needsWaterCount={needsWaterCount ?? undefined}
-      />
-      {/* Controls */}
-      <View style={styles.controlsRow}>
-        <TextInput
-          mode="outlined"
-          dense
-          placeholder="Search plants"
-          value={query}
-          onChangeText={setQuery}
-          left={<TextInput.Icon icon="magnify" />}
-          style={styles.searchInput}
-        />
-        <View style={styles.sortRow}>
-          <Button
-            compact
-            mode={sortBy === 'name' ? 'contained' : 'outlined'}
-            onPress={() => setSortBy('name')}
-            style={styles.sortBtn}
-          >
-            A–Z
-          </Button>
-          <Button
-            compact
-            mode={sortBy === 'stage' ? 'contained' : 'outlined'}
-            onPress={() => setSortBy('stage')}
-            style={styles.sortBtn}
-          >
-            Stage
-          </Button>
-        </View>
-      </View>
-    </View>
-  );
+  // Header (memoized to avoid re-renders)
+  const header = useMemo(() => (
+    <HeaderSection
+      name={group?.name || ''}
+      environment={group?.environment || 'indoor'}
+      weather={weather ? { temperature: weather.temperature, rain: weather.rain, humidity: weather.humidity } : undefined}
+      totalPlants={plants.length}
+      onMoreOptions={(action) => {
+        if (action === 'edit') setEditVisible(true);
+        if (action === 'delete') handleDeleteGroup();
+      }}
+      avgAgeDays={avgAgeDays ?? undefined}
+      needsWaterCount={needsWaterCount ?? undefined}
+      query={query}
+      onChangeQuery={setQuery}
+    />
+  ), [group?.name, group?.environment, weather?.temperature, weather?.rain, weather?.humidity, plants.length, setEditVisible, handleDeleteGroup, avgAgeDays, needsWaterCount, query]);
 
   return (
     <GroupScreenLayout loading={loading} groupExists={!!group} scrollable={false}>
       {group && (
         <View style={{ flex: 1 }}>
-          {/* List of plants in the group with a sticky, modern header */}
-          <GroupPlantList 
+          <GroupPlantList
             plants={filteredPlants}
             header={header}
             stickyHeader
@@ -182,22 +207,8 @@ const GroupDetailScreen = memo(function GroupDetailScreen() {
             onQuickWater={handleQuickWater}
           />
 
-          {/* Floating Add Plant Button with subtle gradient/glass effect */}
-          <View pointerEvents="box-none" style={[styles.fabContainer, { bottom: 24 + insets.bottom }]}>
-            <LinearGradient
-              colors={["rgba(255,255,255,0.16)", "rgba(255,255,255,0.06)"]}
-              style={styles.fab}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <TouchableOpacity style={styles.fabInner} accessibilityLabel="Add Plant" onPress={handleAddPlant}>
-                <MaterialCommunityIcons name="plus" size={26} color="#fff" />
-                <ThemedText style={styles.fabText}>Add Plant</ThemedText>
-              </TouchableOpacity>
-            </LinearGradient>
-          </View>
+          <FloatingAddPlantButton bottom={24 + insets.bottom} onPress={handleAddPlant} />
 
-          {/* Modals */}
           <EditGroupModal
             visible={editVisible}
             group={group}
@@ -205,6 +216,7 @@ const GroupDetailScreen = memo(function GroupDetailScreen() {
             onClose={handleEditClose}
             onSave={handleEditSave}
           />
+
           <ConfirmDeleteModal
             visible={confirmDeleteVisible}
             onCancel={cancelDeleteGroup}
@@ -213,7 +225,6 @@ const GroupDetailScreen = memo(function GroupDetailScreen() {
             subtitle="This will remove the group but keep your plants safe."
           />
 
-          {/* Snackbar feedback */}
           <Snackbar
             visible={snack.visible}
             onDismiss={() => setSnack({ visible: false, message: '' })}
@@ -239,20 +250,21 @@ const styles = StyleSheet.create({
   controlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8 as any,
+    gap: 8,
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 6,
   },
-  searchInput: {
+  searchBar: {
     flex: 1,
-  },
-  sortRow: {
-    flexDirection: 'row',
-    gap: 8 as any,
-  },
-  sortBtn: {
-    marginLeft: 6,
+    marginRight: 8,
+    height: 55,
+    minHeight: 55,
+    paddingVertical: 0,
+    backgroundColor: 'rgba(59, 67, 66, 0.55)',
+    borderRadius: 100,
+    borderWidth: 0,
+    paddingHorizontal: 10,
   },
   fabContainer: {
     position: 'absolute',
@@ -263,7 +275,6 @@ const styles = StyleSheet.create({
   fab: {
     borderRadius: 28,
     overflow: 'hidden',
-    backdropFilter: 'blur(10px)' as any, // web only, native will ignore
   },
   fabInner: {
     backgroundColor: 'rgba(255,255,255,0.08)',

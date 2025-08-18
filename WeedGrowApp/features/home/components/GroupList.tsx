@@ -2,7 +2,7 @@ import React, { useCallback, memo } from 'react';
 import { FlatList, View, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ActivityIndicator } from 'react-native-paper';
-import { ThemedText } from '@/ui/ThemedText';
+import ThemedText from '@/ui/ThemedText';
 import GroupCard from '../../groups/components/GroupCard';
 import type { Group, Plant } from '@/firestoreModels';
 

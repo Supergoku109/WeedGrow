@@ -8,6 +8,7 @@ import { db } from '@/services/firebase';
 import type { Plant } from '@/firestoreModels';
 import { Alert } from 'react-native';
 import { PlantWithId } from '../../groups/hooks/useGroupDetail';
+import logger from '@/lib/logger';
 
 // TODO: Replace with actual authentication user ID
 const CURRENT_USER_ID = 'demoUser';
@@ -45,9 +46,10 @@ export function useGroupList() {
         setGroups(data);
         lastGroupsRef.current = dataHash;
       }
-    } catch (error: any) {
-      console.error('Error fetching groups', error);
-      setError(error.message || 'Failed to load groups');
+    } catch (error: unknown) {
+      logger.error('Error fetching groups', error);
+      const message = typeof error === 'object' && error && 'message' in error ? String((error as { message: unknown }).message) : 'Failed to load groups';
+      setError(message);
     } finally {
       setGroupsLoaded(true);
     }
@@ -67,7 +69,7 @@ export function useGroupList() {
       }));
       setAllPlants(plantsData);
     } catch (error) {
-      console.error('Error fetching plants:', error);
+      logger.error('Error fetching plants:', error);
       // Non-critical error, don't show alert
     } finally {
       setPlantsLoaded(true);
@@ -100,7 +102,7 @@ export function useGroupList() {
       // No reload groups needed - state stays stable
       return true;
     } catch (error) {
-      console.error('Error watering group plants:', error);
+      logger.error('Error watering group plants:', error);
       Alert.alert('Error', 'Failed to water plants');
       return false;
     }

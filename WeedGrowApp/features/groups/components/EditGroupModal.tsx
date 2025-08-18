@@ -5,7 +5,7 @@
  */
 import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { Modal, View, StyleSheet, TextInput, ScrollView, Pressable } from 'react-native';
-import { ThemedText } from '@/ui/ThemedText';
+import ThemedText from '@/ui/ThemedText';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { GroupWithId } from '../api/groupApi';
@@ -135,7 +135,7 @@ const EditGroupModal = memo(function EditGroupModal({ visible, group, allPlants,
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.overlay}>
         <LinearGradient
-          colors={[ThemeColorsBgStart, ThemeColorsBgEnd] as any}
+          colors={[ThemeColorsBgStart, ThemeColorsBgEnd]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.modal, theme === 'dark' ? styles.modalDark : styles.modalLight]}

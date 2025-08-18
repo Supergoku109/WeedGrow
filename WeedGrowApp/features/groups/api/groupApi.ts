@@ -18,6 +18,7 @@ import {
 import { db } from '@/services/firebase';
 import type { Group, PlantLog } from '@/firestoreModels';
 import { addPlantLog } from '@/lib/logs/addPlantLog';
+import logger from '@/lib/logger';
 
 /**
  * Group type with ID field
@@ -52,7 +53,7 @@ export async function getUserGroups(userId: string): Promise<GroupWithId[]> {
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Group) }));
   } catch (error) {
-    console.error('Error fetching user groups:', error);
+    logger.error('Error fetching user groups:', error);
     throw new Error('Failed to load groups. Please try again later.');
   }
 }
@@ -71,7 +72,9 @@ export async function createGroup(options: CreateGroupOptions): Promise<string> 
       location = null,
       createdBy,
       sensorProfileId,
-    } = options;    const groupDoc: any = {
+    } = options;
+
+    const groupDoc: Omit<Group, 'createdAt' | 'updatedAt'> & { createdAt: unknown; updatedAt: unknown } = {
       name,
       environment,
       plantIds,
@@ -81,12 +84,12 @@ export async function createGroup(options: CreateGroupOptions): Promise<string> 
       updatedAt: serverTimestamp(),
     };
     
-    if (sensorProfileId) groupDoc.sensorProfileId = sensorProfileId;
+    if (sensorProfileId) (groupDoc as any).sensorProfileId = sensorProfileId;
 
-    const ref = await addDoc(collection(db, 'groups'), groupDoc);
+    const ref = await addDoc(collection(db, 'groups'), groupDoc as Group);
     return ref.id;
   } catch (error) {
-    console.error('Error creating group:', error);
+    logger.error('Error creating group:', error);
     throw new Error('Failed to create group. Please try again.');
   }
 }
@@ -101,7 +104,7 @@ export async function updateGroup(groupId: string, updates: UpdateGroupOptions):
     const ref = doc(db, 'groups', groupId);
     await updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
   } catch (error) {
-    console.error('Error updating group:', error);
+    logger.error('Error updating group:', error);
     throw new Error('Failed to update group. Please try again.');
   }
 }
@@ -114,7 +117,7 @@ export async function deleteGroup(groupId: string): Promise<void> {
   try {
     await deleteDoc(doc(db, 'groups', groupId));
   } catch (error) {
-    console.error('Error deleting group:', error);
+    logger.error('Error deleting group:', error);
     throw new Error('Failed to delete group. Please try again.');
   }
 }
@@ -133,7 +136,7 @@ export async function getGroupById(groupId: string): Promise<GroupWithId | null>
     
     return { id: snap.id, ...(snap.data() as Group) };
   } catch (error) {
-    console.error('Error fetching group details:', error);
+    logger.error('Error fetching group details:', error);
     throw new Error('Failed to load group details.');
   }
 }
@@ -167,7 +170,7 @@ export async function waterAllPlantsInGroup(
     
     await Promise.all(wateringPromises);
   } catch (error) {
-    console.error('Error watering group plants:', error);
+    logger.error('Error watering group plants:', error);
     throw new Error('Failed to water plants. Please try again.');
   }
 }

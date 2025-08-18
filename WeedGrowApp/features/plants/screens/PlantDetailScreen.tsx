@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import { ThemedText } from '@/ui/ThemedText';
+import ThemedText from '@/ui/ThemedText';
 import { HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT } from '@/constants/Layout';
 import { addPlantLog } from '@/lib/logs/addPlantLog';
 import { fetchWateringHistory, DEFAULT_HISTORY_DAYS } from '@/lib/logs/fetchWateringHistory';
@@ -25,6 +25,7 @@ import LoadingView from '../components/LoadingView';
 import NotFoundView from '../components/NotFoundView';
 import WeedGrowLogTypeSheet from '@/ui/WeedGrowLogTypeSheet';
 import WeedGrowLogForm from '@/ui/WeedGrowLogForm';
+import logger from '@/lib/logger';
 
 export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -57,8 +58,8 @@ export default function PlantDetailScreen() {
         if (dayIndex !== -1) updated[dayIndex].watered = true;
         return updated;
       });
-    } catch (err: any) {
-      console.error('Failed to log watering', err);
+    } catch (err: unknown) {
+      logger.error('Failed to log watering', err);
     }
   };
   React.useEffect(() => {

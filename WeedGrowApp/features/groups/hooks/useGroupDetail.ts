@@ -9,6 +9,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 import type { Group, Plant } from '@/firestoreModels';
 import { deleteGroup, getGroupById, GroupWithId } from '../api/groupApi';
+import logger from '@/lib/logger';
 
 export type PlantWithId = Plant & { id: string };
 
@@ -65,7 +66,7 @@ export function useGroupDetail(groupId?: string) {
         setPlants([]);
       }
     } catch (error) {
-      console.error('Error fetching group details:', error);
+      logger.error('Error fetching group details:', error);
       Alert.alert('Error', 'Failed to load group details');
     } finally {
       setLoading(false);
@@ -87,7 +88,7 @@ export function useGroupDetail(groupId?: string) {
 
   const needsWaterCount = useMemo(() => {
     // Heuristic: count plants with waterLevel <= 0.25
-    return plants.reduce((acc, p: any) => acc + ((p.waterLevel ?? 1) <= 0.25 ? 1 : 0), 0);
+    return plants.reduce((acc, p) => acc + ((p.waterLevel ?? 1) <= 0.25 ? 1 : 0), 0);
   }, [plants]);
 
   /**
@@ -107,7 +108,7 @@ export function useGroupDetail(groupId?: string) {
       await deleteGroup(group.id);
       router.replace('/(tabs)');
     } catch (error) {
-      console.error('Error deleting group:', error);
+      logger.error('Error deleting group:', error);
       Alert.alert('Error', 'Failed to delete group');
     } finally {
       setDeleting(false);

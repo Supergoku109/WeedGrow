@@ -6,7 +6,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { PlantSelection } from '../components/PlantSelection';
 import HomeBackground from '@/features/home/components/HomeBackground';
 import { AnimatedMakikoInput } from '@/components/ui/AnimatedMakikoInput';
-import { ThemedText } from '@/ui/ThemedText';
+import ThemedText from '@/ui/ThemedText';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAddGroup } from '../hooks/useAddGroup';
 import { useRouter, useLocalSearchParams } from 'expo-router';
