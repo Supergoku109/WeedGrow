@@ -21,6 +21,7 @@ import { WeedGrowEnvBadge } from '@/ui/WeedGrowEnvBadge';
 import { waterAllPlantsInGroup } from '@/features/groups/api/groupApi';
 import { useGroupWateredToday } from '../hooks/useGroupWateredToday';
 import { useGroupWeather } from '@/features/groups/hooks/useGroupWeather';
+import { ThemedView } from '@/ui/ThemedView';
 
 export interface GroupCardProps {
   group: Group & { id: string };
@@ -188,7 +189,7 @@ const GroupCard = React.memo(function GroupCard({
     <>
       <TouchableOpacity onPress={handlePress} onLongPress={handleLongPress} activeOpacity={0.92}>
         <Animated.View style={{ transform: [{ scale: scaleAnim }], opacity: opacityAnim }}>
-          <View style={styles.card}>
+          <ThemedView style={styles.card}>
             {/* Header: Env + Name + CTA */}
             <View style={styles.topRow}>
               <WeedGrowEnvBadge environment={group.environment} size={18} style={{ marginRight: 8 }} />
@@ -265,7 +266,7 @@ const GroupCard = React.memo(function GroupCard({
             {lastWatered && (
               <ThemedText style={styles.lastWatered}>Last watered: {lastWatered}</ThemedText>
             )}
-          </View>
+          </ThemedView>
         </Animated.View>
       </TouchableOpacity>
 
@@ -285,7 +286,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     padding: 14,
     minHeight: 160,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    // backgroundColor removed to use ThemedView background
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.04)',
   },

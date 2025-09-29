@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "23884971165",
+    "project_id": "weed-grow",
+    "storage_bucket": "weed-grow.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:23884971165:android:4c5957e136400ca74aa874",
+        "android_client_info": {
+          "package_name": "com.zg.weedgrow"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDAShLgZKZsdun7GL50bl-cpleSE8NlG5g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
