@@ -47,6 +47,10 @@ export default function PlantDetailScreen() {
     Colors[theme].background
   );
 
+  const headerSpacerHeight = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
+  const topProtectedPadding = HEADER_MIN_HEIGHT + insets.top;
+  const bottomSafePadding = (insets.bottom || 0) + 120;
+
   const handleLogWater = async (date: string) => {
     if (!plant || !id) return;
     try {
@@ -131,7 +135,7 @@ export default function PlantDetailScreen() {
       <Animated.ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
-          paddingTop: HEADER_MAX_HEIGHT + insets.top,
+          paddingBottom: bottomSafePadding,
           minHeight: Dimensions.get('window').height + HEADER_MAX_HEIGHT,
         }}
         onScroll={onScroll}
@@ -139,29 +143,38 @@ export default function PlantDetailScreen() {
         bounces={false}
         overScrollMode="never"
       >
-        <View style={{ paddingHorizontal: 16 }}>
-          <ThemedText type="title">{plant.name}</ThemedText>
-          {plant.strain && (
-            <ThemedText type="subtitle" style={{ marginBottom: 10 }}>
-              {plant.strain}
-            </ThemedText>
+        <View style={{ height: headerSpacerHeight }} />
+        <View style={{ paddingTop: topProtectedPadding }}>
+          <View style={{ paddingHorizontal: 16 }}>
+            <ThemedText type="title">{plant.name}</ThemedText>
+            {plant.strain && (
+              <ThemedText type="subtitle" style={{ marginBottom: 10 }}>
+                {plant.strain}
+              </ThemedText>
+            )}
+          </View>
+
+          {plant.environment === 'outdoor' && weekData.length === 7 && (
+            <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
+              <WeeklyCalendar
+                weekData={weekData}
+                history={history}
+                expandedLogDate={expandedLogDate}
+                setExpandedLogDate={setExpandedLogDate}
+                getLogsForDate={(date: string) => dailyLogs[date] || []}
+                loadingLogs={loadingLogs}
+                updateWeekData={updateWeekData}
+                plantId={id}
+              />
+            </View>
           )}
+
+          {plant.notes ? (
+            <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
+              <NotesSection notes={plant.notes} />
+            </View>
+          ) : null}
         </View>
-
-        {plant.environment === 'outdoor' && (
-          <WeeklyCalendar
-            weekData={weekData}
-            history={history}
-            expandedLogDate={expandedLogDate}
-            setExpandedLogDate={setExpandedLogDate}
-            getLogsForDate={(date: string) => dailyLogs[date] || []}
-            loadingLogs={loadingLogs}
-            updateWeekData={updateWeekData}
-            plantId={id}
-          />
-        )}
-
-        <NotesSection notes={plant.notes} />
       </Animated.ScrollView>
 
       {/* Floating Add Log Button */}
