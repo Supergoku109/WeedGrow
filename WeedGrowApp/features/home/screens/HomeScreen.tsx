@@ -15,6 +15,7 @@ import AppHeader from '@/ui/AppHeader';
 import { ThemedText } from '@/ui/ThemedText';
 import HomeBackground from '@/features/home/components/HomeBackground';
 import { useHomeScreenState } from '@/features/home/hooks/useHomeScreenState';
+import { useWateringSuggestions } from '@/features/home/hooks/useWateringSuggestions';
 import SwipeTabs from '@/ui/SwipeTabs';
 
 const styles = StyleSheet.create({
@@ -107,38 +108,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const mockSuggestions = [
-  {
-    key: 'watering',
-    icon: '💧',
-    title: 'Plants that need watering today',
-    description: 'Based on your weather, logs, and schedule.',
-    affected: ['Blue Dream', 'OG Kush', 'Greenhouse Group'],
-    onExpand: () => {},
-  },
-  {
-    key: 'mildew',
-    icon: '🧫',
-    title: 'Powdery mildew risk detected',
-    description: 'High humidity and temp swings detected.',
-    affected: ['Sour Diesel'],
-  },
-  {
-    key: 'fertilizer',
-    icon: '🧪',
-    title: 'Fertilizer due soon',
-    description: 'Based on your fertilizer schedule.',
-    affected: ['Blue Dream', 'OG Kush', 'Sour Diesel', 'Northern Lights'],
-    onExpand: () => {},
-  },
-  {
-    key: 'weather',
-    icon: '🌩',
-    title: 'Storm incoming tomorrow',
-    description: 'Severe weather forecasted for your area.',
-    affected: ['Greenhouse Group'],
-  },
-];
 
 const TLCIndicator = memo(function TLCIndicator({ count }: { count: number }) {
   return (
@@ -165,6 +134,7 @@ export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: 
     handleEditGroup,
     handleWaterAll,
   } = useHomeScreenState();
+  const { suggestions: wateringSuggestions, plantsNeedingWater } = useWateringSuggestions(state.allPlants);
   const [tabIndex, setTabIndex] = useState(initialTabIndex);
   const [plantSearchQuery, setPlantSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -172,7 +142,8 @@ export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: 
   const [plantedFilter, setPlantedFilter] = useState<string | null>(null);
   const [trainingFilter, setTrainingFilter] = useState<string | null>(null);
   const [plantFiltersVisible, setPlantFiltersVisible] = useState(false);
-  const tlcCount = mockSuggestions.length;
+  const suggestionItems = wateringSuggestions;
+  const tlcCount = plantsNeedingWater.length;
 
   const handleAddGroup = useCallback(() => router.push('/add-group'), [router]);
 
@@ -243,7 +214,10 @@ export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: 
         <TLCIndicator count={tlcCount} />
 
         {/* Suggestion Catalog */}
-        <SuggestionCatalog suggestions={mockSuggestions} />
+        {suggestionItems.length > 0 && (
+          <SuggestionCatalog suggestions={suggestionItems} />
+        )}
+
         {/* Swipe Tabs Implementation */}
         <View style={{ marginTop: 4, marginBottom: 4, flex: 1 }}>
           <SwipeTabs tabs={tabs} initialKey={initialKey} />
