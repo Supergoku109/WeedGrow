@@ -181,9 +181,23 @@ async function evaluatePlantWatering(
       (typeof todayWeather.temperature === 'number' ? todayWeather.temperature : null);
     const humidity = typeof todayWeather.humidity === 'number' ? todayWeather.humidity : null;
     let needsWater = true;
+    let planBReason = [];
     // Simple logic: if today or tomorrow has enough rain, don't water
     if (todayRainfall >= options.rainfallThresholdMm || tomorrowRainfall >= options.rainfallThresholdMm) {
       needsWater = false;
+      if (todayRainfall >= options.rainfallThresholdMm) {
+        planBReason.push(`It rained today (${todayRainfall.toFixed(1)}mm)`);
+      }
+      if (tomorrowRainfall >= options.rainfallThresholdMm) {
+        planBReason.push(`Rain expected tomorrow (${tomorrowRainfall.toFixed(1)}mm)`);
+      }
+      planBReason.push('No watering needed.');
+    } else {
+      planBReason.push('No significant rain today or tomorrow.');
+      if (typeof temperatureMax === 'number') {
+        planBReason.push(`Forecast is sunny/hot (high of ${Math.round(temperatureMax)}°C)`);
+      }
+      planBReason.push('Watering is recommended.');
     }
     return {
       plantId: plant.id,
@@ -197,7 +211,7 @@ async function evaluatePlantWatering(
       tomorrowRainfall,
       temperatureMax,
       humidity,
-      reason: "Yesterday’s weather data unavailable – assuming no water was received… using current and forecast data only.",
+      reason: `Yesterday’s weather data unavailable – assuming no water was received. ${planBReason.join(' ')} Using current and forecast data only.`,
     };
   }
 
@@ -428,7 +442,6 @@ export async function evaluateWateringInsights(
       logger.error('Failed to evaluate watering insight for plant', { plantId: plant.id, error });
     }
   }
-
   return insights;
 }
 
