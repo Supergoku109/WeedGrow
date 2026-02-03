@@ -19,6 +19,7 @@ import { updateGroup, type GroupWithId } from '@/features/groups/api/groupApi';
 import { Snackbar, Searchbar } from 'react-native-paper';
 import { addPlantLog } from '@/lib/logs/addPlantLog';
 import logger from '@/lib/logger';
+import { usePlantsWateredToday } from '@/features/plants/hooks/usePlantsWateredToday';
 
 // Web-only style helper for backdrop blur without using `any`
 const webBackdropStyle: ViewStyle = Platform.OS === 'web'
@@ -128,6 +129,10 @@ const GroupDetailScreen = memo(function GroupDetailScreen() {
 
   const { weather } = useGroupWeather(weatherLatLng?.lat, weatherLatLng?.lng);
 
+  const plantIds = useMemo(() => plants.map(p => p.id), [plants]);
+  const { wateredMap, markWatered } = usePlantsWateredToday(plantIds);
+  const [waterLoadingMap, setWaterLoadingMap] = useState<Record<string, boolean>>({});
+
   // Search state (filtering only)
   const [query, setQuery] = useState('');
   const filteredPlants = useMemo(() => {
@@ -171,14 +176,43 @@ const GroupDetailScreen = memo(function GroupDetailScreen() {
   }, [group, refreshGroup, showSnack]);
 
   const handleQuickWater = useCallback(async (plantId: string) => {
+    if (!plantId) return;
+    if (wateredMap[plantId]) {
+      showSnack('Already watered today');
+      return;
+    }
+    let skip = false;
+    setWaterLoadingMap(prev => {
+      if (prev[plantId]) {
+        skip = true;
+        return prev;
+      }
+      return { ...prev, [plantId]: true };
+    });
+    if (skip) return;
     try {
       await addPlantLog(plantId, { type: 'watering', updatedBy: 'system' });
+      markWatered(plantId);
       showSnack('Watered');
     } catch (e: unknown) {
-      const message = typeof e === 'object' && e && 'message' in e ? String((e as { message: unknown }).message) : 'Failed to log';
-      showSnack(message);
+      const message =
+        typeof e === 'object' && e && 'message' in e
+          ? String((e as { message: unknown }).message)
+          : 'Failed to log';
+      if (message.toLowerCase().includes('already')) {
+        markWatered(plantId);
+        showSnack('Already watered today');
+      } else {
+        showSnack(message);
+      }
+    } finally {
+      setWaterLoadingMap(prev => {
+        const next = { ...prev };
+        delete next[plantId];
+        return next;
+      });
     }
-  }, [showSnack]);
+  }, [markWatered, showSnack, wateredMap]);
 
   // Layout values
   const listBottomInset = useMemo(() => 72 + insets.bottom, [insets.bottom]);
@@ -216,6 +250,8 @@ const GroupDetailScreen = memo(function GroupDetailScreen() {
             onRefresh={refreshGroup}
             onRemovePlant={handleRemovePlant}
             onQuickWater={handleQuickWater}
+            wateredMap={wateredMap}
+            waterLoadingMap={waterLoadingMap}
           />
 
           <FloatingAddPlantButton bottom={24 + insets.bottom} onPress={handleAddPlant} />

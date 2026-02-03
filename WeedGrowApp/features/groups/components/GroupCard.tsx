@@ -19,9 +19,9 @@ import ThemedText from '@/ui/ThemedText';
 import type { Group, Plant } from '@/firestoreModels';
 import { WeedGrowEnvBadge } from '@/ui/WeedGrowEnvBadge';
 import { waterAllPlantsInGroup } from '@/features/groups/api/groupApi';
-import { useGroupWateredToday } from '../hooks/useGroupWateredToday';
 import { useGroupWeather } from '@/features/groups/hooks/useGroupWeather';
 import { ThemedView } from '@/ui/ThemedView';
+import { usePlantsWateredToday } from '@/features/plants/hooks/usePlantsWateredToday';
 
 export interface GroupCardProps {
   group: Group & { id: string };
@@ -139,8 +139,12 @@ const GroupCard = React.memo(function GroupCard({
   }, [scaleAnim, opacityAnim]);
 
   // Optimistic watered flag
+  const plantIds = useMemo(() => {
+    if (Array.isArray(group.plantIds) && group.plantIds.length > 0) return group.plantIds;
+    return _plants.map(p => p.id);
+  }, [_plants, group.plantIds]);
+  const { wateredMap, loading: waterStatusLoading, markManyWatered } = usePlantsWateredToday(plantIds);
   const [justWateredToday, setJustWateredToday] = useState(false);
-  const { wateredToday, loading: wateredLoading } = useGroupWateredToday(group.id, group.plantIds || []);
 
   const handleWaterAll = useCallback(async () => {
     setWatering(true);
@@ -148,16 +152,17 @@ const GroupCard = React.memo(function GroupCard({
       await waterAllPlantsInGroup(group.id, 'demoUser'); // TODO: replace with real user ID
       setSnackMessage('All plants watered!');
       setJustWateredToday(true);
+      markManyWatered(plantIds);
     } catch {
       setSnackMessage('Failed to water plants.');
     } finally {
       setSnackVisible(true);
       setWatering(false);
     }
-  }, [group.id]);
+  }, [group.id, markManyWatered, plantIds]);
 
   const confirmWaterAll = useCallback(() => {
-    const count = group.plantIds?.length ?? _plants.length;
+    const count = plantIds.length;
     Alert.alert(
       'Water all plants',
       `Water all ${count} plants in ${group.name}?`,
@@ -166,7 +171,7 @@ const GroupCard = React.memo(function GroupCard({
         { text: 'Water', onPress: handleWaterAll },
       ]
     );
-  }, [group.name, group.plantIds, _plants.length, handleWaterAll]);
+  }, [group.name, handleWaterAll, plantIds.length]);
 
   // Utility to get local date string (YYYY-MM-DD)
   function getLocalDateString(date = new Date()) {
@@ -177,6 +182,11 @@ const GroupCard = React.memo(function GroupCard({
   }
 
   // Determine watered status (use hook, prop, or optimistic)
+  const allWatered = useMemo(() => {
+    if (!plantIds.length) return false;
+    return plantIds.every(id => wateredMap[id]);
+  }, [plantIds, wateredMap]);
+
   const isWatered = useMemo(() => {
     let finalFlag = false;
     if (lastWatered) {
@@ -184,8 +194,8 @@ const GroupCard = React.memo(function GroupCard({
       finalFlag = lastWatered.startsWith(todayStr) || lastWatered.toLowerCase() === 'today';
     }
     if (justWateredToday) return true;
-    return wateredToday || finalFlag;
-  }, [lastWatered, justWateredToday, wateredToday]);
+    return allWatered || finalFlag;
+  }, [allWatered, justWateredToday, lastWatered]);
 
   // Weather display values with optional prop fallback
   const displayTemp = useMemo(() => {
@@ -204,7 +214,7 @@ const GroupCard = React.memo(function GroupCard({
               <ThemedText style={styles.groupName} numberOfLines={1}>{group.name}</ThemedText>
               <TouchableOpacity
                 onPress={confirmWaterAll}
-                disabled={watering || isWatered || wateredLoading}
+                disabled={watering || isWatered || waterStatusLoading}
                 style={[styles.waterButtonPrimary, (watering || isWatered) && styles.waterButtonDisabled]}
                 accessibilityLabel="Water all plants in group"
               >

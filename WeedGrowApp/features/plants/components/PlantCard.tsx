@@ -1,25 +1,22 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, Image, View, Animated, Easing } from 'react-native';
-import { IconButton, Snackbar } from 'react-native-paper';
+import { IconButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/ui/ThemedText';
 import { Plant } from '@/firestoreModels';
-import { calendarGreen } from '@/constants/Colors';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { addPlantLog } from '@/lib/logs/addPlantLog';
-import { LinearGradient } from 'expo-linear-gradient';
 import { WeedGrowEnvBadge } from '@/ui/WeedGrowEnvBadge';
 import { ThemedView } from '@/ui/ThemedView';
 
 export interface PlantCardProps {
   plant: Plant & { id: string };
   onAddLog?: (type?: string) => void;
+  wateredToday?: boolean;
+  waterLoading?: boolean;
 }
 
-export function PlantCard({ plant, onAddLog }: PlantCardProps) {
+export function PlantCard({ plant, onAddLog, wateredToday = false, waterLoading = false }: PlantCardProps) {
   const router = useRouter();
-  const [snackVisible, setSnackVisible] = React.useState(false);
-  const [snackMessage, setSnackMessage] = React.useState('');
 
   // Animation for card mount
   const scaleAnim = React.useRef(new Animated.Value(0)).current;
@@ -42,15 +39,17 @@ export function PlantCard({ plant, onAddLog }: PlantCardProps) {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [opacityAnim, scaleAnim]);
 
   const env = (plant as any).environment ?? 'indoor';
 
+  const isWatered = wateredToday;
+
   const handleWater = async (e: any) => {
     e.stopPropagation();
-    // Instead of logging directly, open the log type sheet/modal from parent via a callback
+    if (isWatered || waterLoading) return;
     if (typeof onAddLog === 'function') {
-      onAddLog('watering');
+      await onAddLog('watering');
     }
   };
 
@@ -87,14 +86,15 @@ export function PlantCard({ plant, onAddLog }: PlantCardProps) {
           {/* Right: Water Button */}
           <View style={styles.waterButtonSection}>
             <IconButton
-              icon="water"
+              icon={waterLoading ? 'progress-clock' : isWatered ? 'water-check' : 'water'}
               size={24}
               mode="contained"
-              iconColor="#fff"
-              containerColor="#1e90ff"
+              iconColor={isWatered ? '#94a3b8' : '#fff'}
+              containerColor={isWatered ? 'rgba(148,163,184,0.25)' : '#1e90ff'}
               style={styles.waterButtonCompact}
               onPress={handleWater}
               accessibilityLabel="Log watering"
+              disabled={isWatered || waterLoading}
             />
           </View>
         </ThemedView>

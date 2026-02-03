@@ -1,17 +1,19 @@
 // features/plants/screens/PlantListScreen.tsx
 
 import React from 'react';
-import { FlatList, View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Alert, FlatList, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import { ThemedView } from '@/ui/ThemedView';
 import { ThemedText } from '@/ui/ThemedText';
-import { ActivityIndicator, IconButton, Chip } from 'react-native-paper';
+import { ActivityIndicator, Snackbar } from 'react-native-paper';
 import { PlantCard } from '@/features/plants/components/PlantCard';
 import { usePlantList } from '@/features/plants/hooks/usePlantList';
+import { usePlantsWateredToday } from '@/features/plants/hooks/usePlantsWateredToday';
+import { addPlantLog } from '@/lib/logs/addPlantLog';
+import logger from '@/lib/logger';
 
 interface PlantListScreenProps {
   searchQuery: string;
@@ -48,8 +50,50 @@ export default function PlantListScreen({
   const insets = useSafeAreaInsets();
   const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
   const {
-    plants, loading, error, weatherMap
+    plants, loading, error
   } = usePlantList();
+  const plantIds = React.useMemo(() => plants.map(p => p.id), [plants]);
+  const {
+    wateredMap,
+    markWatered,
+  } = usePlantsWateredToday(plantIds);
+  const [waterLoadingMap, setWaterLoadingMap] = React.useState<Record<string, boolean>>({});
+  const [snack, setSnack] = React.useState<{ visible: boolean; message: string }>({ visible: false, message: '' });
+
+  const showSnack = React.useCallback((message: string) => setSnack({ visible: true, message }), []);
+
+  const handleQuickWater = React.useCallback(async (plantId: string) => {
+    if (!plantId) return;
+    let skip = false;
+    setWaterLoadingMap(prev => {
+      if (prev[plantId]) {
+        skip = true;
+        return prev;
+      }
+      return { ...prev, [plantId]: true };
+    });
+    if (skip) return;
+    try {
+      await addPlantLog(plantId, { type: 'watering', description: 'Quick water', updatedBy: 'demoUser' });
+      markWatered(plantId);
+      showSnack('Watered today');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to log watering';
+      if (message.includes('already logged')) {
+        markWatered(plantId);
+        showSnack('Already watered today');
+      } else {
+        Alert.alert('Watering failed', message);
+      }
+      logger.error('Failed to quick water plant', { plantId, err });
+    } finally {
+      setWaterLoadingMap(prev => {
+        const next = { ...prev };
+        delete next[plantId];
+        return next;
+      });
+    }
+  }, [markWatered, showSnack]);
 
   // Function to navigate to add plant with current tab index
   const navigateToAddPlant = () => {
@@ -81,7 +125,12 @@ export default function PlantListScreen({
             keyExtractor={(item) => item.id}
             renderItem={({ item, index }) => (
               <>
-                <PlantCard plant={item} />
+                <PlantCard
+                  plant={item}
+                  onAddLog={() => handleQuickWater(item.id)}
+                  wateredToday={!!wateredMap[item.id]}
+                  waterLoading={!!waterLoadingMap[item.id]}
+                />
                 {index === filteredPlants.length - 1 && (
                   <View style={{ alignItems: 'center', marginTop: 16 }}>
                     <TouchableOpacity
@@ -111,6 +160,14 @@ export default function PlantListScreen({
           </View>
         )}
       </View>
+      <Snackbar
+        visible={snack.visible}
+        onDismiss={() => setSnack({ visible: false, message: '' })}
+        duration={2000}
+        style={{ marginBottom: insets.bottom + 8 }}
+      >
+        {snack.message}
+      </Snackbar>
     </View>
   );
 }

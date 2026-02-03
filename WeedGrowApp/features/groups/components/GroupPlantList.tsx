@@ -28,20 +28,39 @@ interface GroupPlantListProps {
   onRefresh?: () => void;
   // Actions
   onRemovePlant?: (plantId: string) => void;
-  onQuickWater?: (plantId: string) => void;
+  onQuickWater?: (plantId: string) => Promise<void> | void;
   onQuickFeed?: (plantId: string) => void;
   onQuickNote?: (plantId: string) => void;
   onMoveUp?: (plantId: string) => void;
   onMoveDown?: (plantId: string) => void;
+  wateredMap?: Record<string, boolean>;
+  waterLoadingMap?: Record<string, boolean>;
 }
 
-const RightActions = ({ onRemove, onQuickWater, onQuickFeed, onQuickNote }: { onRemove?: () => void; onQuickWater?: () => void; onQuickFeed?: () => void; onQuickNote?: () => void }) => (
+const RightActions = ({
+  onRemove,
+  onQuickWater,
+  onQuickFeed,
+  onQuickNote,
+  waterDisabled,
+}: {
+  onRemove?: () => void;
+  onQuickWater?: () => void;
+  onQuickFeed?: () => void;
+  onQuickNote?: () => void;
+  waterDisabled?: boolean;
+}) => (
   <View style={styles.rightActionsContainer}>
     <TouchableOpacity style={[styles.actionBtn, styles.removeBtn]} onPress={onRemove} accessibilityLabel="Remove from group">
       <MaterialCommunityIcons name="trash-can-outline" size={20} color="#fecaca" />
       <ThemedText style={styles.actionText}>Remove</ThemedText>
     </TouchableOpacity>
-    <TouchableOpacity style={[styles.actionBtn, styles.waterBtn]} onPress={onQuickWater} accessibilityLabel="Quick water">
+    <TouchableOpacity
+      style={[styles.actionBtn, styles.waterBtn, waterDisabled && styles.disabledAction]}
+      onPress={onQuickWater}
+      accessibilityLabel="Quick water"
+      disabled={waterDisabled}
+    >
       <MaterialCommunityIcons name="water" size={20} color="#dbeafe" />
       <ThemedText style={styles.actionText}>Water</ThemedText>
     </TouchableOpacity>
@@ -69,7 +88,25 @@ const LeftActions = ({ onMoveUp, onMoveDown }: { onMoveUp?: () => void; onMoveDo
   </View>
 );
 
-const GroupPlantList = memo(function GroupPlantList({ plants, onAddPlant, onCreatePlant, header, stickyHeader = false, showFooterAddButton = true, bottomInset = 0, refreshing, onRefresh, onRemovePlant, onQuickWater, onQuickFeed, onQuickNote, onMoveUp, onMoveDown }: GroupPlantListProps) {
+const GroupPlantList = memo(function GroupPlantList({
+  plants,
+  onAddPlant,
+  onCreatePlant,
+  header,
+  stickyHeader = false,
+  showFooterAddButton = true,
+  bottomInset = 0,
+  refreshing,
+  onRefresh,
+  onRemovePlant,
+  onQuickWater,
+  onQuickFeed,
+  onQuickNote,
+  onMoveUp,
+  onMoveDown,
+  wateredMap = {},
+  waterLoadingMap = {},
+}: GroupPlantListProps) {
   const router = useRouter();
   const navigateToAddPlant = useCallback(() => {
     if (onAddPlant) return onAddPlant();
@@ -113,6 +150,7 @@ const GroupPlantList = memo(function GroupPlantList({ plants, onAddPlant, onCrea
                 onQuickWater={onQuickWater ? () => onQuickWater(item.id) : undefined}
                 onQuickFeed={onQuickFeed ? () => onQuickFeed(item.id) : undefined}
                 onQuickNote={onQuickNote ? () => onQuickNote(item.id) : undefined}
+                waterDisabled={!!waterLoadingMap[item.id] || !!wateredMap[item.id]}
               />
             )}
             renderLeftActions={() => (
@@ -124,10 +162,19 @@ const GroupPlantList = memo(function GroupPlantList({ plants, onAddPlant, onCrea
             overshootRight={false}
             overshootLeft={false}
           >
-            <PlantCard plant={item} onAddLog={onQuickWater ? () => onQuickWater(item.id) : undefined} />
+            <PlantCard
+              plant={item}
+              onAddLog={onQuickWater ? () => onQuickWater(item.id) : undefined}
+              wateredToday={!!wateredMap[item.id]}
+              waterLoading={!!waterLoadingMap[item.id]}
+            />
           </Swipeable>
         ) : (
-          <PlantCard plant={item} />
+          <PlantCard
+            plant={item}
+            wateredToday={!!wateredMap[item.id]}
+            waterLoading={!!waterLoadingMap[item.id]}
+          />
         )
       )}
       ListHeaderComponent={header ?? undefined}
@@ -240,5 +287,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 12,
     marginTop: 2,
+  },
+  disabledAction: {
+    opacity: 0.4,
   },
 });
