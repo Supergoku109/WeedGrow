@@ -1,247 +1,142 @@
-# WeedGrow
+﻿# WeedGrow
 
-WeedGrow is an experiment in building a simple plant tracking app across mobile and web.
-The repository contains two separate projects:
+WeedGrow is a grow/plant tracking mobile app built with Expo (React Native).
+Data is stored in Firebase (Firestore, plus Storage for photo uploads), with optional weather lookups via
+OpenWeatherMap.
 
-- **WeedGrowApp** – an [Expo](https://expo.dev) application for iOS, Android and the web.
-- **weed-grow-web** – a [Vite](https://vitejs.dev) + React web application.
+## Domain Overview
 
-Both projects require [Node.js](https://nodejs.org/) (version 18 or newer is recommended).
-You can install Node.js from the official website or using a version manager such as
-[nvm](https://github.com/nvm-sh/nvm).
+The mobile app's core data model (see `WeedGrowApp/firestoreModels.ts`) centers around "plants" and grow
+activities:
 
-## Directory overview
+- Plants track fields like `name`, `strain`, `growthStage` (germination/seedling/vegetative/flowering),
+  `environment` (outdoor/greenhouse/indoor), and optional metadata (pot size, watering frequency, pests,
+  training tags, notes, location, etc.).
+- Plant logs capture events like watering, fertilizing, training, stage changes, photos, and harvest.
 
-```
-/WeedGrowApp   - Expo React Native project located in `WeedGrowApp`
-/weed-grow-web - Vite React project located in `weed-grow-web`
-```
+## Repo Layout
 
-Each directory contains its own `package.json` and README with more details.
-The steps below outline how to get each project running.
+Primary app:
 
-## Getting started
+- `WeedGrowApp/`: Expo app using Expo Router (iOS/Android/Web)
 
-### 1. Clone the repository
+## Project Status (Verified)
 
-```bash
-# if you haven't cloned it already
-git clone <repo-url>
-cd WeedGrow
-```
+- The Expo app is the primary app in this repo. It reads/writes Firestore collections like `plants`, `groups`,
+  and `sensorProfiles`.
+- Authentication is not wired up yet (no Firebase Auth usage in app code). Some writes currently use placeholder
+  IDs like `demoUser` (for example: plant `owners` and group `createdBy`).
 
-### 2. Install prerequisites
+## Prerequisites
 
-- **Node.js** – download from [nodejs.org](https://nodejs.org/).
-- **Expo CLI** (for the mobile app):
+- Node.js + npm (this workspace is currently being developed with Node `v22.19.0` / npm `10.9.3`).
+  - TODO: Document the minimum supported Node version.
+- For native builds:
+  - Android: Android Studio + JDK are required for `WeedGrowApp`'s `npm run android`.
+  - iOS: Xcode is required for `WeedGrowApp`'s `npm run ios`.
+  - TODO: Document exact versions and setup steps.
 
-```bash
-npm install -g expo-cli
-```
+## Quick Start
 
-### 3. Run the Expo app
+### Mobile App (Expo)
 
 ```bash
 cd WeedGrowApp
 npm install
-npx expo start
+npm start
 ```
 
-This will open the Expo developer tools. From there you can launch the app in a
-simulator or on a device using the Expo Go app.
-
-### 4. Run the Vite web app
+Useful commands (see `WeedGrowApp/package.json`):
 
 ```bash
-cd weed-grow-web
-npm install
-npm run dev
+npm run android
+npm run ios
+npm run web
+npm run lint
+npm run typecheck
 ```
 
-Vite will start a development server (usually on <http://localhost:5173>). Open
-that URL in your browser to view the web app.
+## Environment Variables
 
-## Shared Firebase configuration
+### WeedGrowApp (.env)
 
-Both projects rely on a single Firebase configuration defined in `firebase.ts`
-at the repository root. Create a `.env` file next to it and add your Firebase
-keys using the `VITE_` prefix:
+`WeedGrowApp` loads environment variables from `WeedGrowApp/.env` via `WeedGrowApp/app.config.js` and exposes
+them to the runtime via `expo.extra` (read in `WeedGrowApp/services/firebase.ts`).
 
-```
-VITE_FIREBASE_API_KEY=...
-VITE_FIREBASE_AUTH_DOMAIN=...
-VITE_FIREBASE_PROJECT_ID=...
-VITE_FIREBASE_STORAGE_BUCKET=...
-VITE_FIREBASE_MESSAGING_SENDER_ID=...
-VITE_FIREBASE_APP_ID=...
-VITE_FIREBASE_MEASUREMENT_ID=...
-```
+Required keys (see `WeedGrowApp/app.config.js`):
 
-The Expo and Vite apps each import the config through their respective
-`services/firebase.ts` files, so you only need to maintain the keys in one
-place.
+```bash
+FIREBASE_API_KEY=...
+FIREBASE_AUTH_DOMAIN=...
+FIREBASE_PROJECT_ID=...
+FIREBASE_STORAGE_BUCKET=...
+FIREBASE_MESSAGING_SENDER_ID=...
+FIREBASE_APP_ID=...
+FIREBASE_MEASUREMENT_ID=...
 
-## Additional information
-
-For more information about each project (including build and lint commands),
-see the README files inside `WeedGrowApp` and `weed-grow-web`.
-Here’s a **comprehensive `README.md`** tailored for your `WeedGrow` repo. It’s written to give **AI tools like Codex** full context about your app’s goal, structure, technologies, and roadmap — while also being clear to any human contributor.
-
----
-
-```markdown
-# 🌿 WeedGrow
-
-**WeedGrow** is a modern cannabis cultivation companion app, focused initially on **outdoor growing**. It helps users track their plants' lifecycle, log care activities (like watering and fertilizing), and make smarter growing decisions based on seasonal and weather conditions.
-
----
-
-## 🎯 Purpose
-
-The app’s goal is to **empower outdoor cannabis growers** — especially beginners — by providing a digital assistant to:
-
-- Track the growth stages of each plant
-- Record care logs (watering, pruning, fertilizing, etc.)
-- Receive reminders and growing tips
-- Monitor seasonal and environmental factors
-- Eventually expand to greenhouse and indoor growers
-
----
-
-## 🧱 Tech Stack
-
-| Layer        | Technology                | Purpose                                 |
-|--------------|---------------------------|------------------------------------------|
-| **Frontend** | React + Vite              | Fast, modern UI layer                    |
-| **Data**     | Firebase Firestore        | NoSQL database for plant + log storage  |
-| **Auth**     | Firebase Authentication   | (Planned) User login and personalized data |
-| **Backend**  | Firebase Cloud Functions  | (Planned) Custom logic, reminders       |
-| **Storage**  | Firebase Storage          | (Planned) Upload photos of plants       |
-| **Hosting**  | Firebase Hosting          | Static site hosting                     |
-
----
-
-## 📁 Project Structure
-
+# Used by WeedGrowApp/lib/weather/fetchWeather.ts
+OPENWEATHERMAP_API_KEY=...
 ```
 
-weed-grow/
-├── weed-grow-web/          # React + Vite frontend (this repo)
-│   ├── src/
-│   │   ├── App.tsx         # Main app logic
-│   │   ├── services/
-│   │   │   └── firebase.ts # Firebase configuration
-│   │   └── components/     # (Planned) Reusable UI components
-├── weed-grow-backend/      # (Planned) Optional backend or cloud functions
-├── shared/                 # (Planned) Shared types or logic across frontend/backend
+TODO: Add a `WeedGrowApp/.env.example` file (do not commit secrets).
 
-````
+## Firestore Data Model
 
----
+Source of truth for app-facing types:
 
-## 🔄 Current Functionality
+- `WeedGrowApp/firestoreModels.ts`
+- `WeedGrowApp/CONTEXT.md` (schema overview + query notes; TODO: keep in sync with the code/types)
 
-- ✅ Firebase Firestore setup
-- ✅ Basic Firestore read from a `test` collection
-- 🚧 Ready for adding plant logging & write functionality
+Collections used by the mobile app code today:
 
----
+- `plants/{plantId}`
+  - `logs/{logId}`
+  - `weatherCache/{YYYY-MM-DD}` (doc IDs are dates)
+  - `progressPics/{picId}`
+- `groups/{groupId}`
+- `sensorProfiles/{sensorProfileId}`
 
-## 🧪 Data Model (Planned)
+Other collections/types exist in `WeedGrowApp/firestoreModels.ts` (for example: `users`, `notifications`,
+`analytics`, `invites`), but there is currently no mobile app code that reads/writes them.
+TODO: Confirm which of these are planned vs should be removed or implemented.
 
-### 🔹 Plants Collection
+## Where To Look (Humans + AI)
 
-```json
-{
-  "name": "OG Kush",
-  "strain": "Indica-dominant",
-  "datePlanted": "2024-10-05",
-  "status": "vegetative", // germinating | vegetative | flowering | harvest
-  "location": {
-    "lat": -34.123,
-    "lng": 18.456
-  },
-  "notes": "Doing well, topped once",
-  "userId": "abc123"
-}
-````
+- Mobile routes: `WeedGrowApp/app/` (Expo Router file-based routing)
+- Mobile feature modules: `WeedGrowApp/features/`
+- Shared mobile UI: `WeedGrowApp/ui/` and `WeedGrowApp/components/ui/`
+- Mobile import alias: `@/` maps to the `WeedGrowApp/` root (see `WeedGrowApp/tsconfig.json`)
+- Firebase client (mobile): `WeedGrowApp/services/firebase.ts`
+- Weather logic: `WeedGrowApp/lib/weather/`
+- Log utilities: `WeedGrowApp/lib/logs/`
+- Progress photo uploads: `WeedGrowApp/lib/progressPics/uploadProgressPic.ts`
 
-### 🔹 Care Logs Collection (Linked to Plant)
+## Firestore Admin Scripts (Optional)
 
-```json
-{
-  "plantId": "abc123",
-  "type": "watered",  // watered | fertilized | trimmed | etc.
-  "note": "Soaked well before rain",
-  "timestamp": "2024-10-10T14:05:00Z"
-}
+These scripts use the Firebase Admin SDK and require a service account key JSON file.
+The repo ignores this file on purpose.
+
+- Put your service account JSON at: `WeedGrowApp/serviceAccountKey.json`
+
+Seed example data:
+
+```bash
+cd WeedGrowApp
+node seedFirestore.js
 ```
 
----
+TODO: `WeedGrowApp/seedFirestore.js` currently updates a plant's `sensorProfileId` before `plantId` is defined.
+Verify/fix before relying on it.
 
-## 🚧 Roadmap
+Delete all plants and their subcollections (`logs`, `weatherCache`, `progressPics`):
 
-### Stage 1: MVP
-
-* [x] React + Vite frontend scaffold
-* [x] Firebase Firestore integration
-* [ ] Add plant form (with Firestore write)
-* [ ] Display logged plants in UI
-
-### Stage 2: Basic Tracking
-
-* [ ] Record care events (watering, feeding, etc.)
-* [ ] Show a timeline of care
-* [ ] Calculate growth phase from date planted
-
-### Stage 3: Intelligence
-
-* [ ] Weather-based alerts using user geolocation
-* [ ] Reminder system (via email/notification)
-* [ ] Growth stage tips and task suggestions
-
-### Stage 4: Multi-User + Mobile
-
-* [ ] Firebase Authentication (Google sign-in)
-* [ ] Support per-user plant data
-* [ ] React Native or PWA for mobile-friendly version
-
----
-
-## 🤖 AI Integration Notes (for Codex / GPT Agents)
-
-This app is designed as a modular, extensible React + Firebase system with the goal of building a smart assistant for outdoor cannabis growers.
-
-The `App.tsx` currently includes a Firestore `getDocs()` call reading from the `test` collection, but all plant-related features will be migrated to structured `plants` and `careLogs` collections.
-
-AI tools can assist with:
-
-* Form creation for plant and log entries
-* Auto-advancing growth stages
-* Data visualization (timeline, weather impact)
-* Scheduling tips/reminders
-* Geolocation integration and season checking logic
-
-Contributors and AI agents should follow clean, modular React patterns and avoid overcomplicating the frontend state until multiple views are in play.
-
----
-
-## 🙌 Author
-
-**Zane Groenewald**
-Junior Software Developer @ Pragma
-Cape Town, South Africa
-GitHub: [Supergoku109](https://github.com/Supergoku109)
-
----
-
-## 📄 License
-
-This project is currently personal/private and not intended for commercial redistribution. License to be determined later.
-
+```bash
+cd WeedGrowApp
+node scripts/deleteAllPlantsAndSubcollections.js
 ```
 
----
+Warning: These scripts can modify/delete real Firestore data. Use a test Firebase project unless you are sure.
 
-Let me know if you want this added as an actual file in your repo (`README.md`), or if you'd like a shortened version for GitHub summary.
-```
+## License
+
+TODO: Choose a license.
