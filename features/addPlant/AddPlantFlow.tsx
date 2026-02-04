@@ -12,6 +12,7 @@ import { StepIndicatorBar } from './components/StepIndicatorBar';
 import Step0SelectStage from './screens/Step0SelectStage';
 
 import { useAddPlantForm } from './hooks/useAddPlantForm';
+import { useStepBackground } from './hooks/useStepBackground';
 
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 
@@ -23,6 +24,7 @@ export default function AddPlantFlow() {
   const router = useRouter();
   const [step, setStep] = React.useState(1);
   const { form, setField, resetForm } = useAddPlantForm();
+  const backgroundColor = useStepBackground();
   
   // Animation values for transitions
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -61,26 +63,7 @@ export default function AddPlantFlow() {
     }
   };
 
-  // Common props for every step
-  const shared = { form, setField, next: goNext, back: goBack, step };
-
-  // Determine the current step component
-  let StepComponent;
-  switch (step) {
-    case 1: StepComponent = Step0SelectStage; break;
-    case 2: StepComponent = Step1BasicInfo; break;
-    case 3: StepComponent = Step2Environment; break;
-    case 4: StepComponent = Step3Location; break;
-    case 5: StepComponent = Step4Care; break;
-    case 6: StepComponent = Step5Media; break;
-    case 7: StepComponent = Step6Review; break;
-    default: return null;
-  }
-
   // Use the useStepBackground hook for the proper background color
-  const { useStepBackground } = require('./hooks/useStepBackground');
-  const backgroundColor = useStepBackground();
-  
   // When component mounts, animate the header in first, then the content
   React.useEffect(() => {
     if (isInitialMount.current) {

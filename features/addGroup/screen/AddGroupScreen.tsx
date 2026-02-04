@@ -112,7 +112,7 @@ export default function AddGroupScreen() {
             availablePlants.length === 0 ? (
               <View style={{ alignItems: 'center', marginTop: 24 }}>
                 <ThemedText style={{ opacity: 0.8, textAlign: 'center' }}>
-                  No more available plants to add that match this group's environment.
+                  No more available plants to add that match this group environment.
                 </ThemedText>
               </View>
             ) : (

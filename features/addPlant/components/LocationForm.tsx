@@ -35,7 +35,7 @@ export const LocationForm = memo(function LocationForm({ form, logic, next, back
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Title */}
           <ThemedText type="title" style={styles.title}>
-            📍 Where is your plant?
+            Where is your plant?
           </ThemedText>
 
           {/* Section: Location Details (nickname and geolocation) */}
@@ -74,7 +74,7 @@ export const LocationForm = memo(function LocationForm({ form, logic, next, back
               onLocationChange={handleMapLocationChange}
             />
             <ThemedText style={styles.mapHint}>
-              Tap the map to adjust your plant's location
+              Tap the map to adjust your plant location
             </ThemedText>
           </WeedGrowFormSection>
 

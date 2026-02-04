@@ -211,7 +211,9 @@ export const AnimatedMakikoDropdownInput = forwardRef<TextInput, AnimatedMakikoD
                   setDropdownVisible(false);
                 }}
               >
-                <Text style={{ color: '#fff', fontWeight: '600' }}>Use "{inputValue}"</Text>
+                <Text style={{ color: '#fff', fontWeight: '600' }}>
+                  {`Use "${inputValue}"`}
+                </Text>
               </TouchableOpacity>
             )}
           </ScrollView>
@@ -220,6 +222,8 @@ export const AnimatedMakikoDropdownInput = forwardRef<TextInput, AnimatedMakikoD
     </View>
   );
 });
+
+AnimatedMakikoDropdownInput.displayName = 'AnimatedMakikoDropdownInput';
 
 const styles = StyleSheet.create({
   container: {},

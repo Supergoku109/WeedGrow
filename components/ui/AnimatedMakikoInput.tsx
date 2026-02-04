@@ -157,6 +157,8 @@ export const AnimatedMakikoInput = forwardRef<TextInput, AnimatedMakikoInputProp
   );
 });
 
+AnimatedMakikoInput.displayName = 'AnimatedMakikoInput';
+
 const styles = StyleSheet.create({
   input: {
     flex: 1,

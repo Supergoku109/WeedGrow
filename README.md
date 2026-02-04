@@ -6,7 +6,7 @@ OpenWeatherMap.
 
 ## Domain Overview
 
-The mobile app's core data model (see `WeedGrowApp/firestoreModels.ts`) centers around "plants" and grow
+The mobile app's core data model (see `firestoreModels.ts`) centers around "plants" and grow
 activities:
 
 - Plants track fields like `name`, `strain`, `growthStage` (germination/seedling/vegetative/flowering),
@@ -16,9 +16,7 @@ activities:
 
 ## Repo Layout
 
-Primary app:
-
-- `WeedGrowApp/`: Expo app using Expo Router (iOS/Android/Web)
+Primary app: repo root (Expo app using Expo Router for iOS/Android/Web).
 
 ## Project Status (Verified)
 
@@ -32,8 +30,8 @@ Primary app:
 - Node.js + npm (this workspace is currently being developed with Node `v22.19.0` / npm `10.9.3`).
   - TODO: Document the minimum supported Node version.
 - For native builds:
-  - Android: Android Studio + JDK are required for `WeedGrowApp`'s `npm run android`.
-  - iOS: Xcode is required for `WeedGrowApp`'s `npm run ios`.
+  - Android: Android Studio + JDK are required for `npm run android`.
+  - iOS: Xcode is required for `npm run ios`.
   - TODO: Document exact versions and setup steps.
 
 ## Quick Start
@@ -41,12 +39,11 @@ Primary app:
 ### Mobile App (Expo)
 
 ```bash
-cd WeedGrowApp
 npm install
 npm start
 ```
 
-Useful commands (see `WeedGrowApp/package.json`):
+Useful commands (see `package.json`):
 
 ```bash
 npm run android
@@ -58,12 +55,12 @@ npm run typecheck
 
 ## Environment Variables
 
-### WeedGrowApp (.env)
+### App (.env)
 
-`WeedGrowApp` loads environment variables from `WeedGrowApp/.env` via `WeedGrowApp/app.config.js` and exposes
-them to the runtime via `expo.extra` (read in `WeedGrowApp/services/firebase.ts`).
+The app loads environment variables from `.env` via `app.config.js` and exposes
+them to the runtime via `expo.extra` (read in `services/firebase.ts`).
 
-Required keys (see `WeedGrowApp/app.config.js`):
+Required keys (see `app.config.js`):
 
 ```bash
 FIREBASE_API_KEY=...
@@ -74,18 +71,18 @@ FIREBASE_MESSAGING_SENDER_ID=...
 FIREBASE_APP_ID=...
 FIREBASE_MEASUREMENT_ID=...
 
-# Used by WeedGrowApp/lib/weather/fetchWeather.ts
+# Used by lib/weather/fetchWeather.ts
 OPENWEATHERMAP_API_KEY=...
 ```
 
-TODO: Add a `WeedGrowApp/.env.example` file (do not commit secrets).
+See `.env.example` for a template (do not commit secrets).
 
 ## Firestore Data Model
 
 Source of truth for app-facing types:
 
-- `WeedGrowApp/firestoreModels.ts`
-- `WeedGrowApp/CONTEXT.md` (schema overview + query notes; TODO: keep in sync with the code/types)
+- `firestoreModels.ts`
+- `CONTEXT.md` (schema overview + query notes; TODO: keep in sync with the code/types)
 
 Collections used by the mobile app code today:
 
@@ -96,42 +93,40 @@ Collections used by the mobile app code today:
 - `groups/{groupId}`
 - `sensorProfiles/{sensorProfileId}`
 
-Other collections/types exist in `WeedGrowApp/firestoreModels.ts` (for example: `users`, `notifications`,
+Other collections/types exist in `firestoreModels.ts` (for example: `users`, `notifications`,
 `analytics`, `invites`), but there is currently no mobile app code that reads/writes them.
 TODO: Confirm which of these are planned vs should be removed or implemented.
 
 ## Where To Look (Humans + AI)
 
-- Mobile routes: `WeedGrowApp/app/` (Expo Router file-based routing)
-- Mobile feature modules: `WeedGrowApp/features/`
-- Shared mobile UI: `WeedGrowApp/ui/` and `WeedGrowApp/components/ui/`
-- Mobile import alias: `@/` maps to the `WeedGrowApp/` root (see `WeedGrowApp/tsconfig.json`)
-- Firebase client (mobile): `WeedGrowApp/services/firebase.ts`
-- Weather logic: `WeedGrowApp/lib/weather/`
-- Log utilities: `WeedGrowApp/lib/logs/`
-- Progress photo uploads: `WeedGrowApp/lib/progressPics/uploadProgressPic.ts`
+- Mobile routes: `app/` (Expo Router file-based routing)
+- Mobile feature modules: `features/`
+- Shared mobile UI: `ui/` and `components/ui/`
+- Mobile import alias: `@/` maps to the repo root (see `tsconfig.json`)
+- Firebase client (mobile): `services/firebase.ts`
+- Weather logic: `lib/weather/`
+- Log utilities: `lib/logs/`
+- Progress photo uploads: `lib/progressPics/uploadProgressPic.ts`
 
 ## Firestore Admin Scripts (Optional)
 
 These scripts use the Firebase Admin SDK and require a service account key JSON file.
 The repo ignores this file on purpose.
 
-- Put your service account JSON at: `WeedGrowApp/serviceAccountKey.json`
+- Put your service account JSON at: `serviceAccountKey.json`
 
 Seed example data:
 
 ```bash
-cd WeedGrowApp
 node seedFirestore.js
 ```
 
-TODO: `WeedGrowApp/seedFirestore.js` currently updates a plant's `sensorProfileId` before `plantId` is defined.
+TODO: `seedFirestore.js` currently updates a plant's `sensorProfileId` before `plantId` is defined.
 Verify/fix before relying on it.
 
 Delete all plants and their subcollections (`logs`, `weatherCache`, `progressPics`):
 
 ```bash
-cd WeedGrowApp
 node scripts/deleteAllPlantsAndSubcollections.js
 ```
 

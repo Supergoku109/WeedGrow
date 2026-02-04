@@ -39,13 +39,13 @@ const GroupList = memo(function GroupList({
   );
 
   const renderEmpty = useCallback(() => {
-    if (error) return <ThemedText>❌ {error}</ThemedText>;
+    if (error) return <ThemedText>Error: {error}</ThemedText>;
     // Only show empty message if not loading and no groups
     if (!loading) {
       return (
         <View style={styles.emptyContainer}>
           <ThemedText style={styles.emptyText}>
-            No groups yet.{"\n"}Tap "Add Group" below to get started!
+            No groups yet.{"\n"}Tap Add Group below to get started.
           </ThemedText>
         </View>
       );

@@ -2,7 +2,7 @@ import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 import { storage } from '@/services/firebase';
-import * as FileSystem from 'expo-file-system';
+import { cacheDirectory, copyAsync } from 'expo-file-system';
 
 /**
  * Uploads a progress picture to Firebase Storage and saves metadata to Firestore.
@@ -16,9 +16,12 @@ export async function uploadProgressPic(plantId: string, fileUri: string, captio
     let localUri = fileUri;
     // If Android content URI, copy to cache as file://
     if (localUri.startsWith('content://')) {
+      if (!cacheDirectory) {
+        throw new Error('FileSystem cacheDirectory is unavailable on this platform.');
+      }
       const fileName = `${Date.now()}_progresspic.jpg`;
-      const destPath = FileSystem.cacheDirectory + fileName;
-      await FileSystem.copyAsync({ from: localUri, to: destPath });
+      const destPath = `${cacheDirectory}${fileName}`;
+      await copyAsync({ from: localUri, to: destPath });
       localUri = destPath;
     }
     const filename = `${Date.now()}_${Math.floor(Math.random() * 100000)}.jpg`;

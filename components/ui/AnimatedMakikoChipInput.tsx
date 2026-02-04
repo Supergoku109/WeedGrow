@@ -122,7 +122,9 @@ export const AnimatedMakikoChipInput: React.FC<AnimatedMakikoChipInputProps> = (
           ))}
           {showAdd && (
             <TouchableOpacity style={styles.dropdownItem} onPress={() => handleAdd(input.trim())}>
-              <Text style={{ fontWeight: '600', color: iconColor }}>Add '{input.trim()}'</Text>
+              <Text style={{ fontWeight: '600', color: iconColor }}>
+                {`Add "${input.trim()}"`}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -135,7 +137,7 @@ export const AnimatedMakikoChipInput: React.FC<AnimatedMakikoChipInputProps> = (
             style={styles.chip}
             onPress={() => handleRemove(chip)}
           >
-            <Text style={{ color: '#fff', fontWeight: '600' }}>🌿 {chip}  ✕</Text>
+            <Text style={{ color: '#fff', fontWeight: '600' }}>{`Plant ${chip} x`}</Text>
           </TouchableOpacity>
         ))}
       </View>
