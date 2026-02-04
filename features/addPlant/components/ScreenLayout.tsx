@@ -12,7 +12,7 @@ import {
   View,
   StyleSheet
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Props for the ScreenLayout component
 interface ScreenLayoutProps {

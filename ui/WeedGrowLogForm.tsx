@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { View, StyleSheet, Modal } from 'react-native';
 import { Text, Container, Button, Input } from '@/design-system';
 import { ColorTokens, Spacing, BorderRadius } from '@/design-system/tokens';
 import { LogType } from './WeedGrowLogTypeSheet';

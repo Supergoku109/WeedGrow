@@ -1,5 +1,4 @@
 import React from 'react';
-import { View } from 'react-native';
 import { Row, Text } from '@/design-system/components';
 import { ColorTokens, Spacing, BorderRadius } from '@/design-system/tokens';
 import { MaterialCommunityIcons } from '@expo/vector-icons';

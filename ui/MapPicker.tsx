@@ -1,12 +1,10 @@
 // ui/MapPicker.tsx
 
 import React, { useRef, useEffect } from 'react'
-import { View, Dimensions } from 'react-native'
+import { View } from 'react-native'
 import MapView, { Marker, MapPressEvent } from 'react-native-maps'
 import { Colors } from '@/constants/Colors'
 import { useColorScheme } from '@/hooks/useColorScheme'
-
-const screen = Dimensions.get('window')
 
 interface MapPickerProps {
   location?: { lat: number, lng: number }

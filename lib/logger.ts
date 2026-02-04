@@ -1,7 +1,6 @@
 // Simple centralized logger with environment guard
 // Replaces scattered console.* calls and makes it easy to swap with Sentry later
 
-/* eslint-disable no-console */
 const isDev = __DEV__ === true;
 
 const logger = {

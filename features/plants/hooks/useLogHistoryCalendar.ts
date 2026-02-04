@@ -1,6 +1,6 @@
 // features/plants/hooks/useLogHistoryCalendar.ts
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 import { addPlantLog } from '@/lib/logs/addPlantLog';
@@ -15,12 +15,8 @@ export function useLogHistoryCalendar(plantId?: string) {
   const [selectedLogType, setSelectedLogType] = useState<LogType | null>(null);
   const [pendingLogDate, setPendingLogDate] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchLogs = useCallback(async () => {
     if (!plantId) return;
-    fetchLogs();
-  }, [plantId]);
-
-  async function fetchLogs() {
     const snap = await getDocs(collection(db, 'plants', String(plantId), 'logs'));
     const logs: PlantLog[] = snap.docs.map((d) => d.data() as PlantLog);
     const byDate: Record<string, PlantLog[]> = {};
@@ -32,7 +28,11 @@ export function useLogHistoryCalendar(plantId?: string) {
       }
     });
     setLogsByDate(byDate);
-  }
+  }, [plantId]);
+
+  useEffect(() => {
+    fetchLogs();
+  }, [fetchLogs]);
 
   const getMarkedDates = () => {
     const marks: any = {};

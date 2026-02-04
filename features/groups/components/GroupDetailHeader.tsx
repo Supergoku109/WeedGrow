@@ -5,7 +5,7 @@ import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { Row } from '@/design-system/components/Row/Row';
 import { ColorTokens, Typography, Spacing } from '@/design-system/tokens';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import ThemedText from '@/ui/ThemedText';
+import { ThemedText } from '@/ui/ThemedText';
 
 // Helper to get environment icon and label
 const getEnvIconLabel = (env: string) => {

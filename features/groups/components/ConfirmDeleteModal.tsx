@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, View, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import ThemedText from '@/ui/ThemedText';
+import { ThemedText } from '@/ui/ThemedText';
 import { ColorTokens, Typography } from '@/design-system/tokens';
 
 interface ConfirmDeleteModalProps {

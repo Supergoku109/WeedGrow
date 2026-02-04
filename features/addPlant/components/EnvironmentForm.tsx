@@ -150,18 +150,7 @@ const companionOptions = [
 // Advanced Setup Section
 const AdvancedSetupSection = memo(function AdvancedSetupSection({ form, logic, scrollRef }: { form: PlantForm; logic: Step2EnvironmentLogic; scrollRef?: any }) {
   const [expanded, setExpanded] = useState(false);
-  const [companionInput, setCompanionInput] = useState('');
   const companions = form.companionPlants || [];
-
-  const handleAddCompanion = useCallback((val: string) => {
-    if (val && !companions.includes(val)) {
-      logic.setField('companionPlants', [...companions, val]);
-      setCompanionInput('');
-    }
-  }, [companions, logic]);
-  const handleRemoveCompanion = useCallback((val: string) => {
-    logic.setField('companionPlants', companions.filter((c: string) => c !== val));
-  }, [companions, logic]);
 
   const dropdownInputRef = useRef(null);
 

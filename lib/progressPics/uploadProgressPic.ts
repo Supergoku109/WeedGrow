@@ -1,7 +1,6 @@
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/services/firebase';
-import { storage } from '@/services/firebase';
+import { db, storage } from '@/services/firebase';
 import { cacheDirectory, copyAsync } from 'expo-file-system';
 
 /**

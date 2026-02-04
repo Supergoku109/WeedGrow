@@ -10,7 +10,7 @@ interface WeedGrowDropdownInputProps {
   icon?: string;
   value: string;
   label: string;
-  options: Array<{ label: string; value: string }>;
+  options: { label: string; value: string }[];
   onSelect: (value: string) => void;
   placeholder?: string;
   zIndex?: number;
@@ -63,7 +63,7 @@ export function WeedGrowDropdownInput({
         open={open}
         value={value}
         items={items}
-        setOpen={setOpen as any}
+        setOpen={handleSetOpen as any}
         setValue={(callback) => onSelect(callback(value))}
         setItems={setItems}
         placeholder={placeholder}

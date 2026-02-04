@@ -12,7 +12,7 @@ import { useGroupWeather } from '@/features/groups/hooks/useGroupWeather';
 import { View, StyleSheet, TouchableOpacity, Alert, Platform, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import ThemedText from '@/ui/ThemedText';
+import { ThemedText } from '@/ui/ThemedText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ConfirmDeleteModal from '@/features/groups/components/ConfirmDeleteModal';
 import { updateGroup, type GroupWithId } from '@/features/groups/api/groupApi';
@@ -233,7 +233,7 @@ const GroupDetailScreen = memo(function GroupDetailScreen() {
       query={query}
       onChangeQuery={setQuery}
     />
-  ), [group?.name, group?.environment, weather?.temperature, weather?.rain, weather?.humidity, plants.length, setEditVisible, handleDeleteGroup, avgAgeDays, needsWaterCount, query]);
+  ), [group?.name, group?.environment, weather, plants.length, setEditVisible, handleDeleteGroup, avgAgeDays, needsWaterCount, query]);
 
   return (
     <GroupScreenLayout loading={loading} groupExists={!!group} scrollable={false}>

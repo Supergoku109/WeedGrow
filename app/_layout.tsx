@@ -1,6 +1,6 @@
 import { Slot } from 'expo-router';
 import { PaperProvider, MD3DarkTheme } from 'react-native-paper';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/Colors';
 import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';

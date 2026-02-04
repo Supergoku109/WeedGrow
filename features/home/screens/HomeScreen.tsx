@@ -10,8 +10,8 @@ import { Colors } from '@/constants/Colors';
 import GroupList from '@/features/home/components/GroupList';
 import EditGroupModal from '@/features/groups/components/EditGroupModal';
 import PlantListScreen from '@/features/plants/screens/PlantListScreen';
-import SuggestionCatalog from '@/ui/SuggestionCatalog';
-import AppHeader from '@/ui/AppHeader';
+import { SuggestionCatalog } from '@/ui/SuggestionCatalog';
+import { AppHeader } from '@/ui/AppHeader';
 import { ThemedText } from '@/ui/ThemedText';
 import HomeBackground from '@/features/home/components/HomeBackground';
 import { useHomeScreenState } from '@/features/home/hooks/useHomeScreenState';
@@ -132,10 +132,8 @@ export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: 
     setSnackVisible,
     snackMessage,
     handleEditGroup,
-    handleWaterAll,
   } = useHomeScreenState();
   const { suggestions: wateringSuggestions, plantsNeedingWater } = useWateringSuggestions(state.allPlants);
-  const [tabIndex, setTabIndex] = useState(initialTabIndex);
   const [plantSearchQuery, setPlantSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [plantEnvFilter, setPlantEnvFilter] = useState<string | null>(null);
@@ -168,7 +166,7 @@ export default function HomeScreen({ initialTabIndex = 0 }: { initialTabIndex?: 
         theme={theme}
       />
     </View>
-  ), [searchQuery, filteredGroups, groupPlantsMap, state.loading, state.error, handleEditGroup, handleAddGroup, theme]);
+  ), [searchQuery, setSearchQuery, filteredGroups, groupPlantsMap, state.loading, state.error, handleEditGroup, handleAddGroup, theme]);
 
   const renderPlantsTab = useCallback(() => (
     <View style={{ flex: 1 }}>

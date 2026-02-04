@@ -13,11 +13,9 @@ import {
   deleteDoc,
   getDoc,
   serverTimestamp,
-  DocumentReference,
 } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 import type { Group, PlantLog } from '@/firestoreModels';
-import { addPlantLog } from '@/lib/logs/addPlantLog';
 import logger from '@/lib/logger';
 
 /**

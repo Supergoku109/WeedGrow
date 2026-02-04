@@ -20,7 +20,7 @@ import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 // It handles step navigation, animated transitions, and renders the correct step screen and form for each stage.
 export default function AddPlantFlow() {
   // Get tab index from navigation params
-  const { tabIndex } = useLocalSearchParams<{ tabIndex: string }>();
+  useLocalSearchParams<{ tabIndex: string }>();
   const router = useRouter();
   const [step, setStep] = React.useState(1);
   const { form, setField, resetForm } = useAddPlantForm();
@@ -82,7 +82,7 @@ export default function AddPlantFlow() {
       ]).start();
       isInitialMount.current = false;
     }
-  }, []);
+  }, [fadeAnim, headerFadeAnim]);
   
   // Handle hardware back button for step navigation
   useFocusEffect(
@@ -105,7 +105,7 @@ export default function AddPlantFlow() {
       return () => {
         resetForm();
       };
-    }, [])
+    }, [resetForm])
   );
 
   // Render the current step's form and step indicator

@@ -9,10 +9,9 @@ import {
   TouchableOpacity,
   TouchableOpacityProps,
   ActivityIndicator,
-  StyleSheet,
 } from 'react-native';
 import { Text } from '../Text/Text';
-import { ColorTokens, Spacing, BorderRadius, Shadows, Typography } from '../../tokens';
+import { ColorTokens, Spacing, BorderRadius, Shadows } from '../../tokens';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export interface ButtonProps extends Omit<TouchableOpacityProps, 'style'> {

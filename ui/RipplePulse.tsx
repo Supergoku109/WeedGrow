@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import React from 'react';
+import { StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, withSpring, runOnJS } from 'react-native-reanimated';
 
 interface RipplePulseProps {
@@ -27,7 +27,7 @@ export const RipplePulse = ({ show, onAnimationEnd, color = '#4caf50', duration 
       );
       opacity.value = withTiming(0, { duration });
     }
-  }, [show]);
+  }, [show, duration, onAnimationEnd, opacity, scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],

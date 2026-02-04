@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Animated, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Animated } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface AnimatedMakikoChipInputProps {
@@ -34,7 +34,7 @@ export const AnimatedMakikoChipInput: React.FC<AnimatedMakikoChipInputProps> = (
       duration: 200,
       useNativeDriver: false,
     }).start();
-  }, [focused, input, value.length]);
+  }, [focused, input, value.length, labelAnim]);
 
   const filtered = input
     ? suggestions.filter(

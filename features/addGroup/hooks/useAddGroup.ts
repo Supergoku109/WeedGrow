@@ -41,7 +41,7 @@ export function useAddGroup() {
         createdBy: CURRENT_USER_ID,
       });
       router.back();
-    } catch (e) {
+    } catch {
       alert('Failed to create group.');
     } finally {
       setSubmitting(false);

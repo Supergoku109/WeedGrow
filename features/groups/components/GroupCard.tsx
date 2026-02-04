@@ -15,7 +15,7 @@ import {
 import { Snackbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import ThemedText from '@/ui/ThemedText';
+import { ThemedText } from '@/ui/ThemedText';
 import type { Group, Plant } from '@/firestoreModels';
 import { WeedGrowEnvBadge } from '@/ui/WeedGrowEnvBadge';
 import { waterAllPlantsInGroup } from '@/features/groups/api/groupApi';
@@ -34,9 +34,6 @@ export interface GroupCardProps {
   lastWatered?: string;
   onEdit?: () => void;
 }
-
-// Minimal weather shape used in the badge for outdoor groups
-type WeatherInfo = { temperature?: number; humidity?: number; pop?: number } | null;
 
 const AVATAR_SIZE = 44;
 const AVATAR_BORDER = 2;

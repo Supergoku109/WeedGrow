@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, FlatList, Dimensions } from 'react-native';
-import { Text, Container, Card } from '@/design-system';
+import { StyleSheet, TouchableOpacity, FlatList, Dimensions } from 'react-native';
+import { Text, Container } from '@/design-system';
 import { ColorTokens, Spacing, BorderRadius } from '@/design-system/tokens';
 import GradientOverlay from './GradientOverlay';
 

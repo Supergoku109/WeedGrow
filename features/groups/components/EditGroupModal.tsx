@@ -5,14 +5,14 @@
  */
 import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { Modal, View, StyleSheet, TextInput, ScrollView, Pressable } from 'react-native';
-import ThemedText from '@/ui/ThemedText';
+import { ThemedText } from '@/ui/ThemedText';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { GroupWithId } from '../api/groupApi';
 import { PlantWithId } from '../hooks/useGroupDetail';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
-import { ColorTokens, Typography, Spacing } from '@/design-system/tokens';
+import { ColorTokens, Typography } from '@/design-system/tokens';
 
 // Props for the EditGroupModal component
 interface EditGroupModalProps {

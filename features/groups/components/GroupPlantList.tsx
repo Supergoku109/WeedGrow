@@ -4,7 +4,7 @@
 
 import React, { memo, useCallback } from 'react';
 import { View, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
-import ThemedText from '@/ui/ThemedText';
+import { ThemedText } from '@/ui/ThemedText';
 import type { Plant } from '@/firestoreModels';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';

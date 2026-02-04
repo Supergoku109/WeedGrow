@@ -6,10 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import ThemedText from '@/ui/ThemedText';
+import { ThemedText } from '@/ui/ThemedText';
 import { HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT } from '@/constants/Layout';
-import { addPlantLog } from '@/lib/logs/addPlantLog';
-import { fetchWateringHistory, DEFAULT_HISTORY_DAYS } from '@/lib/logs/fetchWateringHistory';
 import { usePlant } from '../hooks/usePlant';
 import { useWateringHistory } from '../hooks/useWateringHistory';
 import { useWeeklyData } from '../hooks/useWeeklyData';
@@ -56,21 +54,6 @@ export default function PlantDetailScreen() {
   const topProtectedPadding = HEADER_MIN_HEIGHT + insets.top;
   const bottomSafePadding = (insets.bottom || 0) + 120;
 
-  const handleLogWater = async (date: string) => {
-    if (!plant || !id) return;
-    try {
-      await addPlantLog(String(id), { type: 'watering', description: 'Watered the plant', updatedBy: 'demoUser' }, date);
-      const h = await fetchWateringHistory(String(id), DEFAULT_HISTORY_DAYS);
-      updateWeekData(prev => {
-        const updated = [...prev];
-        const dayIndex = updated.findIndex(d => d.date === date);
-        if (dayIndex !== -1) updated[dayIndex].watered = true;
-        return updated;
-      });
-    } catch (err: unknown) {
-      logger.error('Failed to log watering', err);
-    }
-  };
   React.useEffect(() => {
     let cancelled = false;
 

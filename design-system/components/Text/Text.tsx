@@ -5,9 +5,8 @@
  */
 
 import React from 'react';
-import { Text as RNText, TextProps as RNTextProps, StyleSheet } from 'react-native';
+import { Text as RNText, TextProps as RNTextProps } from 'react-native';
 import { Typography, ColorTokens } from '../../tokens';
-import { useColorScheme } from '@/hooks/useColorScheme';
 
 export interface TextProps extends RNTextProps {
   variant?: keyof typeof Typography.styles;
@@ -27,8 +26,6 @@ export const Text: React.FC<TextProps> = ({
   children,
   ...props
 }) => {
-  const colorScheme = useColorScheme();
-  
   const textColor = React.useMemo(() => {
     switch (color) {
       case 'primary':

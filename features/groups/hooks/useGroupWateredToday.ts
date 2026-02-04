@@ -11,6 +11,7 @@ import { db } from '@/services/firebase';
 export function useGroupWateredToday(groupId: string, plantIds: string[] = []) {
   const [wateredToday, setWateredToday] = useState(false);
   const [loading, setLoading] = useState(true);
+  const plantIdsKey = plantIds.join('|');
 
   useEffect(() => {
     if (!plantIds.length) {
@@ -46,7 +47,7 @@ export function useGroupWateredToday(groupId: string, plantIds: string[] = []) {
     }
     checkAllWatered();
     return () => { ignore = true; };
-  }, [groupId, JSON.stringify(plantIds)]);
+  }, [groupId, plantIds, plantIdsKey]);
 
   return { wateredToday, loading };
 }

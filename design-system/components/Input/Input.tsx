@@ -9,7 +9,6 @@ import {
   TextInput,
   TextInputProps,
   View,
-  StyleSheet,
 } from 'react-native';
 import { Text } from '../Text/Text';
 import { ColorTokens, Spacing, BorderRadius, Typography } from '../../tokens';

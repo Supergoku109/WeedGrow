@@ -1,7 +1,3 @@
-import { StyleSheet } from 'react-native';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
-
 export function useWeedGrowInputStyle() {
   // Use moderate borderRadius and overflow: 'hidden' to prevent border gaps
   return {

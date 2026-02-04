@@ -24,7 +24,7 @@ export function useDeletePlant(id?: string, router?: ReturnType<typeof useRouter
         }
       }
     ]);
-  }, [id, router]);
+  }, [id, activeRouter]);
 
   return { onDelete };
 }

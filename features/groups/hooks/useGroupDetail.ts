@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase';
-import type { Group, Plant } from '@/firestoreModels';
+import type { Plant } from '@/firestoreModels';
 import { deleteGroup, getGroupById, GroupWithId } from '../api/groupApi';
 import logger from '@/lib/logger';
 

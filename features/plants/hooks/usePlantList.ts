@@ -1,12 +1,11 @@
 // features/plants/hooks/usePlantList.ts
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plant } from '@/firestoreModels';
 import { PlantAdviceContext } from '@/lib/weather/getPlantAdvice';
 import { collection, getDocs, query } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 import { fetchPlantWeatherContext } from '@/lib/weather/fetchPlantWeatherContext';
-import { FirebaseError } from 'firebase/app';
 
 interface PlantItem extends Plant {
   id: string;

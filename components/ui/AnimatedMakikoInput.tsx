@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { View, TextInput, StyleSheet, TextInputProps, LayoutChangeEvent, Platform, BackHandler, Keyboard } from 'react-native';
+import { View, TextInput, StyleSheet, TextInputProps, LayoutChangeEvent, Platform, BackHandler, Animated as RNAnimated } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolate } from 'react-native-reanimated';
-import { Animated as RNAnimated } from 'react-native';
 
 interface AnimatedMakikoInputProps extends Omit<TextInputProps, 'onChangeText' | 'value'> {
   label: string;
@@ -45,11 +44,11 @@ export const AnimatedMakikoInput = forwardRef<TextInput, AnimatedMakikoInputProp
       duration: 200,
       useNativeDriver: false,
     }).start();
-  }, [focused, value]);
+  }, [focused, value, labelAnim]);
 
   useEffect(() => {
     progress.value = withTiming(focused ? 1 : 0, { duration: 350 });
-  }, [focused]);
+  }, [focused, progress]);
 
   // Android hardware back button handling for blur
   useEffect(() => {

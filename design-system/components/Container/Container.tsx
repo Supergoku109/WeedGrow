@@ -5,9 +5,8 @@
  */
 
 import React from 'react';
-import { View, ViewProps, StyleSheet } from 'react-native';
+import { View, ViewProps } from 'react-native';
 import { Spacing, ColorTokens, BorderRadius, Shadows } from '../../tokens';
-import { useColorScheme } from '@/hooks/useColorScheme';
 
 export interface ContainerProps extends ViewProps {
   variant?: 'default' | 'card' | 'surface' | 'modal';
@@ -37,8 +36,6 @@ export const Container: React.FC<ContainerProps> = ({
   children,
   ...props
 }) => {
-  const colorScheme = useColorScheme();
-
   const containerStyle = React.useMemo(() => {
     const baseStyle: any = {
       flexDirection: direction,
@@ -106,7 +103,6 @@ export const Container: React.FC<ContainerProps> = ({
     radius,
     backgroundColor,
     style,
-    colorScheme,
   ]);
 
   return (

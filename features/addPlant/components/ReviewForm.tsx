@@ -10,7 +10,6 @@ import { WeedGrowCard } from '@/ui/WeedGrowCard'
 import { WeedGrowButtonRow } from '@/ui/WeedGrowButtonRow'
 import { WeedGrowFormSection } from '@/ui/WeedGrowFormSection'
 import type { PlantForm } from '@/features/plants/form/PlantForm'
-import { useStep6Review } from '../hooks/useStep6Review'
 import type { Step6ReviewLogic } from '../hooks/useStep6Review'
 
 // Props for the ReviewForm component

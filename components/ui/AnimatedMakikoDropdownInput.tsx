@@ -1,6 +1,5 @@
 import React, { useState, useRef, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { Animated, View, TouchableOpacity, StyleSheet, Text, ScrollView, TextInput, Platform, BackHandler } from 'react-native';
-import type { TextStyle } from 'react-native';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -52,7 +51,7 @@ export const AnimatedMakikoDropdownInput = forwardRef<TextInput, AnimatedMakikoD
       duration: 200,
       useNativeDriver: false,
     }).start();
-  }, [focused, inputValue]);
+  }, [focused, inputValue, labelAnim]);
 
   // Animate dropdown open/close
   useEffect(() => {
@@ -66,7 +65,7 @@ export const AnimatedMakikoDropdownInput = forwardRef<TextInput, AnimatedMakikoD
       duration: 200,
       useNativeDriver: false,
     }).start();
-  }, [dropdownVisible]);
+  }, [dropdownVisible, arrowAnim, dropdownAnim]);
 
   useEffect(() => {
     setInputValue(value || '');

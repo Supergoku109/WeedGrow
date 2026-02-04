@@ -2,8 +2,7 @@
 // This screen renders the first step of the Add Plant flow: entering basic plant information.
 // It uses the BasicInfoForm and step logic, and handles navigation between steps.
 
-import React, { memo, useCallback } from 'react';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import React, { memo } from 'react';
 
 import { StepScreen } from '@/features/addPlant/components/StepScreen';
 import { BasicInfoForm } from '@/features/addPlant/components/BasicInfoForm';
@@ -15,14 +14,6 @@ const Step1BasicInfo = memo(function Step1BasicInfo({
 }: StepProps) {
   // Get logic for this step
   const logic = useStep1BasicInfo(form, setField);
-  const router = useRouter();
-  const { tabIndex } = useLocalSearchParams<{ tabIndex: string }>();
-
-  // Navigation helper (not used in this step, but kept for future-proofing)
-  const navigateToHome = useCallback(() => {
-    router.replace({ pathname: '/(tabs)', params: { tabIndex: tabIndex ?? '1' } });
-  }, [router, tabIndex]);
-
   // Render the step screen and form
   return (
     <StepScreen 

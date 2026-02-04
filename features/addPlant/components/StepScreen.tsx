@@ -2,7 +2,6 @@
 import React, { ReactNode } from 'react';
 import { View } from 'react-native';
 
-import { StepIndicatorBar } from './StepIndicatorBar';
 import { ScreenLayout } from './ScreenLayout';
 import HomeBackground from '@/features/home/components/HomeBackground';
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { TextInput, Button, RadioButton, Text, Switch, SegmentedButtons } from 'react-native-paper';
+import { TextInput, Button, Text, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -31,7 +31,7 @@ export default function AddSensorProfileScreen() {
       });
       // Instead of router.back(), go to step2 and pass newSensorProfileId
       router.replace({ pathname: '/add-plant/step2', params: { newSensorProfileId: docRef.id } });
-    } catch (e) {
+    } catch {
       // handle error
     } finally {
       setSaving(false);

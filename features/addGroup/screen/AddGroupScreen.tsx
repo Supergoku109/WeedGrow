@@ -6,7 +6,8 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { PlantSelection } from '../components/PlantSelection';
 import HomeBackground from '@/features/home/components/HomeBackground';
 import { AnimatedMakikoInput } from '@/components/ui/AnimatedMakikoInput';
-import ThemedText from '@/ui/ThemedText';
+import { ThemedText } from '@/ui/ThemedText';
+import Feather from 'react-native-vector-icons/Feather';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAddGroup } from '../hooks/useAddGroup';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -22,7 +23,6 @@ export default function AddGroupScreen() {
     loading,
     error,
     selectedPlantIds,
-    setSelectedPlantIds,
     groupLocationPlantId,
     setGroupLocationPlantId,
     groupName,
@@ -96,7 +96,7 @@ export default function AddGroupScreen() {
           <AnimatedMakikoInput
             label="Group Name"
             iconName="users"
-            iconClass={require('react-native-vector-icons/Feather').default}
+            iconClass={Feather}
             value={groupName}
             onChangeText={setGroupName}
           />

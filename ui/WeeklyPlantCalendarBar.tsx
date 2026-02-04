@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, LayoutAnimation, UIManager, Modal, Pressable, Alert, Animated as RNAnimated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, UIManager, Modal, Pressable, Alert, Animated as RNAnimated } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ThemedText } from '@/ui/ThemedText';
 import WeedGrowLogTypeSheet, { LogType } from './WeedGrowLogTypeSheet';
@@ -38,7 +38,7 @@ interface WeeklyPlantCalendarBarProps {
   onLogWater: (date: string) => void;
   expandedLogDate?: string | null;
   setExpandedLogDate?: (date: string | null) => void;
-  getLogsForDate?: (date: string) => Array<{ type: string; description?: string; updatedBy?: string; timestamp?: any }>;
+  getLogsForDate?: (date: string) => { type: string; description?: string; updatedBy?: string; timestamp?: any }[];
   plantId?: string;
   onViewGallery?: () => void;
   onAddPicture?: () => void;
@@ -47,7 +47,6 @@ interface WeeklyPlantCalendarBarProps {
 }
 
 export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedLogDate: controlledExpandedLogDate, setExpandedLogDate: setControlledExpandedLogDate, getLogsForDate, plantId, onViewGallery, onAddPicture, uploading, onUpdateWeekData }: WeeklyPlantCalendarBarProps) {
-  const [expanded, setExpanded] = useState(false);
   const [actionBubble, setActionBubble] = useState<{ visible: boolean; x: number; y: number; date: string | null }>({ visible: false, x: 0, y: 0, date: null });
   const [logTypeSheetVisible, setLogTypeSheetVisible] = useState(false);
   const [pendingLogDate, setPendingLogDate] = useState<string | null>(null);
@@ -68,16 +67,11 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
         if (!(global as any).nativeFabricUIManager) {
           UIManager.setLayoutAnimationEnabledExperimental(true);
         }
-      } catch (e) {
+      } catch {
         // Silently ignore any errors
       }
     }
   }, []);
-
-  const handleExpand = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpanded((prev) => !prev);
-  };
 
   const handleLongPress = (date: string, event: any) => {
     // Get position for bubble
@@ -122,11 +116,16 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
     handleCloseBubble();
   };
 
+  const logCount = React.useMemo(() => {
+    if (!getLogsForDate || !expandedLogDate) return 0;
+    return getLogsForDate(expandedLogDate)?.length || 0;
+  }, [getLogsForDate, expandedLogDate]);
+
   // Animated transition for log card
   const [logCardKey, setLogCardKey] = useState<string>('');
   React.useEffect(() => {
-    if (expandedLogDate) setLogCardKey(expandedLogDate + '-' + ((getLogsForDate && expandedLogDate) ? (getLogsForDate(expandedLogDate)?.length || 0) : 0));
-  }, [expandedLogDate, getLogsForDate && expandedLogDate ? getLogsForDate(expandedLogDate)?.length : 0]);
+    if (expandedLogDate) setLogCardKey(`${expandedLogDate}-${logCount}`);
+  }, [expandedLogDate, logCount]);
 
   // Animated fade for log card
   const [fadeAnim] = useState(new RNAnimated.Value(1));
@@ -138,13 +137,13 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
     }).start(() => {
       fadeAnim.setValue(1);
     });
-  }, [expandedLogDate]);
+  }, [expandedLogDate, fadeAnim]);
 
   // Modern Log Summary Card (redesigned)
   function ModernLogCard({ date, weather, logs, onAddLog, onAddPic }: {
     date: string;
     weather?: WeeklyDayData;
-    logs: Array<{ type: string; description?: string; updatedBy?: string; timestamp?: any }>;
+    logs: { type: string; description?: string; updatedBy?: string; timestamp?: any }[];
 
     onAddLog?: () => void; // Make optional
     onAddPic: () => void;
@@ -223,21 +222,7 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
     );
   }
 
-  // When a log is submitted, update the local weekData to reflect watering/fed/pest/health immediately
-  React.useEffect(() => {
-    if (!pendingLogDate || !selectedLogType) return;
-    // Only update if the log form just closed (i.e., selectedLogType was just set to null)
-    if (selectedLogType === null) {
-      // setWeekData is not defined; this block should be removed or replaced with onUpdateWeekData if needed
-      // If you want to update weekData, use onUpdateWeekData prop as done elsewhere
-    }
-  }, [selectedLogType]);
-
-  // Track the last log type for immediate update
-  const lastLoggedTypeRef = React.useRef<LogType | null>(null);
-  React.useEffect(() => {
-    if (selectedLogType) lastLoggedTypeRef.current = selectedLogType;
-  }, [selectedLogType]);
+  // Placeholder for future log-type tracking if needed.
 
   return (
     <><View style={{ flexDirection: 'column', paddingBottom: 8 }}>
@@ -245,7 +230,6 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scroll} contentContainerStyle={styles.container}>
         {weekData.map((d, idx) => {
           const isToday = !!d.isToday;
-          const watered = d.watered;
           // Pick weather icon based on summary (simple mapping)
           let weatherIcon: any = 'weather-partly-cloudy';
           if (d.weatherSummary) {
@@ -280,41 +264,6 @@ export default function WeeklyPlantCalendarBar({ weekData, onLogWater, expandedL
                   <Text style={{ fontSize: 15, opacity: d.health ? 1 : 0.25 }}>❤️</Text>
                 </View>
               </View>
-              {expanded && (
-                <View style={styles.expandedContent}>
-                  <View style={styles.tempCol}>
-                    <View style={styles.tempRow}>
-                      <MaterialCommunityIcons name="arrow-up" color="#ef4444" size={14} accessibilityLabel="Max temp" />
-                      <Text style={[styles.tempText, { color: '#ef4444' }]}> {
-                        d.detailedTemps && d.detailedTemps.max !== null && d.detailedTemps.max !== undefined
-                          ? `${d.detailedTemps.max.toFixed(1)}°`
-                          : d.maxTemp !== null
-                            ? `${d.maxTemp.toFixed(1)}°`
-                            : '--'
-                      }</Text>
-                    </View>
-                    <View style={styles.tempRow}>
-                      <MaterialCommunityIcons name="arrow-down" color="#3b82f6" size={14} accessibilityLabel="Min temp" />
-                      <Text style={[styles.tempText, { color: '#3b82f6' }]}> {
-                        d.detailedTemps && d.detailedTemps.min !== null && d.detailedTemps.min !== undefined
-                          ? `${d.detailedTemps.min.toFixed(1)}°`
-                          : d.minTemp !== null
-                            ? `${d.minTemp.toFixed(1)}°`
-                            : '--'
-                      }</Text>
-                    </View>
-                  </View>
-                  <View style={styles.infoRow}>
-                    <MaterialCommunityIcons name="weather-rainy" color="#38bdf8" size={14} accessibilityLabel="Rainfall" />
-                    <Text style={styles.infoText}>{d.rain !== null ? `${d.rain}mm` : '--'}</Text>
-                  </View>
-                  <View style={styles.infoRow}>
-                    <MaterialCommunityIcons name="water-percent" color="#06b6d4" size={14} accessibilityLabel="Humidity" />
-                    <Text style={styles.infoText}>{d.humidity !== null ? `${d.humidity}%` : '--'}</Text>
-                  </View>
-                  {/* Add more details if desired */}
-                </View>
-              )}
             </TouchableOpacity>
           );
         })}

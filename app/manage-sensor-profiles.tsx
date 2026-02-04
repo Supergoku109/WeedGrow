@@ -5,9 +5,7 @@ import { Text, Button, List, Dialog, Portal, TextInput, ActivityIndicator } from
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { db } from '@/services/firebase';
-import { useRouter } from 'expo-router';
-import { collection, getDocs, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
-import { deleteField } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, deleteDoc, query, where, deleteField } from 'firebase/firestore';
 import HomeBackground from '@/features/home/components/HomeBackground';
 
 export default function ManageSensorProfilesScreen({ emptyMessage }: { emptyMessage?: string } = {}) {
@@ -23,7 +21,6 @@ export default function ManageSensorProfilesScreen({ emptyMessage }: { emptyMess
   const [linkedPlants, setLinkedPlants] = useState<any[]>([]);
   const [showLinked, setShowLinked] = useState(false);
   const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
-  const router = useRouter();
 
   useEffect(() => {
     let isMounted = true;
@@ -34,7 +31,7 @@ export default function ManageSensorProfilesScreen({ emptyMessage }: { emptyMess
         if (isMounted) {
           setProfiles(snap.docs.map((d: any) => ({ id: d.id, ...d.data() })));
         }
-      } catch (e) {
+      } catch {
         if (isMounted) setProfiles([]);
       } finally {
         if (isMounted) setLoading(false);
@@ -73,7 +70,7 @@ export default function ManageSensorProfilesScreen({ emptyMessage }: { emptyMess
       }
       await updateDoc(doc(db, 'sensorProfiles', editing.id), update);
       setEditing(null);
-    } catch (e) {
+    } catch {
       Alert.alert('Error', 'Failed to update profile.');
     }
   };

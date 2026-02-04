@@ -33,4 +33,3 @@ export default function HomeBackground() {
   );
 }
 
-const styles = StyleSheet.create({});

@@ -11,6 +11,8 @@ export const useHomeScreenState = () => {
   // Core groups data and operations
   const groupsState = useGroupList();
 
+  const { handleWaterAll: handleWaterAllApi } = groupsState;
+
   // Filtering state and logic
   const {
     searchQuery,
@@ -37,7 +39,7 @@ export const useHomeScreenState = () => {
 
   // Group action handlers
   const { handleEditGroup } = useGroupListHandlers({
-    handleWaterAllApi: groupsState.handleWaterAll,
+    handleWaterAllApi,
     setEditGroup: groupsState.setEditGroup,
     setSnackMessage,
     setSnackVisible
@@ -51,7 +53,7 @@ export const useHomeScreenState = () => {
     setWaterLoadingMap((prev) => ({ ...prev, [groupId]: true }));
     setWaterDisabledMap((prev) => ({ ...prev, [groupId]: true }));
     try {
-      await groupsState.handleWaterAll(groupId);
+      await handleWaterAllApi(groupId);
       setSnackMessage('All plants watered successfully!');
     } catch (error: any) {
       console.error('Error watering group plants:', error);
@@ -63,7 +65,7 @@ export const useHomeScreenState = () => {
       }, 500);
       setSnackVisible(true);
     }
-  }, [groupsState.handleWaterAll]);
+  }, [handleWaterAllApi]);
 
   /**
    * Dismisses the notification snackbar

@@ -3,7 +3,7 @@
 // It allows the user to set the plant's physical location using a map and nickname, and optionally use device geolocation.
 
 import React, { memo, useCallback } from 'react'
-import { View, ScrollView, StyleSheet } from 'react-native'
+import { ScrollView, StyleSheet } from 'react-native'
 import { Button } from 'react-native-paper'
 import { ThemedText } from '@/ui/ThemedText'
 import { WeedGrowCard } from '@/ui/WeedGrowCard'
@@ -11,6 +11,7 @@ import { WeedGrowFormSection } from '@/ui/WeedGrowFormSection'
 import { WeedGrowButtonRow } from '@/ui/WeedGrowButtonRow'
 import { MapPicker } from '@/ui/MapPicker'
 import { AnimatedMakikoInput } from '@/components/ui/AnimatedMakikoInput'
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import { WeedGrowCardBackground } from '@/components/ui/WeedGrowCardBackground'
 
 import type { PlantForm } from '@/features/plants/form/PlantForm'
@@ -59,7 +60,7 @@ export const LocationForm = memo(function LocationForm({ form, logic, next, back
               onChangeText={handleLocationNicknameChange}
               iconName="map-marker"
               iconColor={logic.tint}
-              iconClass={require('react-native-vector-icons/MaterialCommunityIcons').default}
+              iconClass={MaterialCommunityIcons}
               autoCapitalize="words"
               autoCorrect={false}
               returnKeyType="done"

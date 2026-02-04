@@ -29,7 +29,7 @@ export default function SensorProfileBar({ sensorProfileId }: SensorProfileBarPr
             setError('Profile not found');
           }
         }
-      } catch (e) {
+      } catch {
         if (!ignore) setError('Failed to load profile');
       } finally {
         if (!ignore) setLoading(false);

@@ -11,7 +11,7 @@ export interface ExpandedLogPanelProps {
     humidity?: number | null;
     rain?: number | null;
   };
-  logs: Array<{ type: string; description?: string; updatedBy?: string; timestamp?: any }>;
+  logs: { type: string; description?: string; updatedBy?: string; timestamp?: any }[];
   onAddLog: () => void;
   onAddPic: () => void;
 }

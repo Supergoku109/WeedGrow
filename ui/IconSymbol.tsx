@@ -1,6 +1,5 @@
 import React from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 export function IconSymbol({ name, size, color }: { name: string; size: number; color: string }) {
   // Map your custom icon names to the correct icon set and name
