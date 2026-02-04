@@ -53,6 +53,14 @@ npm run lint
 npm run typecheck
 ```
 
+Optional helper (PowerShell on Windows):
+
+```powershell
+.\scripts\dev.ps1 start
+.\scripts\dev.ps1 lint
+.\scripts\dev.ps1 typecheck
+```
+
 ## Environment Variables
 
 ### App (.env)
