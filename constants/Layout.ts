@@ -8,7 +8,7 @@ import { Spacing } from '@/design-system/tokens/spacing';
 // Header dimensions
 export const HEADER_MAX_HEIGHT = 220;
 export const GALLERY_BAR_HEIGHT = 96;
-export const HEADER_MIN_HEIGHT = GALLERY_BAR_HEIGHT;
+export const HEADER_MIN_HEIGHT = 88;
 
 // Common component dimensions
 export const BUTTON_HEIGHT = {

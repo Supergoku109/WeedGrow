@@ -10,10 +10,8 @@ import { usePlant } from '../hooks/usePlant';
 import { useWateringHistory } from '../hooks/useWateringHistory';
 import { useWeeklyData } from '../hooks/useWeeklyData';
 import { useDailyLogs } from '../hooks/useDailyLogs';
-import { useProgressPics } from '../hooks/useProgressPics';
 import { useCollapsingHeader } from '../hooks/useCollapsingHeader';
 import PlantHeader from '../components/PlantHeader';
-import GalleryBar from '../components/GalleryBar';
 import WeeklyCalendar from '../components/WeeklyCalendar';
 import NotesSection from '../components/NotesSection';
 import { evaluateWateringInsights, type PlantSummary, type WateringInsight } from '@/lib/suggestions/wateringSuggestions';
@@ -36,17 +34,14 @@ export default function PlantDetailScreen() {
   const [wateringInsightLoading, setWateringInsightLoading] = React.useState(false);
   const [wateringInsightError, setWateringInsightError] = React.useState<string | null>(null);
   const { expandedLogDate, setExpandedLogDate, dailyLogs, loadingLogs } = useDailyLogs(id);
-  const { progressPics } = useProgressPics(id);
-
-  const { onScroll, animatedBgImageStyle, galleryBarAnimatedStyle } = useCollapsingHeader(
+  const headerMinHeight = HEADER_MIN_HEIGHT + insets.top;
+  const { onScroll, animatedBgImageStyle, collapseProgress } = useCollapsingHeader(
     HEADER_MAX_HEIGHT,
-    HEADER_MIN_HEIGHT,
-    insets.top,
-    screenBackground
+    headerMinHeight
   );
 
-  const headerSpacerHeight = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
-  const topProtectedPadding = HEADER_MIN_HEIGHT + insets.top;
+  const headerSpacerHeight = HEADER_MAX_HEIGHT - headerMinHeight;
+  const topProtectedPadding = headerMinHeight;
   const bottomSafePadding = (insets.bottom || 0) + 80;
   const fabBottom = (insets.bottom || 0) + 24;
 
@@ -174,12 +169,9 @@ export default function PlantDetailScreen() {
           strain={plant.strain}
           stage={plant.growthStage}
           onEdit={handleEditPlant}
+          collapseProgress={collapseProgress}
+          topInset={insets.top}
         />
-      </Animated.View>
-
-      {/* Animated Gallery Bar */}
-      <Animated.View style={galleryBarAnimatedStyle}>
-        <GalleryBar plant={plant} progressPics={progressPics} />
       </Animated.View>
 
       {/* Main content */}

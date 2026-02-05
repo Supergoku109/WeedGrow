@@ -1,10 +1,8 @@
-import { useSharedValue, useAnimatedScrollHandler, useAnimatedStyle, interpolate, Extrapolate } from 'react-native-reanimated';
+import { useSharedValue, useAnimatedScrollHandler, useAnimatedStyle, interpolate, Extrapolate, useDerivedValue } from 'react-native-reanimated';
 
 export function useCollapsingHeader(
   maxHeight: number,
-  minHeight: number,
-  insetsTop: number,
-  themeBackground: string
+  minHeight: number
 ) {
   const scrollY = useSharedValue(0);
   const maxScroll = maxHeight - minHeight;
@@ -23,13 +21,6 @@ export function useCollapsingHeader(
       Extrapolate.CLAMP
     );
 
-    const opacity = interpolate(
-      scrollY.value,
-      [0, maxScroll * 0.8, maxScroll],
-      [1, 1, 0],
-      Extrapolate.CLAMP
-    );
-
     return {
       position: 'absolute',
       top: 0, // changed from insetsTop to 0
@@ -37,43 +28,15 @@ export function useCollapsingHeader(
       right: 0,
       width: '100%',
       height,
-      opacity,
+      overflow: 'hidden',
       zIndex: 0,
     };
   });
 
-  const galleryBarAnimatedStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      scrollY.value,
-      [0, maxScroll],
-      [0, 1],
-      Extrapolate.CLAMP
-    );
-
-    return {
-      position: 'absolute',
-      top: insetsTop, // use insetsTop so collapsed bar sits below the notch
-      left: 0,
-      right: 0,
-      height: minHeight,
-      opacity,
-      transform: [
-        {
-          translateY: interpolate(
-            scrollY.value,
-            [0, maxScroll],
-            [minHeight, 0],
-            Extrapolate.CLAMP
-          ),
-        },
-      ],
-      zIndex: 10,
-      backgroundColor: themeBackground,
-      borderBottomWidth: opacity > 0.95 ? 1 : 0,
-      borderBottomColor: '#ddd',
-      justifyContent: 'center',
-    };
+  const collapseProgress = useDerivedValue(() => {
+    if (maxScroll <= 0) return 0;
+    return Math.min(1, Math.max(0, scrollY.value / maxScroll));
   });
 
-  return { onScroll, animatedBgImageStyle, galleryBarAnimatedStyle };
+  return { onScroll, animatedBgImageStyle, collapseProgress };
 }
