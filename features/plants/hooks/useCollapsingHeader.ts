@@ -29,7 +29,6 @@ export function useCollapsingHeader(
       width: '100%',
       height,
       overflow: 'hidden',
-      zIndex: 0,
     };
   });
 

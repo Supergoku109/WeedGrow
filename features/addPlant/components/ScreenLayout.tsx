@@ -20,6 +20,7 @@ interface ScreenLayoutProps {
   backgroundColor?: string; // Optional background color
   scrollable?: boolean; // Whether to wrap content in a ScrollView
   paddingTopIndicator?: boolean; // Whether to add extra top padding (e.g. for step indicator)
+  horizontalPadding?: number; // Optional horizontal padding for content
 }
 
 // Main layout component for Add Plant screens
@@ -27,7 +28,8 @@ export function ScreenLayout({
   children,
   backgroundColor = '#fff',
   scrollable = true,
-  paddingTopIndicator = false
+  paddingTopIndicator = false,
+  horizontalPadding = 16,
 }: ScreenLayoutProps) {
   return (
     // Safe area for bottom (and optionally top) insets
@@ -44,7 +46,10 @@ export function ScreenLayout({
             <ScrollView
               contentContainerStyle={[
                 styles.scrollContent,
-                { paddingTop: paddingTopIndicator ? 8 : 0 }
+                {
+                  paddingTop: paddingTopIndicator ? 8 : 0,
+                  paddingHorizontal: horizontalPadding,
+                },
               ]}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
@@ -57,7 +62,10 @@ export function ScreenLayout({
             <View
               style={[
                 styles.flex,
-                { paddingTop: paddingTopIndicator ? 8 : 0 }
+                {
+                  paddingTop: paddingTopIndicator ? 8 : 0,
+                  paddingHorizontal: horizontalPadding,
+                },
               ]}
             >
               {children}
@@ -73,5 +81,5 @@ export function ScreenLayout({
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   flex: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingHorizontal: 16, gap: 16 }
+  scrollContent: { flexGrow: 1, gap: 16 }
 });

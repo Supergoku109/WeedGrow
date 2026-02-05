@@ -1,6 +1,8 @@
 import { db } from '@/services/firebase';
-import { doc, deleteDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, deleteDoc, collection, getDocs, writeBatch, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { invalidatePlantCache } from '@/features/plants/hooks/usePlantList';
+import logger from '@/lib/logger';
+import type { Plant } from '@/firestoreModels';
 
 // Main delete function for entire plant + subcollections
 export async function deletePlantAndSubcollections(id: string) {
@@ -23,4 +25,17 @@ export async function deletePlantAndSubcollections(id: string) {
 
   // Invalidate the plant cache so fresh data is fetched next time
   invalidatePlantCache();
+}
+
+export type UpdatePlantFields = Partial<Omit<Plant, 'createdAt' | 'updatedAt' | 'owners'>>;
+
+export async function updatePlant(id: string, updates: UpdatePlantFields) {
+  try {
+    const plantRef = doc(db, 'plants', id);
+    await updateDoc(plantRef, { ...updates, updatedAt: serverTimestamp() });
+    invalidatePlantCache();
+  } catch (error) {
+    logger.error('Error updating plant:', error);
+    throw new Error('Failed to update plant. Please try again.');
+  }
 }

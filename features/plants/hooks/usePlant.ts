@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 import { Plant } from '@/firestoreModels';
 
@@ -9,18 +9,26 @@ export function usePlant(id?: string) {
 
   useEffect(() => {
     if (!id) {
+      setPlant(null);
       setLoading(false);
       return;
     }
 
-    const fetch = async () => {
-      const ref = doc(db, 'plants', id);
-      const snap = await getDoc(ref);
-      if (snap.exists()) setPlant(snap.data() as Plant);
-      setLoading(false);
-    };
+    setLoading(true);
+    const ref = doc(db, 'plants', id);
+    const unsubscribe = onSnapshot(
+      ref,
+      (snap) => {
+        setPlant(snap.exists() ? (snap.data() as Plant) : null);
+        setLoading(false);
+      },
+      () => {
+        setPlant(null);
+        setLoading(false);
+      }
+    );
 
-    fetch();
+    return () => unsubscribe();
   }, [id]);
 
   return { plant, loading };

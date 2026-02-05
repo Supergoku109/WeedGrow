@@ -250,7 +250,7 @@ export default function PlantDetailScreen() {
 
   const handleEditPlant = React.useCallback(() => {
     if (!id) return;
-    router.push({ pathname: '/add-plant', params: { editId: String(id) } });
+    router.push(`/plant/${String(id)}/edit`);
   }, [id, router]);
 
   if (loading) return <LoadingView />;
@@ -262,7 +262,7 @@ export default function PlantDetailScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: screenBackgroundColor }} edges={['left', 'right']}>
       {/* Collapsing background image */}
-      <Animated.View style={animatedBgImageStyle}>
+      <Animated.View style={[animatedBgImageStyle, styles.headerOverlay]} pointerEvents="box-none">
         <PlantHeader
           imageUri={plant.imageUri}
           height={HEADER_MAX_HEIGHT}
@@ -277,7 +277,7 @@ export default function PlantDetailScreen() {
 
       {/* Main content */}
       <Animated.ScrollView
-        style={{ flex: 1 }}
+        style={styles.scroll}
         contentContainerStyle={{
           paddingTop: HEADER_MAX_HEIGHT,
           paddingBottom: scrollContentPaddingBottom,
@@ -428,6 +428,15 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
+  },
+  headerOverlay: {
+    zIndex: 10,
+    elevation: 10,
+  },
+  scroll: {
+    flex: 1,
+    position: 'relative',
+    zIndex: 0,
   },
 });
 

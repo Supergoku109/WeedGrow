@@ -22,6 +22,7 @@ export interface Plant {
     notes?: string;
     imageUri?: string;
     waterLevel?: number; // 0-1 representing current watering level
+    height?: number;
   
     location?: {
       lat: number;
