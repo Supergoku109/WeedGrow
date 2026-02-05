@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import WeeklyPlantCalendarBar, { WeeklyDayData } from '@/ui/WeeklyPlantCalendarBar';
 import { PlantLog } from '@/firestoreModels';
 import { ThemedText } from '@/ui/ThemedText';
+import { Spacing } from '@/design-system/tokens/spacing';
 
 interface WeeklyCalendarProps {
   weekData: WeeklyDayData[];
@@ -18,10 +19,12 @@ interface WeeklyCalendarProps {
   onAddLog?: () => void;
   onAddPicture?: () => void;
   locationLabel?: string;
+  detailCardTopMargin?: number;
 }
 
 export default function WeeklyCalendar(props: WeeklyCalendarProps) {
   const router = useRouter();
+  const detailCardTopMargin = props.detailCardTopMargin ?? Spacing.sm;
 
   if (props.weekData.length !== 7) return null;
 
@@ -85,7 +88,7 @@ export default function WeeklyCalendar(props: WeeklyCalendarProps) {
       />
 
       {selectedDay ? (
-        <View style={styles.detailCard}>
+        <View style={[styles.detailCard, { marginTop: detailCardTopMargin }]}>
           <View style={styles.detailRow}>
             <MaterialCommunityIcons name="thermometer" size={18} color="#9aa3ab" />
             <ThemedText style={styles.detailText}>
@@ -166,7 +169,6 @@ export default function WeeklyCalendar(props: WeeklyCalendarProps) {
 
 const styles = StyleSheet.create({
   detailCard: {
-    marginTop: 12,
     marginBottom: 10,
     padding: 16,
     borderRadius: 20,

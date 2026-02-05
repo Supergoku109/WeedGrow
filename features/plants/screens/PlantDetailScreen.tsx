@@ -22,6 +22,107 @@ import { usePlant } from '../hooks/usePlant';
 import { useWateringHistory } from '../hooks/useWateringHistory';
 import { useWeeklyData } from '../hooks/useWeeklyData';
 
+type WateringInsightSectionProps = {
+  isLoading: boolean;
+  insight: WateringInsight | null;
+  error: string | null;
+  isLocationMissing: boolean;
+};
+
+function WateringInsightSection({
+  isLoading,
+  insight,
+  error,
+  isLocationMissing,
+}: WateringInsightSectionProps) {
+  if (isLoading) {
+    return (
+      <View style={[styles.wateringInsightCard, styles.wateringInsightNeutral]}>
+        <MaterialCommunityIcons
+          name="progress-clock"
+          size={22}
+          color="#2f6b3b"
+          style={styles.wateringInsightIcon}
+        />
+        <View style={styles.wateringInsightTextContainer}>
+          <ThemedText style={styles.wateringInsightHeadline}>Checking watering needs...</ThemedText>
+          <ThemedText style={styles.wateringInsightReason}>Hold on while we analyse the latest weather.</ThemedText>
+        </View>
+      </View>
+    );
+  }
+
+  if (insight) {
+    return (
+      <View
+        style={[
+          styles.wateringInsightCard,
+          insight.needsWater
+            ? styles.wateringInsightNeedsWater
+            : styles.wateringInsightAllGood,
+        ]}
+      >
+        <MaterialCommunityIcons
+          name={insight.needsWater ? 'water-alert' : 'water-check'}
+          size={22}
+          color={insight.needsWater ? '#a4432d' : '#2f6b3b'}
+          style={styles.wateringInsightIcon}
+        />
+        <View style={styles.wateringInsightTextContainer}>
+          <ThemedText style={styles.wateringInsightHeadline}>
+            {insight.needsWater
+              ? (insight.reason.includes("Yesterday's weather data unavailable")
+                ? "Yesterday's weather data unavailable - assuming no water was received... using current and forecast data only. Watering needed today."
+                : 'Watering needed today')
+              : (insight.reason.includes("Yesterday's weather data unavailable")
+                ? "Yesterday's weather data unavailable - assuming no water was received... using current and forecast data only. No watering needed today."
+                : 'No watering needed today')}
+          </ThemedText>
+          <ThemedText style={styles.wateringInsightReason}>
+            {insight.reason}
+          </ThemedText>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.wateringInsightCard, styles.wateringInsightError]}>
+        <MaterialCommunityIcons
+          name="alert-circle-outline"
+          size={22}
+          color="#b9504b"
+          style={styles.wateringInsightIcon}
+        />
+        <View style={styles.wateringInsightTextContainer}>
+          <ThemedText style={styles.wateringInsightHeadline}>Couldn't fetch watering guidance</ThemedText>
+          <ThemedText style={styles.wateringInsightReason}>{error}</ThemedText>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.wateringInsightCard, styles.wateringInsightNeutral]}>
+      <MaterialCommunityIcons
+        name={isLocationMissing ? 'map-marker-alert-outline' : 'information-outline'}
+        size={22}
+        color="#4f6b5b"
+        style={styles.wateringInsightIcon}
+      />
+      <View style={styles.wateringInsightTextContainer}>
+        <ThemedText style={styles.wateringInsightHeadline}>Watering guidance unavailable</ThemedText>
+        <ThemedText style={styles.wateringInsightReason}>
+          {isLocationMissing
+            ? 'Add a location to this plant to enable weather-based watering advice.'
+            : 'No weather history yet. We will update this insight once data is available.'}
+        </ThemedText>
+      </View>
+    </View>
+  );
+}
+
 export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
@@ -33,9 +134,11 @@ export default function PlantDetailScreen() {
   const { history } = useWateringHistory(plant, id);
   const { weekData, updateWeekData } = useWeeklyData(plant, history, id);
   const [wateringInsight, setWateringInsight] = React.useState<WateringInsight | null>(null);
-  const [wateringInsightLoading, setWateringInsightLoading] = React.useState(false);
+  const [isWateringInsightLoading, setIsWateringInsightLoading] = React.useState(false);
   const [wateringInsightError, setWateringInsightError] = React.useState<string | null>(null);
   const { expandedLogDate, setExpandedLogDate, dailyLogs, loadingLogs } = useDailyLogs(id);
+  const isLocationAvailable =
+    typeof plant?.location?.lat === 'number' && typeof plant?.location?.lng === 'number';
   const collapsedHeaderHeight = HEADER_MIN_HEIGHT + insets.top;
   const headerCollapseRange = Math.max(0, HEADER_MAX_HEIGHT - collapsedHeaderHeight);
   const { onScroll, animatedBgImageStyle, collapseProgress } = useCollapsingHeader(
@@ -53,21 +156,19 @@ export default function PlantDetailScreen() {
     if (!plant || !id) {
       setWateringInsight(null);
       setWateringInsightError(null);
-      setWateringInsightLoading(false);
+      setIsWateringInsightLoading(false);
       return;
     }
 
-    const hasLocation =
-      typeof (plant as any)?.location?.lat === 'number' && typeof (plant as any)?.location?.lng === 'number';
-    if (!hasLocation) {
+    if (!isLocationAvailable) {
       setWateringInsight(null);
       setWateringInsightError(null);
-      setWateringInsightLoading(false);
+      setIsWateringInsightLoading(false);
       return;
     }
 
     const evaluate = async () => {
-      setWateringInsightLoading(true);
+      setIsWateringInsightLoading(true);
       setWateringInsightError(null);
       try {
         const summary: PlantSummary = { ...plant, id: String(id) };
@@ -83,7 +184,7 @@ export default function PlantDetailScreen() {
         }
       } finally {
         if (!cancelled) {
-          setWateringInsightLoading(false);
+          setIsWateringInsightLoading(false);
         }
       }
     };
@@ -93,7 +194,7 @@ export default function PlantDetailScreen() {
     return () => {
       cancelled = true;
     };
-  }, [plant, id]);
+  }, [plant, id, isLocationAvailable]);
 
   React.useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -123,23 +224,23 @@ export default function PlantDetailScreen() {
     }
   }, [plant?.environment, weekData, todayLocalDate, expandedLogDate, setExpandedLogDate]);
 
-  const [logTypeSheetVisible, setLogTypeSheetVisible] = React.useState(false);
-  const [logFormVisible, setLogFormVisible] = React.useState(false);
+  const [isLogTypeSheetVisible, setIsLogTypeSheetVisible] = React.useState(false);
+  const [isLogFormVisible, setIsLogFormVisible] = React.useState(false);
   const [selectedLogType, setSelectedLogType] = React.useState<import('@/ui/WeedGrowLogTypeSheet').LogType | null>(null);
 
-  const handleAddLogPress = () => setLogTypeSheetVisible(true);
+  const handleAddLogPress = () => setIsLogTypeSheetVisible(true);
   const handleLogTypeSelect = (type: import('@/ui/WeedGrowLogTypeSheet').LogType) => {
     setSelectedLogType(type);
-    setLogTypeSheetVisible(false);
-    setLogFormVisible(true);
+    setIsLogTypeSheetVisible(false);
+    setIsLogFormVisible(true);
   };
   const handleLogFormCancel = () => {
-    setLogFormVisible(false);
+    setIsLogFormVisible(false);
     setSelectedLogType(null);
   };
-  const handleLogFormSubmit = (fields: { description: string }) => {
+  const handleLogFormSubmit = (_fields: { description: string }) => {
     // You may want to call your addPlantLog logic here, or open a date picker, etc.
-    setLogFormVisible(false);
+    setIsLogFormVisible(false);
     setSelectedLogType(null);
     // Optionally, trigger a refresh or feedback
   };
@@ -155,10 +256,8 @@ export default function PlantDetailScreen() {
   if (loading) return <LoadingView />;
   if (!plant) return <NotFoundView />;
 
-  const locationMissing =
-    !(plant as any)?.location ||
-    typeof (plant as any).location?.lat !== 'number' ||
-    typeof (plant as any).location?.lng !== 'number';
+  const isLocationMissing = !isLocationAvailable;
+  const shouldShowWeeklyCalendar = plant.environment === 'outdoor' && weekData.length === 7;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: screenBackgroundColor }} edges={['left', 'right']}>
@@ -191,83 +290,15 @@ export default function PlantDetailScreen() {
         overScrollMode="never"
       >
         <View style={styles.wateringInsightWrapper}>
-          {wateringInsightLoading ? (
-            <View style={[styles.wateringInsightCard, styles.wateringInsightNeutral]}>
-              <MaterialCommunityIcons
-                name="progress-clock"
-                size={22}
-                color="#2f6b3b"
-                style={styles.wateringInsightIcon}
-              />
-              <View style={styles.wateringInsightTextContainer}>
-                <ThemedText style={styles.wateringInsightHeadline}>Checking watering needs...</ThemedText>
-                <ThemedText style={styles.wateringInsightReason}>Hold on while we analyse the latest weather.</ThemedText>
-              </View>
-            </View>
-          ) : wateringInsight ? (
-            <View
-              style={[
-                styles.wateringInsightCard,
-                wateringInsight.needsWater
-                  ? styles.wateringInsightNeedsWater
-                  : styles.wateringInsightAllGood,
-              ]}
-            >
-              <MaterialCommunityIcons
-                name={wateringInsight.needsWater ? 'water-alert' : 'water-check'}
-                size={22}
-                color={wateringInsight.needsWater ? '#a4432d' : '#2f6b3b'}
-                style={styles.wateringInsightIcon}
-              />
-              <View style={styles.wateringInsightTextContainer}>
-                <ThemedText style={styles.wateringInsightHeadline}>
-                  {wateringInsight.needsWater
-                    ? (wateringInsight.reason.includes("Yesterday's weather data unavailable")
-                      ? "Yesterday's weather data unavailable - assuming no water was received... using current and forecast data only. Watering needed today."
-                      : 'Watering needed today')
-                    : (wateringInsight.reason.includes("Yesterday's weather data unavailable")
-                      ? "Yesterday's weather data unavailable - assuming no water was received... using current and forecast data only. No watering needed today."
-                      : 'No watering needed today')}
-                </ThemedText>
-                <ThemedText style={styles.wateringInsightReason}>
-                  {wateringInsight.reason}
-                </ThemedText>
-              </View>
-            </View>
-          ) : wateringInsightError ? (
-            <View style={[styles.wateringInsightCard, styles.wateringInsightError]}>
-              <MaterialCommunityIcons
-                name="alert-circle-outline"
-                size={22}
-                color="#b9504b"
-                style={styles.wateringInsightIcon}
-              />
-              <View style={styles.wateringInsightTextContainer}>
-                <ThemedText style={styles.wateringInsightHeadline}>Couldn't fetch watering guidance</ThemedText>
-                <ThemedText style={styles.wateringInsightReason}>{wateringInsightError}</ThemedText>
-              </View>
-            </View>
-          ) : (
-            <View style={[styles.wateringInsightCard, styles.wateringInsightNeutral]}>
-              <MaterialCommunityIcons
-                name={locationMissing ? 'map-marker-alert-outline' : 'information-outline'}
-                size={22}
-                color="#4f6b5b"
-                style={styles.wateringInsightIcon}
-              />
-              <View style={styles.wateringInsightTextContainer}>
-                <ThemedText style={styles.wateringInsightHeadline}>Watering guidance unavailable</ThemedText>
-                <ThemedText style={styles.wateringInsightReason}>
-                  {locationMissing
-                    ? 'Add a location to this plant to enable weather-based watering advice.'
-                    : 'No weather history yet. We will update this insight once data is available.'}
-                </ThemedText>
-              </View>
-            </View>
-          )}
+          <WateringInsightSection
+            isLoading={isWateringInsightLoading}
+            insight={wateringInsight}
+            error={wateringInsightError}
+            isLocationMissing={isLocationMissing}
+          />
         </View>
 
-        {plant.environment === 'outdoor' && weekData.length === 7 && (
+        {shouldShowWeeklyCalendar && (
           <View style={styles.section}>
             <WeeklyCalendar
               weekData={weekData}
@@ -281,6 +312,7 @@ export default function PlantDetailScreen() {
               onAddLog={handleAddLogPress}
               onAddPicture={handleAddPicturePress}
               locationLabel={plant.locationNickname || 'Home'}
+              detailCardTopMargin={0}
             />
           </View>
         )}
@@ -294,13 +326,13 @@ export default function PlantDetailScreen() {
 
       {/* Log Type Sheet */}
       <WeedGrowLogTypeSheet
-        visible={logTypeSheetVisible}
+        visible={isLogTypeSheetVisible}
         onSelect={handleLogTypeSelect}
-        onClose={() => setLogTypeSheetVisible(false)}
+        onClose={() => setIsLogTypeSheetVisible(false)}
       />
       {/* Log Form Modal */}
       <WeedGrowLogForm
-        visible={logFormVisible}
+        visible={isLogFormVisible}
         logType={selectedLogType || 'notes'}
         onSubmit={handleLogFormSubmit}
         onCancel={handleLogFormCancel}
