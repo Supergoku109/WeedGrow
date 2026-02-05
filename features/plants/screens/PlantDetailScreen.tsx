@@ -1,11 +1,12 @@
 import React from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { SafeAreaView, Dimensions, View, BackHandler, StyleSheet, TouchableOpacity } from 'react-native';
+import { useWindowDimensions, View, BackHandler, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ThemedText } from '@/ui/ThemedText';
 import { HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT } from '@/constants/Layout';
+import { Spacing } from '@/design-system/tokens/spacing';
 import { usePlant } from '../hooks/usePlant';
 import { useWateringHistory } from '../hooks/useWateringHistory';
 import { useWeeklyData } from '../hooks/useWeeklyData';
@@ -24,6 +25,7 @@ import logger from '@/lib/logger';
 export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const router = useRouter();
   const screenBackground = '#0f1012';
 
@@ -35,15 +37,15 @@ export default function PlantDetailScreen() {
   const [wateringInsightError, setWateringInsightError] = React.useState<string | null>(null);
   const { expandedLogDate, setExpandedLogDate, dailyLogs, loadingLogs } = useDailyLogs(id);
   const headerMinHeight = HEADER_MIN_HEIGHT + insets.top;
+  const maxScroll = Math.max(0, HEADER_MAX_HEIGHT - headerMinHeight);
   const { onScroll, animatedBgImageStyle, collapseProgress } = useCollapsingHeader(
     HEADER_MAX_HEIGHT,
     headerMinHeight
   );
 
-  const headerSpacerHeight = HEADER_MAX_HEIGHT - headerMinHeight;
-  const topProtectedPadding = headerMinHeight;
-  const bottomSafePadding = (insets.bottom || 0) + 80;
-  const fabBottom = (insets.bottom || 0) + 24;
+  const fabBottom = insets.bottom + FAB_OFFSET;
+  const contentPaddingBottom = fabBottom + FAB_SIZE + FAB_CONTENT_CLEARANCE;
+  const contentMinHeight = windowHeight + maxScroll;
 
   React.useEffect(() => {
     let cancelled = false;
@@ -159,7 +161,7 @@ export default function PlantDetailScreen() {
     typeof (plant as any).location?.lng !== 'number';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: screenBackground }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: screenBackground }} edges={['left', 'right']}>
       {/* Collapsing background image */}
       <Animated.View style={animatedBgImageStyle}>
         <PlantHeader
@@ -178,117 +180,116 @@ export default function PlantDetailScreen() {
       <Animated.ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
-          paddingBottom: bottomSafePadding,
-          minHeight: Dimensions.get('window').height + HEADER_MAX_HEIGHT,
+          paddingTop: HEADER_MAX_HEIGHT,
+          paddingBottom: contentPaddingBottom,
+          paddingHorizontal: CONTENT_HORIZONTAL,
+          minHeight: contentMinHeight,
         }}
         onScroll={onScroll}
         scrollEventThrottle={16}
         bounces={false}
         overScrollMode="never"
       >
-        <View style={{ height: headerSpacerHeight }} />
-        <View style={{ paddingTop: topProtectedPadding }}>
-          <View style={styles.wateringInsightWrapper}>
-            {wateringInsightLoading ? (
-              <View style={[styles.wateringInsightCard, styles.wateringInsightNeutral]}>
-                <MaterialCommunityIcons
-                  name="progress-clock"
-                  size={22}
-                  color="#2f6b3b"
-                  style={styles.wateringInsightIcon}
-                />
-                <View style={styles.wateringInsightTextContainer}>
-                  <ThemedText style={styles.wateringInsightHeadline}>Checking watering needs...</ThemedText>
-                  <ThemedText style={styles.wateringInsightReason}>Hold on while we analyse the latest weather.</ThemedText>
-                </View>
-              </View>
-            ) : wateringInsight ? (
-              <View
-                style={[
-                  styles.wateringInsightCard,
-                  wateringInsight.needsWater
-                    ? styles.wateringInsightNeedsWater
-                    : styles.wateringInsightAllGood,
-                ]}
-              >
-                <MaterialCommunityIcons
-                  name={wateringInsight.needsWater ? 'water-alert' : 'water-check'}
-                  size={22}
-                  color={wateringInsight.needsWater ? '#a4432d' : '#2f6b3b'}
-                  style={styles.wateringInsightIcon}
-                />
-                <View style={styles.wateringInsightTextContainer}>
-                  <ThemedText style={styles.wateringInsightHeadline}>
-                    {wateringInsight.needsWater
-                      ? (wateringInsight.reason.includes("Yesterday's weather data unavailable")
-                        ? "Yesterday's weather data unavailable - assuming no water was received... using current and forecast data only. Watering needed today."
-                        : 'Watering needed today')
-                      : (wateringInsight.reason.includes("Yesterday's weather data unavailable")
-                        ? "Yesterday's weather data unavailable - assuming no water was received... using current and forecast data only. No watering needed today."
-                        : 'No watering needed today')}
-                  </ThemedText>
-                  <ThemedText style={styles.wateringInsightReason}>
-                    {wateringInsight.reason}
-                  </ThemedText>
-                </View>
-              </View>
-            ) : wateringInsightError ? (
-              <View style={[styles.wateringInsightCard, styles.wateringInsightError]}>
-                <MaterialCommunityIcons
-                  name="alert-circle-outline"
-                  size={22}
-                  color="#b9504b"
-                  style={styles.wateringInsightIcon}
-                />
-                <View style={styles.wateringInsightTextContainer}>
-                  <ThemedText style={styles.wateringInsightHeadline}>Couldn't fetch watering guidance</ThemedText>
-                  <ThemedText style={styles.wateringInsightReason}>{wateringInsightError}</ThemedText>
-                </View>
-              </View>
-            ) : (
-              <View style={[styles.wateringInsightCard, styles.wateringInsightNeutral]}>
-                <MaterialCommunityIcons
-                  name={locationMissing ? 'map-marker-alert-outline' : 'information-outline'}
-                  size={22}
-                  color="#4f6b5b"
-                  style={styles.wateringInsightIcon}
-                />
-                <View style={styles.wateringInsightTextContainer}>
-                  <ThemedText style={styles.wateringInsightHeadline}>Watering guidance unavailable</ThemedText>
-                  <ThemedText style={styles.wateringInsightReason}>
-                    {locationMissing
-                      ? 'Add a location to this plant to enable weather-based watering advice.'
-                      : 'No weather history yet. We will update this insight once data is available.'}
-                  </ThemedText>
-                </View>
-              </View>
-            )}
-          </View>
-
-          {plant.environment === 'outdoor' && weekData.length === 7 && (
-            <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
-              <WeeklyCalendar
-                weekData={weekData}
-                history={history}
-                expandedLogDate={expandedLogDate}
-                setExpandedLogDate={setExpandedLogDate}
-                getLogsForDate={(date: string) => dailyLogs[date] || []}
-                loadingLogs={loadingLogs}
-                updateWeekData={updateWeekData}
-                plantId={id}
-                onAddLog={handleAddLogPress}
-                onAddPicture={handleAddPicturePress}
-                locationLabel={plant.locationNickname || 'Home'}
+        <View style={styles.wateringInsightWrapper}>
+          {wateringInsightLoading ? (
+            <View style={[styles.wateringInsightCard, styles.wateringInsightNeutral]}>
+              <MaterialCommunityIcons
+                name="progress-clock"
+                size={22}
+                color="#2f6b3b"
+                style={styles.wateringInsightIcon}
               />
+              <View style={styles.wateringInsightTextContainer}>
+                <ThemedText style={styles.wateringInsightHeadline}>Checking watering needs...</ThemedText>
+                <ThemedText style={styles.wateringInsightReason}>Hold on while we analyse the latest weather.</ThemedText>
+              </View>
+            </View>
+          ) : wateringInsight ? (
+            <View
+              style={[
+                styles.wateringInsightCard,
+                wateringInsight.needsWater
+                  ? styles.wateringInsightNeedsWater
+                  : styles.wateringInsightAllGood,
+              ]}
+            >
+              <MaterialCommunityIcons
+                name={wateringInsight.needsWater ? 'water-alert' : 'water-check'}
+                size={22}
+                color={wateringInsight.needsWater ? '#a4432d' : '#2f6b3b'}
+                style={styles.wateringInsightIcon}
+              />
+              <View style={styles.wateringInsightTextContainer}>
+                <ThemedText style={styles.wateringInsightHeadline}>
+                  {wateringInsight.needsWater
+                    ? (wateringInsight.reason.includes("Yesterday's weather data unavailable")
+                      ? "Yesterday's weather data unavailable - assuming no water was received... using current and forecast data only. Watering needed today."
+                      : 'Watering needed today')
+                    : (wateringInsight.reason.includes("Yesterday's weather data unavailable")
+                      ? "Yesterday's weather data unavailable - assuming no water was received... using current and forecast data only. No watering needed today."
+                      : 'No watering needed today')}
+                </ThemedText>
+                <ThemedText style={styles.wateringInsightReason}>
+                  {wateringInsight.reason}
+                </ThemedText>
+              </View>
+            </View>
+          ) : wateringInsightError ? (
+            <View style={[styles.wateringInsightCard, styles.wateringInsightError]}>
+              <MaterialCommunityIcons
+                name="alert-circle-outline"
+                size={22}
+                color="#b9504b"
+                style={styles.wateringInsightIcon}
+              />
+              <View style={styles.wateringInsightTextContainer}>
+                <ThemedText style={styles.wateringInsightHeadline}>Couldn't fetch watering guidance</ThemedText>
+                <ThemedText style={styles.wateringInsightReason}>{wateringInsightError}</ThemedText>
+              </View>
+            </View>
+          ) : (
+            <View style={[styles.wateringInsightCard, styles.wateringInsightNeutral]}>
+              <MaterialCommunityIcons
+                name={locationMissing ? 'map-marker-alert-outline' : 'information-outline'}
+                size={22}
+                color="#4f6b5b"
+                style={styles.wateringInsightIcon}
+              />
+              <View style={styles.wateringInsightTextContainer}>
+                <ThemedText style={styles.wateringInsightHeadline}>Watering guidance unavailable</ThemedText>
+                <ThemedText style={styles.wateringInsightReason}>
+                  {locationMissing
+                    ? 'Add a location to this plant to enable weather-based watering advice.'
+                    : 'No weather history yet. We will update this insight once data is available.'}
+                </ThemedText>
+              </View>
             </View>
           )}
-
-          {plant.notes ? (
-            <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
-              <NotesSection notes={plant.notes} />
-            </View>
-          ) : null}
         </View>
+
+        {plant.environment === 'outdoor' && weekData.length === 7 && (
+          <View style={styles.section}>
+            <WeeklyCalendar
+              weekData={weekData}
+              history={history}
+              expandedLogDate={expandedLogDate}
+              setExpandedLogDate={setExpandedLogDate}
+              getLogsForDate={(date: string) => dailyLogs[date] || []}
+              loadingLogs={loadingLogs}
+              updateWeekData={updateWeekData}
+              plantId={id}
+              onAddLog={handleAddLogPress}
+              onAddPicture={handleAddPicturePress}
+              locationLabel={plant.locationNickname || 'Home'}
+            />
+          </View>
+        )}
+
+        {plant.notes ? (
+          <View style={styles.sectionLarge}>
+            <NotesSection notes={plant.notes} />
+          </View>
+        ) : null}
       </Animated.ScrollView>
 
       {/* Log Type Sheet */}
@@ -317,11 +318,19 @@ export default function PlantDetailScreen() {
   );
 }
 
+const FAB_SIZE = 58;
+const FAB_OFFSET = Spacing.lg;
+const FAB_CONTENT_CLEARANCE = Spacing.md;
+const CONTENT_HORIZONTAL = Spacing.md;
+const SECTION_GAP = Spacing.md;
+const SECTION_GAP_LARGE = Spacing.lg;
+const INSIGHT_OVERLAP = -18;
+const INSIGHT_GAP = 12;
+
 const styles = StyleSheet.create({
   wateringInsightWrapper: {
-    paddingHorizontal: 16,
-    marginTop: -18,
-    marginBottom: 12,
+    marginTop: INSIGHT_OVERLAP,
+    marginBottom: INSIGHT_GAP,
   },
   wateringInsightCard: {
     borderRadius: 20,
@@ -367,12 +376,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#d9a1a1',
   },
+  section: {
+    marginTop: SECTION_GAP,
+  },
+  sectionLarge: {
+    marginTop: SECTION_GAP_LARGE,
+  },
   fab: {
     position: 'absolute',
     right: 20,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: FAB_SIZE,
+    height: FAB_SIZE,
+    borderRadius: FAB_SIZE / 2,
     backgroundColor: '#79c79f',
     alignItems: 'center',
     justifyContent: 'center',
