@@ -33,7 +33,7 @@ export default function PlantDetailScreen() {
   const { history } = useWateringHistory(plant, id);
   const { weekData, updateWeekData } = useWeeklyData(plant, history, id);
   const [wateringInsight, setWateringInsight] = React.useState<WateringInsight | null>(null);
-  const [isWateringInsightLoading, setIsWateringInsightLoading] = React.useState(false);
+  const [wateringInsightLoading, setWateringInsightLoading] = React.useState(false);
   const [wateringInsightError, setWateringInsightError] = React.useState<string | null>(null);
   const { expandedLogDate, setExpandedLogDate, dailyLogs, loadingLogs } = useDailyLogs(id);
   const collapsedHeaderHeight = HEADER_MIN_HEIGHT + insets.top;
@@ -53,21 +53,21 @@ export default function PlantDetailScreen() {
     if (!plant || !id) {
       setWateringInsight(null);
       setWateringInsightError(null);
-      setIsWateringInsightLoading(false);
+      setWateringInsightLoading(false);
       return;
     }
 
-    const isLocationAvailable =
+    const hasLocation =
       typeof (plant as any)?.location?.lat === 'number' && typeof (plant as any)?.location?.lng === 'number';
-    if (!isLocationAvailable) {
+    if (!hasLocation) {
       setWateringInsight(null);
       setWateringInsightError(null);
-      setIsWateringInsightLoading(false);
+      setWateringInsightLoading(false);
       return;
     }
 
     const evaluate = async () => {
-      setIsWateringInsightLoading(true);
+      setWateringInsightLoading(true);
       setWateringInsightError(null);
       try {
         const summary: PlantSummary = { ...plant, id: String(id) };
@@ -83,7 +83,7 @@ export default function PlantDetailScreen() {
         }
       } finally {
         if (!cancelled) {
-          setIsWateringInsightLoading(false);
+          setWateringInsightLoading(false);
         }
       }
     };
@@ -123,23 +123,23 @@ export default function PlantDetailScreen() {
     }
   }, [plant?.environment, weekData, todayLocalDate, expandedLogDate, setExpandedLogDate]);
 
-  const [isLogTypeSheetVisible, setIsLogTypeSheetVisible] = React.useState(false);
-  const [isLogFormVisible, setIsLogFormVisible] = React.useState(false);
+  const [logTypeSheetVisible, setLogTypeSheetVisible] = React.useState(false);
+  const [logFormVisible, setLogFormVisible] = React.useState(false);
   const [selectedLogType, setSelectedLogType] = React.useState<import('@/ui/WeedGrowLogTypeSheet').LogType | null>(null);
 
-  const handleAddLogPress = () => setIsLogTypeSheetVisible(true);
+  const handleAddLogPress = () => setLogTypeSheetVisible(true);
   const handleLogTypeSelect = (type: import('@/ui/WeedGrowLogTypeSheet').LogType) => {
     setSelectedLogType(type);
-    setIsLogTypeSheetVisible(false);
-    setIsLogFormVisible(true);
+    setLogTypeSheetVisible(false);
+    setLogFormVisible(true);
   };
   const handleLogFormCancel = () => {
-    setIsLogFormVisible(false);
+    setLogFormVisible(false);
     setSelectedLogType(null);
   };
-  const handleLogFormSubmit = (_fields: { description: string }) => {
+  const handleLogFormSubmit = (fields: { description: string }) => {
     // You may want to call your addPlantLog logic here, or open a date picker, etc.
-    setIsLogFormVisible(false);
+    setLogFormVisible(false);
     setSelectedLogType(null);
     // Optionally, trigger a refresh or feedback
   };
@@ -155,7 +155,7 @@ export default function PlantDetailScreen() {
   if (loading) return <LoadingView />;
   if (!plant) return <NotFoundView />;
 
-  const isLocationMissing =
+  const locationMissing =
     !(plant as any)?.location ||
     typeof (plant as any).location?.lat !== 'number' ||
     typeof (plant as any).location?.lng !== 'number';
@@ -191,7 +191,7 @@ export default function PlantDetailScreen() {
         overScrollMode="never"
       >
         <View style={styles.wateringInsightWrapper}>
-          {isWateringInsightLoading ? (
+          {wateringInsightLoading ? (
             <View style={[styles.wateringInsightCard, styles.wateringInsightNeutral]}>
               <MaterialCommunityIcons
                 name="progress-clock"
@@ -250,7 +250,7 @@ export default function PlantDetailScreen() {
           ) : (
             <View style={[styles.wateringInsightCard, styles.wateringInsightNeutral]}>
               <MaterialCommunityIcons
-                name={isLocationMissing ? 'map-marker-alert-outline' : 'information-outline'}
+                name={locationMissing ? 'map-marker-alert-outline' : 'information-outline'}
                 size={22}
                 color="#4f6b5b"
                 style={styles.wateringInsightIcon}
@@ -258,7 +258,7 @@ export default function PlantDetailScreen() {
               <View style={styles.wateringInsightTextContainer}>
                 <ThemedText style={styles.wateringInsightHeadline}>Watering guidance unavailable</ThemedText>
                 <ThemedText style={styles.wateringInsightReason}>
-                  {isLocationMissing
+                  {locationMissing
                     ? 'Add a location to this plant to enable weather-based watering advice.'
                     : 'No weather history yet. We will update this insight once data is available.'}
                 </ThemedText>
@@ -294,13 +294,13 @@ export default function PlantDetailScreen() {
 
       {/* Log Type Sheet */}
       <WeedGrowLogTypeSheet
-        visible={isLogTypeSheetVisible}
+        visible={logTypeSheetVisible}
         onSelect={handleLogTypeSelect}
-        onClose={() => setIsLogTypeSheetVisible(false)}
+        onClose={() => setLogTypeSheetVisible(false)}
       />
       {/* Log Form Modal */}
       <WeedGrowLogForm
-        visible={isLogFormVisible}
+        visible={logFormVisible}
         logType={selectedLogType || 'notes'}
         onSubmit={handleLogFormSubmit}
         onCancel={handleLogFormCancel}
@@ -323,7 +323,7 @@ const FAB_BOTTOM_MARGIN = Spacing.lg;
 const FAB_CONTENT_SPACER = Spacing.md;
 const SCREEN_SIDE_PADDING = Spacing.md;
 const SECTION_TOP_MARGIN = Spacing.sm;
-const SECTION_TOP_MARGIN_LARGE = Spacing.lg;
+const SECTION_TOP_MARGIN_LARGE = SECTION_TOP_MARGIN;
 const INSIGHT_TOP_MARGIN = Spacing.sm;
 const INSIGHT_BOTTOM_MARGIN = 0;
 
