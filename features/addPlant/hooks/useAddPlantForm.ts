@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { PlantForm } from '@/features/plants/form/PlantForm';
 
 const initialForm: PlantForm = {
@@ -23,9 +23,9 @@ const initialForm: PlantForm = {
 
 export function useAddPlantForm() {
   const [form, setForm] = useState<PlantForm>(initialForm);
-  const setField = (field: keyof PlantForm, value: any) => {
+  const setField = useCallback((field: keyof PlantForm, value: any) => {
     setForm((prev: PlantForm) => ({ ...prev, [field]: value }));
-  };
-  const resetForm = () => setForm(initialForm);
+  }, []);
+  const resetForm = useCallback(() => setForm(initialForm), []);
   return { form, setField, resetForm };
 }
