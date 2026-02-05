@@ -1,51 +1,51 @@
-import React from 'react';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useWindowDimensions, View, BackHandler, StyleSheet, TouchableOpacity } from 'react-native';
-import Animated from 'react-native-reanimated';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ThemedText } from '@/ui/ThemedText';
 import { HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT } from '@/constants/Layout';
 import { Spacing } from '@/design-system/tokens/spacing';
+import logger from '@/lib/logger';
+import { evaluateWateringInsights, type PlantSummary, type WateringInsight } from '@/lib/suggestions/wateringSuggestions';
+import { ThemedText } from '@/ui/ThemedText';
+import WeedGrowLogForm from '@/ui/WeedGrowLogForm';
+import WeedGrowLogTypeSheet from '@/ui/WeedGrowLogTypeSheet';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React from 'react';
+import { BackHandler, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import LoadingView from '../components/LoadingView';
+import NotesSection from '../components/NotesSection';
+import NotFoundView from '../components/NotFoundView';
+import PlantHeader from '../components/PlantHeader';
+import WeeklyCalendar from '../components/WeeklyCalendar';
+import { useCollapsingHeader } from '../hooks/useCollapsingHeader';
+import { useDailyLogs } from '../hooks/useDailyLogs';
 import { usePlant } from '../hooks/usePlant';
 import { useWateringHistory } from '../hooks/useWateringHistory';
 import { useWeeklyData } from '../hooks/useWeeklyData';
-import { useDailyLogs } from '../hooks/useDailyLogs';
-import { useCollapsingHeader } from '../hooks/useCollapsingHeader';
-import PlantHeader from '../components/PlantHeader';
-import WeeklyCalendar from '../components/WeeklyCalendar';
-import NotesSection from '../components/NotesSection';
-import { evaluateWateringInsights, type PlantSummary, type WateringInsight } from '@/lib/suggestions/wateringSuggestions';
-import LoadingView from '../components/LoadingView';
-import NotFoundView from '../components/NotFoundView';
-import WeedGrowLogTypeSheet from '@/ui/WeedGrowLogTypeSheet';
-import WeedGrowLogForm from '@/ui/WeedGrowLogForm';
-import logger from '@/lib/logger';
 
 export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const router = useRouter();
-  const screenBackground = '#0f1012';
+  const screenBackgroundColor = '#0f1012';
 
   const { plant, loading } = usePlant(id);
   const { history } = useWateringHistory(plant, id);
   const { weekData, updateWeekData } = useWeeklyData(plant, history, id);
   const [wateringInsight, setWateringInsight] = React.useState<WateringInsight | null>(null);
-  const [wateringInsightLoading, setWateringInsightLoading] = React.useState(false);
+  const [isWateringInsightLoading, setIsWateringInsightLoading] = React.useState(false);
   const [wateringInsightError, setWateringInsightError] = React.useState<string | null>(null);
   const { expandedLogDate, setExpandedLogDate, dailyLogs, loadingLogs } = useDailyLogs(id);
-  const headerMinHeight = HEADER_MIN_HEIGHT + insets.top;
-  const maxScroll = Math.max(0, HEADER_MAX_HEIGHT - headerMinHeight);
+  const collapsedHeaderHeight = HEADER_MIN_HEIGHT + insets.top;
+  const headerCollapseRange = Math.max(0, HEADER_MAX_HEIGHT - collapsedHeaderHeight);
   const { onScroll, animatedBgImageStyle, collapseProgress } = useCollapsingHeader(
     HEADER_MAX_HEIGHT,
-    headerMinHeight
+    collapsedHeaderHeight
   );
 
-  const fabBottom = insets.bottom + FAB_OFFSET;
-  const contentPaddingBottom = fabBottom + FAB_SIZE + FAB_CONTENT_CLEARANCE;
-  const contentMinHeight = windowHeight + maxScroll;
+  const fabBottomOffset = insets.bottom + FAB_BOTTOM_MARGIN;
+  const scrollContentPaddingBottom = fabBottomOffset + FAB_DIAMETER + FAB_CONTENT_SPACER;
+  const scrollContentMinHeight = windowHeight + headerCollapseRange;
 
   React.useEffect(() => {
     let cancelled = false;
@@ -53,21 +53,21 @@ export default function PlantDetailScreen() {
     if (!plant || !id) {
       setWateringInsight(null);
       setWateringInsightError(null);
-      setWateringInsightLoading(false);
+      setIsWateringInsightLoading(false);
       return;
     }
 
-    const hasLocation =
+    const isLocationAvailable =
       typeof (plant as any)?.location?.lat === 'number' && typeof (plant as any)?.location?.lng === 'number';
-    if (!hasLocation) {
+    if (!isLocationAvailable) {
       setWateringInsight(null);
       setWateringInsightError(null);
-      setWateringInsightLoading(false);
+      setIsWateringInsightLoading(false);
       return;
     }
 
     const evaluate = async () => {
-      setWateringInsightLoading(true);
+      setIsWateringInsightLoading(true);
       setWateringInsightError(null);
       try {
         const summary: PlantSummary = { ...plant, id: String(id) };
@@ -83,7 +83,7 @@ export default function PlantDetailScreen() {
         }
       } finally {
         if (!cancelled) {
-          setWateringInsightLoading(false);
+          setIsWateringInsightLoading(false);
         }
       }
     };
@@ -104,7 +104,7 @@ export default function PlantDetailScreen() {
     return () => backHandler.remove();
   }, [router]);
 
-  const todayDate = React.useMemo(() => {
+  const todayLocalDate = React.useMemo(() => {
     // Use robust local date string for today
     return getLocalDateString();
   }, []);
@@ -118,28 +118,28 @@ export default function PlantDetailScreen() {
       !expandedLogDate
     ) {
       // Find the weekData entry for today
-      const todayEntry = weekData.find((d) => d.isToday || d.date === todayDate);
+      const todayEntry = weekData.find((d) => d.isToday || d.date === todayLocalDate);
       if (todayEntry) setExpandedLogDate(todayEntry.date);
     }
-  }, [plant?.environment, weekData, todayDate, expandedLogDate, setExpandedLogDate]);
+  }, [plant?.environment, weekData, todayLocalDate, expandedLogDate, setExpandedLogDate]);
 
-  const [logTypeSheetVisible, setLogTypeSheetVisible] = React.useState(false);
-  const [logFormVisible, setLogFormVisible] = React.useState(false);
+  const [isLogTypeSheetVisible, setIsLogTypeSheetVisible] = React.useState(false);
+  const [isLogFormVisible, setIsLogFormVisible] = React.useState(false);
   const [selectedLogType, setSelectedLogType] = React.useState<import('@/ui/WeedGrowLogTypeSheet').LogType | null>(null);
 
-  const handleAddLogPress = () => setLogTypeSheetVisible(true);
+  const handleAddLogPress = () => setIsLogTypeSheetVisible(true);
   const handleLogTypeSelect = (type: import('@/ui/WeedGrowLogTypeSheet').LogType) => {
     setSelectedLogType(type);
-    setLogTypeSheetVisible(false);
-    setLogFormVisible(true);
+    setIsLogTypeSheetVisible(false);
+    setIsLogFormVisible(true);
   };
   const handleLogFormCancel = () => {
-    setLogFormVisible(false);
+    setIsLogFormVisible(false);
     setSelectedLogType(null);
   };
-  const handleLogFormSubmit = (fields: { description: string }) => {
+  const handleLogFormSubmit = (_fields: { description: string }) => {
     // You may want to call your addPlantLog logic here, or open a date picker, etc.
-    setLogFormVisible(false);
+    setIsLogFormVisible(false);
     setSelectedLogType(null);
     // Optionally, trigger a refresh or feedback
   };
@@ -155,13 +155,13 @@ export default function PlantDetailScreen() {
   if (loading) return <LoadingView />;
   if (!plant) return <NotFoundView />;
 
-  const locationMissing =
+  const isLocationMissing =
     !(plant as any)?.location ||
     typeof (plant as any).location?.lat !== 'number' ||
     typeof (plant as any).location?.lng !== 'number';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: screenBackground }} edges={['left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: screenBackgroundColor }} edges={['left', 'right']}>
       {/* Collapsing background image */}
       <Animated.View style={animatedBgImageStyle}>
         <PlantHeader
@@ -181,9 +181,9 @@ export default function PlantDetailScreen() {
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingTop: HEADER_MAX_HEIGHT,
-          paddingBottom: contentPaddingBottom,
-          paddingHorizontal: CONTENT_HORIZONTAL,
-          minHeight: contentMinHeight,
+          paddingBottom: scrollContentPaddingBottom,
+          paddingHorizontal: SCREEN_SIDE_PADDING,
+          minHeight: scrollContentMinHeight,
         }}
         onScroll={onScroll}
         scrollEventThrottle={16}
@@ -191,7 +191,7 @@ export default function PlantDetailScreen() {
         overScrollMode="never"
       >
         <View style={styles.wateringInsightWrapper}>
-          {wateringInsightLoading ? (
+          {isWateringInsightLoading ? (
             <View style={[styles.wateringInsightCard, styles.wateringInsightNeutral]}>
               <MaterialCommunityIcons
                 name="progress-clock"
@@ -250,7 +250,7 @@ export default function PlantDetailScreen() {
           ) : (
             <View style={[styles.wateringInsightCard, styles.wateringInsightNeutral]}>
               <MaterialCommunityIcons
-                name={locationMissing ? 'map-marker-alert-outline' : 'information-outline'}
+                name={isLocationMissing ? 'map-marker-alert-outline' : 'information-outline'}
                 size={22}
                 color="#4f6b5b"
                 style={styles.wateringInsightIcon}
@@ -258,7 +258,7 @@ export default function PlantDetailScreen() {
               <View style={styles.wateringInsightTextContainer}>
                 <ThemedText style={styles.wateringInsightHeadline}>Watering guidance unavailable</ThemedText>
                 <ThemedText style={styles.wateringInsightReason}>
-                  {locationMissing
+                  {isLocationMissing
                     ? 'Add a location to this plant to enable weather-based watering advice.'
                     : 'No weather history yet. We will update this insight once data is available.'}
                 </ThemedText>
@@ -294,20 +294,20 @@ export default function PlantDetailScreen() {
 
       {/* Log Type Sheet */}
       <WeedGrowLogTypeSheet
-        visible={logTypeSheetVisible}
+        visible={isLogTypeSheetVisible}
         onSelect={handleLogTypeSelect}
-        onClose={() => setLogTypeSheetVisible(false)}
+        onClose={() => setIsLogTypeSheetVisible(false)}
       />
       {/* Log Form Modal */}
       <WeedGrowLogForm
-        visible={logFormVisible}
+        visible={isLogFormVisible}
         logType={selectedLogType || 'notes'}
         onSubmit={handleLogFormSubmit}
         onCancel={handleLogFormCancel}
       />
 
       <TouchableOpacity
-        style={[styles.fab, { bottom: fabBottom }]}
+        style={[styles.fab, { bottom: fabBottomOffset }]}
         onPress={handleAddLogPress}
         accessibilityLabel="Add log"
         activeOpacity={0.85}
@@ -318,19 +318,19 @@ export default function PlantDetailScreen() {
   );
 }
 
-const FAB_SIZE = 58;
-const FAB_OFFSET = Spacing.lg;
-const FAB_CONTENT_CLEARANCE = Spacing.md;
-const CONTENT_HORIZONTAL = Spacing.md;
-const SECTION_GAP = Spacing.md;
-const SECTION_GAP_LARGE = Spacing.lg;
-const INSIGHT_OVERLAP = -18;
-const INSIGHT_GAP = 12;
+const FAB_DIAMETER = 58;
+const FAB_BOTTOM_MARGIN = Spacing.lg;
+const FAB_CONTENT_SPACER = Spacing.md;
+const SCREEN_SIDE_PADDING = Spacing.md;
+const SECTION_TOP_MARGIN = Spacing.sm;
+const SECTION_TOP_MARGIN_LARGE = Spacing.lg;
+const INSIGHT_TOP_MARGIN = Spacing.sm;
+const INSIGHT_BOTTOM_MARGIN = 0;
 
 const styles = StyleSheet.create({
   wateringInsightWrapper: {
-    marginTop: INSIGHT_OVERLAP,
-    marginBottom: INSIGHT_GAP,
+    marginTop: INSIGHT_TOP_MARGIN,
+    marginBottom: INSIGHT_BOTTOM_MARGIN,
   },
   wateringInsightCard: {
     borderRadius: 20,
@@ -377,17 +377,17 @@ const styles = StyleSheet.create({
     borderColor: '#d9a1a1',
   },
   section: {
-    marginTop: SECTION_GAP,
+    marginTop: SECTION_TOP_MARGIN,
   },
   sectionLarge: {
-    marginTop: SECTION_GAP_LARGE,
+    marginTop: SECTION_TOP_MARGIN_LARGE,
   },
   fab: {
     position: 'absolute',
     right: 20,
-    width: FAB_SIZE,
-    height: FAB_SIZE,
-    borderRadius: FAB_SIZE / 2,
+    width: FAB_DIAMETER,
+    height: FAB_DIAMETER,
+    borderRadius: FAB_DIAMETER / 2,
     backgroundColor: '#79c79f',
     alignItems: 'center',
     justifyContent: 'center',
