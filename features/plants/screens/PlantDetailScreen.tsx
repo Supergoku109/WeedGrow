@@ -1,11 +1,9 @@
 import React from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { SafeAreaView, Dimensions, View, BackHandler, TouchableOpacity, StyleSheet } from 'react-native';
+import { SafeAreaView, Dimensions, View, BackHandler, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
 import { ThemedText } from '@/ui/ThemedText';
 import { HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT } from '@/constants/Layout';
 import { usePlant } from '../hooks/usePlant';
@@ -13,13 +11,11 @@ import { useWateringHistory } from '../hooks/useWateringHistory';
 import { useWeeklyData } from '../hooks/useWeeklyData';
 import { useDailyLogs } from '../hooks/useDailyLogs';
 import { useProgressPics } from '../hooks/useProgressPics';
-import { useDeletePlant } from '../hooks/useDeletePlant';
 import { useCollapsingHeader } from '../hooks/useCollapsingHeader';
 import PlantHeader from '../components/PlantHeader';
 import GalleryBar from '../components/GalleryBar';
 import WeeklyCalendar from '../components/WeeklyCalendar';
 import NotesSection from '../components/NotesSection';
-import DeleteButton from '../components/DeleteButton';
 import { evaluateWateringInsights, type PlantSummary, type WateringInsight } from '@/lib/suggestions/wateringSuggestions';
 import LoadingView from '../components/LoadingView';
 import NotFoundView from '../components/NotFoundView';
@@ -31,7 +27,7 @@ export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
+  const screenBackground = '#0f1012';
 
   const { plant, loading } = usePlant(id);
   const { history } = useWateringHistory(plant, id);
@@ -41,18 +37,18 @@ export default function PlantDetailScreen() {
   const [wateringInsightError, setWateringInsightError] = React.useState<string | null>(null);
   const { expandedLogDate, setExpandedLogDate, dailyLogs, loadingLogs } = useDailyLogs(id);
   const { progressPics } = useProgressPics(id);
-  const { onDelete } = useDeletePlant(id, router);
 
   const { onScroll, animatedBgImageStyle, galleryBarAnimatedStyle } = useCollapsingHeader(
     HEADER_MAX_HEIGHT,
     HEADER_MIN_HEIGHT,
     insets.top,
-    Colors[theme].background
+    screenBackground
   );
 
   const headerSpacerHeight = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
   const topProtectedPadding = HEADER_MIN_HEIGHT + insets.top;
-  const bottomSafePadding = (insets.bottom || 0) + 120;
+  const bottomSafePadding = (insets.bottom || 0) + 80;
+  const fabBottom = (insets.bottom || 0) + 24;
 
   React.useEffect(() => {
     let cancelled = false;
@@ -150,6 +146,14 @@ export default function PlantDetailScreen() {
     setSelectedLogType(null);
     // Optionally, trigger a refresh or feedback
   };
+  const handleAddPicturePress = () => {
+    // TODO: Implement add progress pic logic
+  };
+
+  const handleEditPlant = React.useCallback(() => {
+    if (!id) return;
+    router.push({ pathname: '/add-plant', params: { editId: String(id) } });
+  }, [id, router]);
 
   if (loading) return <LoadingView />;
   if (!plant) return <NotFoundView />;
@@ -160,10 +164,17 @@ export default function PlantDetailScreen() {
     typeof (plant as any).location?.lng !== 'number';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors[theme].background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: screenBackground }}>
       {/* Collapsing background image */}
       <Animated.View style={animatedBgImageStyle}>
-        <PlantHeader imageUri={plant.imageUri} height={HEADER_MAX_HEIGHT} />
+        <PlantHeader
+          imageUri={plant.imageUri}
+          height={HEADER_MAX_HEIGHT}
+          name={plant.name}
+          strain={plant.strain}
+          stage={plant.growthStage}
+          onEdit={handleEditPlant}
+        />
       </Animated.View>
 
       {/* Animated Gallery Bar */}
@@ -185,22 +196,13 @@ export default function PlantDetailScreen() {
       >
         <View style={{ height: headerSpacerHeight }} />
         <View style={{ paddingTop: topProtectedPadding }}>
-          <View style={{ paddingHorizontal: 16 }}>
-            <ThemedText type="title">{plant.name}</ThemedText>
-            {plant.strain && (
-              <ThemedText type="subtitle" style={{ marginBottom: 10 }}>
-                {plant.strain}
-              </ThemedText>
-            )}
-          </View>
-
           <View style={styles.wateringInsightWrapper}>
             {wateringInsightLoading ? (
               <View style={[styles.wateringInsightCard, styles.wateringInsightNeutral]}>
                 <MaterialCommunityIcons
                   name="progress-clock"
-                  size={20}
-                  color="#d0f0ff"
+                  size={22}
+                  color="#2f6b3b"
                   style={styles.wateringInsightIcon}
                 />
                 <View style={styles.wateringInsightTextContainer}>
@@ -219,19 +221,19 @@ export default function PlantDetailScreen() {
               >
                 <MaterialCommunityIcons
                   name={wateringInsight.needsWater ? 'water-alert' : 'water-check'}
-                  size={20}
-                  color="#ffffff"
+                  size={22}
+                  color={wateringInsight.needsWater ? '#a4432d' : '#2f6b3b'}
                   style={styles.wateringInsightIcon}
                 />
                 <View style={styles.wateringInsightTextContainer}>
                   <ThemedText style={styles.wateringInsightHeadline}>
                     {wateringInsight.needsWater
                       ? (wateringInsight.reason.includes("Yesterday's weather data unavailable")
-                        ? "Yesterday’s weather data unavailable – assuming no water was received… using current and forecast data only. Watering needed today."
-                        : "Watering needed today")
+                        ? "Yesterday's weather data unavailable - assuming no water was received... using current and forecast data only. Watering needed today."
+                        : 'Watering needed today')
                       : (wateringInsight.reason.includes("Yesterday's weather data unavailable")
-                        ? "Yesterday’s weather data unavailable – assuming no water was received… using current and forecast data only. No watering needed today."
-                        : "No watering needed today")}
+                        ? "Yesterday's weather data unavailable - assuming no water was received... using current and forecast data only. No watering needed today."
+                        : 'No watering needed today')}
                   </ThemedText>
                   <ThemedText style={styles.wateringInsightReason}>
                     {wateringInsight.reason}
@@ -242,12 +244,12 @@ export default function PlantDetailScreen() {
               <View style={[styles.wateringInsightCard, styles.wateringInsightError]}>
                 <MaterialCommunityIcons
                   name="alert-circle-outline"
-                  size={20}
-                  color="#ffd7d7"
+                  size={22}
+                  color="#b9504b"
                   style={styles.wateringInsightIcon}
                 />
                 <View style={styles.wateringInsightTextContainer}>
-                  <ThemedText style={styles.wateringInsightHeadline}>Couldn&apos;t fetch watering guidance</ThemedText>
+                  <ThemedText style={styles.wateringInsightHeadline}>Couldn't fetch watering guidance</ThemedText>
                   <ThemedText style={styles.wateringInsightReason}>{wateringInsightError}</ThemedText>
                 </View>
               </View>
@@ -255,8 +257,8 @@ export default function PlantDetailScreen() {
               <View style={[styles.wateringInsightCard, styles.wateringInsightNeutral]}>
                 <MaterialCommunityIcons
                   name={locationMissing ? 'map-marker-alert-outline' : 'information-outline'}
-                  size={20}
-                  color="#d0f0ff"
+                  size={22}
+                  color="#4f6b5b"
                   style={styles.wateringInsightIcon}
                 />
                 <View style={styles.wateringInsightTextContainer}>
@@ -282,6 +284,9 @@ export default function PlantDetailScreen() {
                 loadingLogs={loadingLogs}
                 updateWeekData={updateWeekData}
                 plantId={id}
+                onAddLog={handleAddLogPress}
+                onAddPicture={handleAddPicturePress}
+                locationLabel={plant.locationNickname || 'Home'}
               />
             </View>
           )}
@@ -293,28 +298,6 @@ export default function PlantDetailScreen() {
           ) : null}
         </View>
       </Animated.ScrollView>
-
-      {/* Floating Add Log Button */}
-      <TouchableOpacity
-        style={[styles.fab, { bottom: (insets.bottom || 0) + 56 }]} // 56px above nav bar
-        onPress={handleAddLogPress}
-        accessibilityLabel="Add Log"
-      >
-        <View style={styles.fabInner}>
-          <ThemedText style={styles.fabIcon}>＋</ThemedText>
-        </View>
-      </TouchableOpacity>
-
-      {/* Floating Add Progress Pic Button */}
-      <TouchableOpacity
-        style={[styles.fab, { bottom: (insets.bottom || 0) + 120 }]}
-        onPress={() => {/* TODO: Implement add progress pic logic */}}
-        accessibilityLabel="Add Progress Pic"
-      >
-        <View style={[styles.fabInner, { backgroundColor: '#00c853' }]}> 
-          <ThemedText style={styles.fabIcon}>📷</ThemedText>
-        </View>
-      </TouchableOpacity>
 
       {/* Log Type Sheet */}
       <WeedGrowLogTypeSheet
@@ -330,7 +313,14 @@ export default function PlantDetailScreen() {
         onCancel={handleLogFormCancel}
       />
 
-      <DeleteButton onDelete={onDelete} insets={insets} />
+      <TouchableOpacity
+        style={[styles.fab, { bottom: fabBottom }]}
+        onPress={handleAddLogPress}
+        accessibilityLabel="Add log"
+        activeOpacity={0.85}
+      >
+        <MaterialCommunityIcons name="plus" size={28} color="#ffffff" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -338,11 +328,11 @@ export default function PlantDetailScreen() {
 const styles = StyleSheet.create({
   wateringInsightWrapper: {
     paddingHorizontal: 16,
-    marginTop: 16,
+    marginTop: -18,
     marginBottom: 12,
   },
   wateringInsightCard: {
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -356,59 +346,49 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   wateringInsightHeadline: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1f2c24',
   },
   wateringInsightReason: {
     fontSize: 13,
     lineHeight: 18,
-    color: '#dce7e1',
+    color: '#43514b',
   },
   wateringInsightNeedsWater: {
-    backgroundColor: '#3a2d2d',
+    backgroundColor: '#f4e4e4',
     borderWidth: 1,
-    borderColor: '#ffb4a2',
+    borderColor: '#e0b0ae',
   },
   wateringInsightAllGood: {
-    backgroundColor: '#25352c',
+    backgroundColor: '#e7f3ea',
     borderWidth: 1,
-    borderColor: '#6cd9a7',
+    borderColor: '#85c29d',
   },
   wateringInsightNeutral: {
-    backgroundColor: '#2d3432',
+    backgroundColor: '#edf1ee',
     borderWidth: 1,
-    borderColor: '#60706a',
+    borderColor: '#a6b7af',
   },
   wateringInsightError: {
-    backgroundColor: '#402c2c',
+    backgroundColor: '#f2dddd',
     borderWidth: 1,
-    borderColor: '#ff8a80',
+    borderColor: '#d9a1a1',
   },
   fab: {
     position: 'absolute',
-    right: 24,
-    // bottom will be set dynamically
-    zIndex: 10,
-    elevation: 4,
-  },
-  fabInner: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 28,
-    width: 56,
-    height: 56,
+    right: 20,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#79c79f',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  fabIcon: {
-    color: '#fff',
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginTop: -2,
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
   },
 });
 
