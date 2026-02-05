@@ -241,6 +241,7 @@ const GroupDetailScreen = memo(function GroupDetailScreen() {
         <View style={{ flex: 1 }}>
           <GroupPlantList
             plants={filteredPlants}
+            groupId={id ? String(id) : undefined}
             header={header}
             stickyHeader
             showFooterAddButton={false}

@@ -13,6 +13,7 @@ import { Swipeable } from 'react-native-gesture-handler';
 
 interface GroupPlantListProps {
   plants: (Plant & { id: string })[];
+  groupId?: string;
   onAddPlant?: () => void;
   onCreatePlant?: () => void;
   // Optional header to render above the list using ListHeaderComponent
@@ -106,6 +107,7 @@ const GroupPlantList = memo(function GroupPlantList({
   onMoveDown,
   wateredMap = {},
   waterLoadingMap = {},
+  groupId,
 }: GroupPlantListProps) {
   const router = useRouter();
   const navigateToAddPlant = useCallback(() => {
@@ -116,6 +118,14 @@ const GroupPlantList = memo(function GroupPlantList({
     if (onCreatePlant) return onCreatePlant();
     router.push('/add-plant');
   }, [router, onCreatePlant]);
+
+  const navigateToPlantDetail = useCallback((plantId: string) => {
+    if (!groupId) {
+      router.push({ pathname: '/plant/[id]', params: { id: plantId } });
+      return;
+    }
+    router.push({ pathname: '/plant/[id]', params: { id: plantId, fromGroupId: groupId } });
+  }, [router, groupId]);
 
   if (!plants || plants.length === 0) {
     return (
@@ -164,6 +174,7 @@ const GroupPlantList = memo(function GroupPlantList({
           >
             <PlantCard
               plant={item}
+              onPress={() => navigateToPlantDetail(item.id)}
               onAddLog={onQuickWater ? () => onQuickWater(item.id) : undefined}
               wateredToday={!!wateredMap[item.id]}
               waterLoading={!!waterLoadingMap[item.id]}
@@ -172,6 +183,7 @@ const GroupPlantList = memo(function GroupPlantList({
         ) : (
           <PlantCard
             plant={item}
+            onPress={() => navigateToPlantDetail(item.id)}
             wateredToday={!!wateredMap[item.id]}
             waterLoading={!!waterLoadingMap[item.id]}
           />

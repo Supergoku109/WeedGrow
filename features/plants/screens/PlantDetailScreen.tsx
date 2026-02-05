@@ -6,7 +6,7 @@ import { ThemedText } from '@/ui/ThemedText';
 import WeedGrowLogForm from '@/ui/WeedGrowLogForm';
 import WeedGrowLogTypeSheet from '@/ui/WeedGrowLogTypeSheet';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import React from 'react';
 import { BackHandler, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -16,6 +16,7 @@ import NotesSection from '../components/NotesSection';
 import NotFoundView from '../components/NotFoundView';
 import PlantHeader from '../components/PlantHeader';
 import WeeklyCalendar from '../components/WeeklyCalendar';
+import EditPlantModal from '../components/EditPlantModal';
 import { useCollapsingHeader } from '../hooks/useCollapsingHeader';
 import { useDailyLogs } from '../hooks/useDailyLogs';
 import { usePlant } from '../hooks/usePlant';
@@ -124,11 +125,15 @@ function WateringInsightSection({
 }
 
 export default function PlantDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, fromGroupId } = useLocalSearchParams<{ id: string; fromGroupId?: string }>();
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const router = useRouter();
   const screenBackgroundColor = '#0f1012';
+  const normalizedFromGroupId = React.useMemo(
+    () => (Array.isArray(fromGroupId) ? fromGroupId[0] : fromGroupId),
+    [fromGroupId]
+  );
 
   const { plant, loading } = usePlant(id);
   const { history } = useWateringHistory(plant, id);
@@ -136,6 +141,7 @@ export default function PlantDetailScreen() {
   const [wateringInsight, setWateringInsight] = React.useState<WateringInsight | null>(null);
   const [isWateringInsightLoading, setIsWateringInsightLoading] = React.useState(false);
   const [wateringInsightError, setWateringInsightError] = React.useState<string | null>(null);
+  const [isEditVisible, setEditVisible] = React.useState(false);
   const { expandedLogDate, setExpandedLogDate, dailyLogs, loadingLogs } = useDailyLogs(id);
   const isLocationAvailable =
     typeof plant?.location?.lat === 'number' && typeof plant?.location?.lng === 'number';
@@ -196,14 +202,24 @@ export default function PlantDetailScreen() {
     };
   }, [plant, id, isLocationAvailable]);
 
-  React.useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      router.replace('/(tabs)?tabIndex=1'); // Use replace instead of push to avoid stacking
-      return true; // Prevent default back button behavior
-    });
-
-    return () => backHandler.remove();
-  }, [router]);
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        if (normalizedFromGroupId) {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace({ pathname: '/group/[id]', params: { id: normalizedFromGroupId } });
+          }
+          return true;
+        }
+        router.replace('/(tabs)?tabIndex=1'); // Use replace instead of push to avoid stacking
+        return true; // Prevent default back button behavior
+      };
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [router, normalizedFromGroupId])
+  );
 
   const todayLocalDate = React.useMemo(() => {
     // Use robust local date string for today
@@ -250,8 +266,8 @@ export default function PlantDetailScreen() {
 
   const handleEditPlant = React.useCallback(() => {
     if (!id) return;
-    router.push(`/plant/${String(id)}/edit`);
-  }, [id, router]);
+    setEditVisible(true);
+  }, [id]);
 
   if (loading) return <LoadingView />;
   if (!plant) return <NotFoundView />;
@@ -336,6 +352,13 @@ export default function PlantDetailScreen() {
         logType={selectedLogType || 'notes'}
         onSubmit={handleLogFormSubmit}
         onCancel={handleLogFormCancel}
+      />
+
+      <EditPlantModal
+        visible={isEditVisible}
+        plant={plant}
+        plantId={String(id)}
+        onClose={() => setEditVisible(false)}
       />
 
       <TouchableOpacity

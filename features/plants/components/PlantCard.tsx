@@ -13,9 +13,10 @@ export interface PlantCardProps {
   onAddLog?: (type?: string) => void;
   wateredToday?: boolean;
   waterLoading?: boolean;
+  onPress?: () => void;
 }
 
-export function PlantCard({ plant, onAddLog, wateredToday = false, waterLoading = false }: PlantCardProps) {
+export function PlantCard({ plant, onAddLog, wateredToday = false, waterLoading = false, onPress }: PlantCardProps) {
   const router = useRouter();
 
   // Animation for card mount
@@ -55,7 +56,7 @@ export function PlantCard({ plant, onAddLog, wateredToday = false, waterLoading 
 
   return (
     <TouchableOpacity
-      onPress={() => router.push({ pathname: '/plant/[id]', params: { id: plant.id } })}
+      onPress={onPress ?? (() => router.push({ pathname: '/plant/[id]', params: { id: plant.id } }))}
     >
       <Animated.View style={{ transform: [{ scale: scaleAnim }], opacity: opacityAnim }}>
         <ThemedView style={[styles.card, { flexDirection: 'row', alignItems: 'stretch', minHeight: 90 }]}> 
