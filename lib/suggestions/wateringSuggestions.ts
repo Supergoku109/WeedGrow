@@ -29,6 +29,16 @@ const HIGH_WIND_DRYING_THRESHOLD_KPH = 22;
 const CLOUDY_THRESHOLD = 70;
 const MILDEW_SAMPLE_DAYS = 3;
 const LIGHT_RAIN_DELAY_WEIGHTS = [1, 0.6, 0.35] as const;
+const GERMINATION_STAGE_REDUCTION_DAYS = 0.45;
+const SEEDLING_STAGE_REDUCTION_DAYS = 0.35;
+const SMALL_POT_THRESHOLD_LITERS = 7;
+const LARGE_POT_THRESHOLD_LITERS = 25;
+const SMALL_POT_REDUCTION_DAYS = 0.35;
+const LARGE_POT_INCREASE_DAYS = 0.2;
+const FULL_SUN_REDUCTION_DAYS = 0.25;
+const SHADE_INCREASE_DAYS = 0.2;
+const PARTIAL_SHADE_INCREASE_DAYS = 0.1;
+const GALLON_TO_LITERS = 3.785;
 
 /**
  * Watering algorithm walkthrough
@@ -81,8 +91,6 @@ type RangeEntry = {
 };
 
 interface HistoricalSignals {
-  historicalWeatherCount: number;
-  historicalLogCount: number;
   lastManualWater: Date | null;
   lastRainDate: Date | null;
   yesterdayWeatherFound: boolean;
@@ -133,14 +141,13 @@ function getBaseThreshold(environment: Plant['environment'] | undefined): number
   return 2; // outdoor or unspecified
 }
 
-function formatDaysSince(days: number, source: WaterSource): string {
+function formatDaysSince(days: number, source: Exclude<WaterSource, 'unknown'>): string {
   if (days < 0.5) return source === 'rain' ? 'watered by rain today' : 'watered today';
   if (days < 1.5) return source === 'rain' ? 'watered by rain yesterday' : 'watered yesterday';
   const rounded = Math.round(days);
   const suffix = rounded === 1 ? 'day' : 'days';
   if (source === 'rain') return `rainfall ${rounded} ${suffix} ago`;
-  if (source === 'manual') return `watered ${rounded} ${suffix} ago`;
-  return `no watering for ~${rounded} ${suffix}`;
+  return `watered ${rounded} ${suffix} ago`;
 }
 
 function capitalize(text: string): string {
@@ -362,22 +369,8 @@ function extractLastWaterEvent(
   return { lastWaterDay, lastWaterSource };
 }
 
-function getPlantAgeDays(plant: PlantSummary, startOfToday: Date): number | null {
-  const createdAtTimestamp = (plant as any)?.createdAt;
-  const createdAtDate =
-    typeof createdAtTimestamp?.toDate === 'function' ? createdAtTimestamp.toDate() : null;
-
-  if (!createdAtDate) return null;
-
-  const createdStart = startOfDay(createdAtDate);
-  const ageDays = (startOfToday.getTime() - createdStart.getTime()) / MS_PER_DAY;
-  return ageDays < 0 ? 0 : ageDays;
-}
-
 function resolveDaysSinceLastWater(
   lastWaterDay: Date | null,
-  noHistoryAvailable: boolean,
-  plantAgeDays: number | null,
   lookbackDays: number,
   today: Date,
 ): number {
@@ -385,9 +378,6 @@ function resolveDaysSinceLastWater(
 
   if (lastWaterDay) {
     daysSinceLastWater = (today.getTime() - lastWaterDay.getTime()) / MS_PER_DAY;
-  } else if (noHistoryAvailable) {
-    const assumedDays = Math.max(1, plantAgeDays ?? 1);
-    daysSinceLastWater = assumedDays;
   } else {
     daysSinceLastWater = lookbackDays + 1;
   }
@@ -418,13 +408,78 @@ function buildClimateFlags(
   return { isVeryHot, isHot, isCoolAndCloudy, isLowHumidity, isHighWind };
 }
 
+function parsePotSizeLiters(potSize?: string): number | null {
+  if (!potSize) return null;
+  const normalized = potSize.trim().toLowerCase();
+  const amountMatch = normalized.match(/(\d+(?:\.\d+)?)(?:\s*([a-z]+))?/);
+  if (!amountMatch) return null;
+
+  const amount = Number(amountMatch[1]);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  const unit = amountMatch[2] ?? '';
+
+  if (unit.startsWith('gal') || /\b(gal|gallon|gallons)\b/.test(normalized)) {
+    return amount * GALLON_TO_LITERS;
+  }
+
+  if (
+    unit === 'l' ||
+    unit.startsWith('lit') ||
+    /\b(l|liter|liters|litre|litres)\b/.test(normalized)
+  ) {
+    return amount;
+  }
+
+  // Default to liters when unit is omitted.
+  return amount;
+}
+
+function getGrowthStageThresholdModifier(growthStage: Plant['growthStage'] | undefined): number {
+  if (growthStage === 'germination') return -GERMINATION_STAGE_REDUCTION_DAYS;
+  if (growthStage === 'seedling') return -SEEDLING_STAGE_REDUCTION_DAYS;
+  return 0;
+}
+
+function getPotSizeThresholdModifier(potSize?: string): number {
+  const liters = parsePotSizeLiters(potSize);
+  if (liters === null) return 0;
+  if (liters <= SMALL_POT_THRESHOLD_LITERS) return -SMALL_POT_REDUCTION_DAYS;
+  if (liters >= LARGE_POT_THRESHOLD_LITERS) return LARGE_POT_INCREASE_DAYS;
+  return 0;
+}
+
+function getSunlightThresholdModifier(sunlightExposure?: string): number {
+  if (!sunlightExposure) return 0;
+  const normalized = sunlightExposure.trim().toLowerCase();
+
+  if (normalized.includes('full sun') || normalized.includes('direct sun')) {
+    return -FULL_SUN_REDUCTION_DAYS;
+  }
+
+  if (normalized.includes('partial shade')) {
+    return PARTIAL_SHADE_INCREASE_DAYS;
+  }
+
+  if (normalized.includes('shade') || normalized.includes('low light')) {
+    return SHADE_INCREASE_DAYS;
+  }
+
+  return 0;
+}
+
 function calculateThresholdDays(
   environment: Plant['environment'] | undefined,
+  growthStage: Plant['growthStage'] | undefined,
+  potSize: string | undefined,
+  sunlightExposure: string | undefined,
   climate: ClimateFlags,
   tomorrowRainfall: number,
   rainfallThresholdMm: number,
 ): number {
   let thresholdDays = getBaseThreshold(environment);
+  thresholdDays += getGrowthStageThresholdModifier(growthStage);
+  thresholdDays += getPotSizeThresholdModifier(potSize);
+  thresholdDays += getSunlightThresholdModifier(sunlightExposure);
 
   if (climate.isVeryHot) thresholdDays -= 0.75;
   else if (climate.isHot) thresholdDays -= 0.5;
@@ -458,8 +513,6 @@ function collectHistoricalSignals(
   endOfToday: Date,
   rainfallThresholdMm: number,
 ): HistoricalSignals {
-  let historicalWeatherCount = 0;
-  let historicalLogCount = 0;
   let lastManualWater: Date | null = null;
   let lastRainDate: Date | null = null;
   let yesterdayWeatherFound = false;
@@ -468,13 +521,6 @@ function collectHistoricalSignals(
     const dayDate = startOfDay(new Date(`${dateKey}T00:00:00`));
     if (dateKey === yesterdayKey && entry.weather) yesterdayWeatherFound = true;
     if (dayDate >= endOfToday) return;
-
-    if (dayDate < startOfToday) {
-      if (entry.weather) historicalWeatherCount += 1;
-      if (Array.isArray(entry.logs) && entry.logs.length > 0) {
-        historicalLogCount += entry.logs.filter((log) => log.type === 'watering').length;
-      }
-    }
 
     const logs = Array.isArray(entry.logs) ? entry.logs : [];
     logs.forEach((log) => {
@@ -497,8 +543,6 @@ function collectHistoricalSignals(
   });
 
   return {
-    historicalWeatherCount,
-    historicalLogCount,
     lastManualWater,
     lastRainDate,
     yesterdayWeatherFound,
@@ -509,9 +553,6 @@ function buildReason(params: {
   lastWaterDay: Date | null;
   daysSinceLastWater: number;
   lastWaterSource: WaterSource;
-  noHistoryAvailable: boolean;
-  yesterdayMissing: boolean;
-  plantAgeDays: number | null;
   needsWater: boolean;
   climate: ClimateFlags;
   humidity: number | null;
@@ -530,9 +571,6 @@ function buildReason(params: {
     lastWaterDay,
     daysSinceLastWater,
     lastWaterSource,
-    noHistoryAvailable,
-    yesterdayMissing,
-    plantAgeDays,
     needsWater,
     climate,
     humidity,
@@ -548,26 +586,8 @@ function buildReason(params: {
   } = params;
 
   if (lastWaterDay) {
-    reasonParts.push(`${formatDaysSince(daysSinceLastWater, lastWaterSource)}`);
-  } else if (noHistoryAvailable) {
-    if (yesterdayMissing) {
-      reasonParts.push('Yesterday\'s weather data unavailable - assuming no water was received.');
-    } else {
-      reasonParts.push('No prior watering records yet.');
-    }
-
-    if (plantAgeDays !== null) {
-      const ageRounded = Math.max(0, Math.round(plantAgeDays));
-      if (ageRounded === 0) {
-        reasonParts.push('Plant created today; starting with current conditions.');
-      } else {
-        reasonParts.push(`Plant created ${ageRounded} day${ageRounded === 1 ? '' : 's'} ago.`);
-      }
-    } else {
-      reasonParts.push('No weather history yet; using current conditions.');
-    }
-
-    reasonParts.push('Using current and forecast data only.');
+    const source = lastWaterSource === 'rain' ? 'rain' : 'manual';
+    reasonParts.push(`${formatDaysSince(daysSinceLastWater, source)}`);
   } else {
     reasonParts.push('No watering logged in the past week.');
   }
@@ -849,11 +869,6 @@ async function evaluatePlantWatering(
     options.rainfallThresholdMm,
   );
 
-  const hasHistoricalWeather = history.historicalWeatherCount > 0;
-  const hasHistoricalLogs = history.historicalLogCount > 0;
-  const noHistoryAvailable = !hasHistoricalWeather && !hasHistoricalLogs;
-  const yesterdayMissing = !history.yesterdayWeatherFound;
-
   const { lastWaterDay, lastWaterSource: initialWaterSource } = extractLastWaterEvent(
     history.lastManualWater,
     history.lastRainDate,
@@ -861,11 +876,8 @@ async function evaluatePlantWatering(
   let lastWaterSource: WaterSource = initialWaterSource;
 
   // Phase 6: estimate dryness window and whether watering is due.
-  const plantAgeDays = getPlantAgeDays(plant, startOfToday);
   let daysSinceLastWater = resolveDaysSinceLastWater(
     lastWaterDay,
-    noHistoryAvailable,
-    plantAgeDays,
     options.lookbackDays,
     today,
   );
@@ -877,6 +889,9 @@ async function evaluatePlantWatering(
   const climate = buildClimateFlags(temperatureMax, humidity, cloudCoverage, windSpeed);
   const thresholdDays = calculateThresholdDays(
     plant.environment,
+    plant.growthStage,
+    plant.potSize,
+    plant.sunlightExposure,
     climate,
     tomorrowRainfall,
     options.rainfallThresholdMm,
@@ -910,9 +925,6 @@ async function evaluatePlantWatering(
     lastWaterDay,
     daysSinceLastWater,
     lastWaterSource,
-    noHistoryAvailable,
-    yesterdayMissing,
-    plantAgeDays,
     needsWater,
     climate,
     humidity,

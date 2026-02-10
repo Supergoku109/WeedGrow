@@ -511,4 +511,429 @@ describe('evaluateWateringInsights (black-box)', () => {
     expect(insight.needsWater).toBe(false);
     expect(insight.score).toBe(0.99);
   });
+
+  it('26) potSize modifier: small pots dry faster than large pots', async () => {
+    const smallPotPlant = makePlantSummary({ id: 'p-small-pot', potSize: '3L' });
+    const largePotPlant = makePlantSummary({ id: 'p-large-pot', potSize: '50L' });
+
+    const rangeForSmallPot = makeFullPathRange(6);
+    setRangeWeather(
+      rangeForSmallPot,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 31, humidity: 50 }),
+    );
+    setRangeWeather(rangeForSmallPot, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValueOnce(rangeForSmallPot);
+    const [smallPotInsight] = await evaluateWateringInsights([smallPotPlant]);
+
+    const rangeForLargePot = makeFullPathRange(6);
+    setRangeWeather(
+      rangeForLargePot,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 31, humidity: 50 }),
+    );
+    setRangeWeather(rangeForLargePot, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValueOnce(rangeForLargePot);
+    const [largePotInsight] = await evaluateWateringInsights([largePotPlant]);
+
+    expect(smallPotInsight.thresholdDays).toBe(1.15);
+    expect(largePotInsight.thresholdDays).toBe(1.7);
+    expect(smallPotInsight.thresholdDays).toBeLessThan(largePotInsight.thresholdDays);
+  });
+
+  it('27) growth stage modifier: seedling is more sensitive than flowering', async () => {
+    const seedlingPlant = makePlantSummary({ id: 'p-seedling', growthStage: 'seedling' });
+    const floweringPlant = makePlantSummary({ id: 'p-flowering', growthStage: 'flowering' });
+
+    const rangeForSeedling = makeFullPathRange(6);
+    setRangeWeather(
+      rangeForSeedling,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 30, humidity: 48 }),
+    );
+    setRangeWeather(rangeForSeedling, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValueOnce(rangeForSeedling);
+    const [seedlingInsight] = await evaluateWateringInsights([seedlingPlant]);
+
+    const rangeForFlowering = makeFullPathRange(6);
+    setRangeWeather(
+      rangeForFlowering,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 30, humidity: 48 }),
+    );
+    setRangeWeather(rangeForFlowering, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValueOnce(rangeForFlowering);
+    const [floweringInsight] = await evaluateWateringInsights([floweringPlant]);
+
+    expect(seedlingInsight.thresholdDays).toBe(1.15);
+    expect(floweringInsight.thresholdDays).toBe(1.5);
+    expect(seedlingInsight.thresholdDays).toBeLessThan(floweringInsight.thresholdDays);
+  });
+
+  it('28) sunlight modifier: full sun dries faster than shade and can flip decision', async () => {
+    const fullSunPlant = makePlantSummary({ id: 'p-full-sun', sunlightExposure: 'full sun' });
+    const shadePlant = makePlantSummary({ id: 'p-shade', sunlightExposure: 'shade' });
+
+    const rangeForFullSun = makeFullPathRange(6);
+    const fullSunManual = new Date(TODAY_START);
+    fullSunManual.setDate(fullSunManual.getDate() - 2);
+    fullSunManual.setHours(9, 0, 0, 0);
+    addRangeLog(rangeForFullSun, toDateKey(addDays(TODAY_START, -2)), makeLog(fullSunManual, 'watering'));
+    setRangeWeather(
+      rangeForFullSun,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 29, humidity: 52 }),
+    );
+    setRangeWeather(rangeForFullSun, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValueOnce(rangeForFullSun);
+    const [fullSunInsight] = await evaluateWateringInsights([fullSunPlant]);
+
+    const rangeForShade = makeFullPathRange(6);
+    const shadeManual = new Date(TODAY_START);
+    shadeManual.setDate(shadeManual.getDate() - 2);
+    shadeManual.setHours(9, 0, 0, 0);
+    addRangeLog(rangeForShade, toDateKey(addDays(TODAY_START, -2)), makeLog(shadeManual, 'watering'));
+    setRangeWeather(
+      rangeForShade,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 29, humidity: 52 }),
+    );
+    setRangeWeather(rangeForShade, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValueOnce(rangeForShade);
+    const [shadeInsight] = await evaluateWateringInsights([shadePlant]);
+
+    expect(fullSunInsight.thresholdDays).toBe(1.75);
+    expect(shadeInsight.thresholdDays).toBe(2.2);
+    expect(fullSunInsight.needsWater).toBe(true);
+    expect(shadeInsight.needsWater).toBe(false);
+  });
+
+  it('29) Plan B includes tomorrow rain fragment when only tomorrow exceeds threshold', async () => {
+    const plant = makePlantSummary({ id: 'p-planb-tomorrow-rain' });
+    const range = makePlanBRange(6);
+    setRangeWeather(range, TODAY_KEY, makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 24 }));
+    setRangeWeather(range, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 10 }));
+    fetchRangeMock.mockResolvedValue(range);
+
+    const [insight] = await evaluateWateringInsights([plant]);
+
+    expect(insight.needsWater).toBe(false);
+    expect(insight.reason).toContain('Rain expected tomorrow');
+  });
+
+  it('30) Plan B includes light-rain fragment when today rain is below threshold', async () => {
+    const plant = makePlantSummary({ id: 'p-planb-light-rain' });
+    const range = makePlanBRange(6);
+    setRangeWeather(range, TODAY_KEY, makeWeatherEntry(TODAY_KEY, { rainfall: 4, temperature: 24 }));
+    setRangeWeather(range, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValue(range);
+
+    const [insight] = await evaluateWateringInsights([plant]);
+
+    expect(insight.needsWater).toBe(true);
+    expect(insight.reason).toContain('Only light rain fell today');
+  });
+
+  it('31) Plan B adds heat-stress watch when rain suppresses watering on hot day', async () => {
+    const plant = makePlantSummary({ id: 'p-planb-heat-watch' });
+    const range = makePlanBRange(6);
+    setRangeWeather(range, TODAY_KEY, makeWeatherEntry(TODAY_KEY, { rainfall: 10, temperature: 35 }));
+    setRangeWeather(range, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValue(range);
+
+    const [insight] = await evaluateWateringInsights([plant]);
+
+    expect(insight.needsWater).toBe(false);
+    expect(insight.reason).toContain('Heat stress watch');
+  });
+
+  it('32) Plan B adds cool-wet root rot warning when rain suppresses watering', async () => {
+    const plant = makePlantSummary({ id: 'p-planb-root-rot' });
+    const range = makePlanBRange(6);
+    setRangeWeather(
+      range,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 10, temperature: 13, humidity: 86 }),
+    );
+    setRangeWeather(range, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValue(range);
+
+    const [insight] = await evaluateWateringInsights([plant]);
+
+    expect(insight.needsWater).toBe(false);
+    expect(insight.reason).toContain('Cool wet conditions increase root rot risk');
+  });
+
+  it('33) forecasted light rain keeps watering active when plant is overdue', async () => {
+    const plant = makePlantSummary({ id: 'p-forecast-light-rain-overdue' });
+    const range = makeFullPathRange(6);
+    const manualAt = new Date(TODAY_START);
+    manualAt.setDate(manualAt.getDate() - 4);
+    manualAt.setHours(9, 0, 0, 0);
+    addRangeLog(range, toDateKey(addDays(TODAY_START, -4)), makeLog(manualAt, 'watering'));
+
+    setRangeWeather(
+      range,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 4, forecasted: true, temperature: 33, humidity: 35 }),
+    );
+    setRangeWeather(range, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValue(range);
+
+    const [insight] = await evaluateWateringInsights([plant]);
+
+    expect(insight.needsWater).toBe(true);
+    expect(insight.reason).toContain('only light rain (~4.0mm) is forecast today');
+  });
+
+  it('34) needs-water reason includes high-wind drying fragment when windy', async () => {
+    const plant = makePlantSummary({ id: 'p-high-wind-reason' });
+    const range = makeFullPathRange(6);
+    const manualAt = new Date(TODAY_START);
+    manualAt.setDate(manualAt.getDate() - 3);
+    manualAt.setHours(10, 0, 0, 0);
+    addRangeLog(range, toDateKey(addDays(TODAY_START, -3)), makeLog(manualAt, 'watering'));
+    setRangeWeather(
+      range,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 29, humidity: 50, windSpeed: 25 }),
+    );
+    setRangeWeather(range, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValue(range);
+
+    const [insight] = await evaluateWateringInsights([plant]);
+
+    expect(insight.needsWater).toBe(true);
+    expect(insight.reason).toContain('strong winds are increasing drying');
+  });
+
+  it('35) non-needs-water reason uses forecast-significant-rain fragment for unobserved today rain', async () => {
+    const plant = makePlantSummary({ id: 'p-forecast-significant-rain' });
+    const range = makeFullPathRange(6);
+    const manualAt = new Date(TODAY_START);
+    manualAt.setDate(manualAt.getDate() - 1);
+    manualAt.setHours(10, 0, 0, 0);
+    addRangeLog(range, YESTERDAY_KEY, makeLog(manualAt, 'watering'));
+    setRangeWeather(
+      range,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 10, forecasted: true, temperature: 24, humidity: 55 }),
+    );
+    setRangeWeather(range, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValue(range);
+
+    const [insight] = await evaluateWateringInsights([plant]);
+
+    expect(insight.needsWater).toBe(false);
+    expect(insight.reason).toContain('forecast suggests around 10.0mm of rain today');
+  });
+
+  it('36) refresh path merges parsed dates that were not present in original range', async () => {
+    const plant = makePlantSummary({ id: 'p-refresh-extra-date' });
+    const range = makeFullPathRange(6);
+    setRangeWeather(range, TOMORROW_KEY, null);
+    fetchRangeMock.mockResolvedValue(range);
+
+    const extraDateKey = toDateKey(addDays(TODAY_START, 3));
+    parseWeatherDataMock.mockReturnValue({
+      [extraDateKey]: makeWeatherEntry(extraDateKey, { temperature: 22, rainfall: 0 }),
+    } as any);
+
+    const [insight] = await evaluateWateringInsights([plant]);
+
+    expect(insight).toBeDefined();
+    expect(fetchWeatherMock).toHaveBeenCalledTimes(1);
+    expect(updateWeatherCacheMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('37) outer evaluation catch logs and skips plant when evaluation throws unexpectedly', async () => {
+    const badPlant = makePlantSummary({ id: 'p-outer-catch-bad' });
+    const goodPlant = makePlantSummary({ id: 'p-outer-catch-good' });
+
+    fetchRangeMock.mockImplementation(async (plantId) => {
+      if (plantId === badPlant.id) return undefined as any;
+      return makeFullPathRange(6);
+    });
+
+    const result = await evaluateWateringInsights([badPlant, goodPlant]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].plantId).toBe(goodPlant.id);
+    expect(loggerMock.error).toHaveBeenCalledWith(
+      'Failed to evaluate watering insight for plant',
+      expect.objectContaining({ plantId: badPlant.id, error: expect.anything() }),
+    );
+  });
+
+  it('38) watering log without timestamp.toDate falls back to day key for last manual water', async () => {
+    const plant = makePlantSummary({ id: 'p-log-fallback-timestamp' });
+    const range = makeFullPathRange(6);
+    addRangeLog(range, YESTERDAY_KEY, {
+      type: 'watering',
+      timestamp: {} as any,
+      updatedBy: 'demoUser',
+    } as any);
+    fetchRangeMock.mockResolvedValue(range);
+
+    const [insight] = await evaluateWateringInsights([plant]);
+
+    expect(insight.lastWaterSource).toBe('manual');
+    expect(insight.daysSinceLastWater).toBe(1);
+  });
+
+  it('39) invalid log timestamp falls back to lookback+1 days without crashing', async () => {
+    const plant = makePlantSummary({ id: 'p-invalid-log-date' });
+    const range = makeFullPathRange(6);
+    addRangeLog(range, YESTERDAY_KEY, {
+      type: 'watering',
+      timestamp: { toDate: () => new Date(Number.NaN) },
+      updatedBy: 'demoUser',
+    } as any);
+    fetchRangeMock.mockResolvedValue(range);
+
+    const [insight] = await evaluateWateringInsights([plant]);
+
+    expect(insight.daysSinceLastWater).toBe(7);
+  });
+
+  it('40) gallon pot size is parsed and mid-sized pots apply no extra modifier', async () => {
+    const gallonPlant = makePlantSummary({ id: 'p-pot-gallon', potSize: '5 gallons' });
+    const mediumLiterPlant = makePlantSummary({ id: 'p-pot-medium-liter', potSize: '18L' });
+
+    const gallonRange = makeFullPathRange(6);
+    setRangeWeather(
+      gallonRange,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 31, humidity: 50 }),
+    );
+    setRangeWeather(gallonRange, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValueOnce(gallonRange);
+    const [gallonInsight] = await evaluateWateringInsights([gallonPlant]);
+
+    const mediumRange = makeFullPathRange(6);
+    setRangeWeather(
+      mediumRange,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 31, humidity: 50 }),
+    );
+    setRangeWeather(mediumRange, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValueOnce(mediumRange);
+    const [mediumInsight] = await evaluateWateringInsights([mediumLiterPlant]);
+
+    expect(gallonInsight.thresholdDays).toBe(1.5);
+    expect(mediumInsight.thresholdDays).toBe(1.5);
+  });
+
+  it('41) partial shade applies a mild threshold increase', async () => {
+    const partialShadePlant = makePlantSummary({
+      id: 'p-partial-shade',
+      sunlightExposure: 'partial shade',
+    });
+    const neutralPlant = makePlantSummary({
+      id: 'p-neutral-sun',
+      sunlightExposure: undefined,
+    } as any);
+
+    const partialShadeRange = makeFullPathRange(6);
+    setRangeWeather(
+      partialShadeRange,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 24, humidity: 55 }),
+    );
+    setRangeWeather(partialShadeRange, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValueOnce(partialShadeRange);
+    const [partialShadeInsight] = await evaluateWateringInsights([partialShadePlant]);
+
+    const neutralRange = makeFullPathRange(6);
+    setRangeWeather(
+      neutralRange,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 24, humidity: 55 }),
+    );
+    setRangeWeather(neutralRange, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValueOnce(neutralRange);
+    const [neutralInsight] = await evaluateWateringInsights([neutralPlant]);
+
+    expect(partialShadeInsight.thresholdDays).toBe(2.1);
+    expect(neutralInsight.thresholdDays).toBe(2);
+  });
+
+  it('42) unknown sunlight descriptors currently apply no threshold modifier', async () => {
+    const unknownSunPlant = makePlantSummary({
+      id: 'p-unknown-sun',
+      sunlightExposure: 'dappled canopy',
+    });
+    const neutralPlant = makePlantSummary({
+      id: 'p-neutral-sun-2',
+      sunlightExposure: undefined,
+    } as any);
+
+    const unknownRange = makeFullPathRange(6);
+    setRangeWeather(
+      unknownRange,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 24, humidity: 55 }),
+    );
+    setRangeWeather(unknownRange, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValueOnce(unknownRange);
+    const [unknownInsight] = await evaluateWateringInsights([unknownSunPlant]);
+
+    const neutralRange = makeFullPathRange(6);
+    setRangeWeather(
+      neutralRange,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 24, humidity: 55 }),
+    );
+    setRangeWeather(neutralRange, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValueOnce(neutralRange);
+    const [neutralInsight] = await evaluateWateringInsights([neutralPlant]);
+
+    expect(unknownInsight.thresholdDays).toBe(2);
+    expect(unknownInsight.thresholdDays).toBe(neutralInsight.thresholdDays);
+  });
+
+  it('43) Plan B with missing humidity keeps mildew at low via defensive fallback', async () => {
+    const plant = makePlantSummary({ id: 'p-planb-missing-humidity' });
+    const range = makePlanBRange(6);
+    setRangeWeather(
+      range,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { humidity: undefined as any, temperature: 24, rainfall: 0 }),
+    );
+    setRangeWeather(range, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValue(range);
+
+    const [insight] = await evaluateWateringInsights([plant]);
+
+    expect(insight.mildewRiskLevel).toBe('low');
+    expect(insight.mildewShouldWarn).toBe(false);
+  });
+
+  it('44) pot size without unit defaults to liters parsing', async () => {
+    const noUnitPlant = makePlantSummary({ id: 'p-pot-no-unit', potSize: '12' });
+    const literPlant = makePlantSummary({ id: 'p-pot-12l', potSize: '12L' });
+
+    const noUnitRange = makeFullPathRange(6);
+    setRangeWeather(
+      noUnitRange,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 31, humidity: 50 }),
+    );
+    setRangeWeather(noUnitRange, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValueOnce(noUnitRange);
+    const [noUnitInsight] = await evaluateWateringInsights([noUnitPlant]);
+
+    const literRange = makeFullPathRange(6);
+    setRangeWeather(
+      literRange,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 31, humidity: 50 }),
+    );
+    setRangeWeather(literRange, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValueOnce(literRange);
+    const [literInsight] = await evaluateWateringInsights([literPlant]);
+
+    expect(noUnitInsight.thresholdDays).toBe(1.5);
+    expect(noUnitInsight.thresholdDays).toBe(literInsight.thresholdDays);
+  });
 });
