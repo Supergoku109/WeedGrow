@@ -297,7 +297,7 @@ const RAIN_PATTERN_SCENARIOS: ScenarioCase[] = [
     expect: {
       needsWater: true,
       lastWaterSource: 'manual',
-      daysSinceLastWater: 4,
+      daysSinceLastWater: 3.7,
       reasonIncludes: ['forecast high', 'humidity near'],
     },
   },
@@ -683,4 +683,3 @@ describe('watering suggestions - real-world intent scenario matrix', () => {
     assertScenarioExpectations(result[0], scenario.expect);
   });
 });
-

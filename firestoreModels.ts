@@ -79,6 +79,7 @@ export interface WeatherCacheEntry {
     sunrise?: string;
     sunset?: string;
     pop?: number;
+    nightHumidity?: number;
     detailedTemps?: {
       morn: number | null;
       day: number | null;

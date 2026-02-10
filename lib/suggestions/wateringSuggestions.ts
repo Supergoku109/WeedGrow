@@ -28,6 +28,7 @@ const HIGH_HUMIDITY_THRESHOLD = 75;
 const HIGH_WIND_DRYING_THRESHOLD_KPH = 22;
 const CLOUDY_THRESHOLD = 70;
 const MILDEW_SAMPLE_DAYS = 3;
+const LIGHT_RAIN_DELAY_WEIGHTS = [1, 0.6, 0.35] as const;
 
 /**
  * Watering algorithm walkthrough
@@ -162,6 +163,42 @@ function hasValidCoordinates(plant: PlantSummary): plant is PlantSummary & {
 
 function getRainfall(weather: WeatherCacheEntry | null | undefined): number {
   return typeof weather?.rainfall === 'number' ? weather.rainfall : 0;
+}
+
+function isObservedWeatherForDate(
+  weather: WeatherCacheEntry | null | undefined,
+  dateKey: string,
+): boolean {
+  if (!weather) return false;
+  if (weather.date && weather.date !== dateKey) return false;
+  return weather.forecasted !== true;
+}
+
+function getLightRainDelayDays(
+  range: Record<string, RangeEntry>,
+  today: Date,
+  rainfallThresholdMm: number,
+): number {
+  if (!Number.isFinite(rainfallThresholdMm) || rainfallThresholdMm <= 0) return 0;
+
+  let effectiveRainMm = 0;
+
+  LIGHT_RAIN_DELAY_WEIGHTS.forEach((weight, offset) => {
+    const key = formatDate(addDays(today, -offset));
+    const weather = range[key]?.weather;
+    if (!weather) return;
+    if (offset === 0 && !isObservedWeatherForDate(weather, key)) return;
+
+    const rainfall = getRainfall(weather);
+    if (rainfall >= LIGHT_RAIN_THRESHOLD_MM && rainfall < rainfallThresholdMm) {
+      effectiveRainMm += rainfall * weight;
+    }
+  });
+
+  const delayDays = effectiveRainMm / rainfallThresholdMm;
+  if (!Number.isFinite(delayDays) || delayDays <= 0) return 0;
+  if (delayDays > 1) return 1;
+  return delayDays;
 }
 
 function getRecentRainfallTotal(
@@ -402,6 +439,18 @@ function calculateThresholdDays(
   return thresholdDays;
 }
 
+function hasUsefulHistoryBeforeDate(
+  range: Record<string, RangeEntry>,
+  boundaryDate: Date,
+): boolean {
+  return Object.entries(range).some(([dateKey, entry]) => {
+    const dayDate = startOfDay(new Date(`${dateKey}T00:00:00`));
+    if (dayDate >= boundaryDate) return false;
+    if (entry.weather) return true;
+    return Array.isArray(entry.logs) && entry.logs.some((log) => log.type === 'watering');
+  });
+}
+
 function collectHistoricalSignals(
   range: Record<string, RangeEntry>,
   yesterdayKey: string,
@@ -423,7 +472,7 @@ function collectHistoricalSignals(
     if (dayDate < startOfToday) {
       if (entry.weather) historicalWeatherCount += 1;
       if (Array.isArray(entry.logs) && entry.logs.length > 0) {
-        historicalLogCount += entry.logs.length;
+        historicalLogCount += entry.logs.filter((log) => log.type === 'watering').length;
       }
     }
 
@@ -437,10 +486,12 @@ function collectHistoricalSignals(
       }
     });
 
-    const rainfall = getRainfall(entry.weather);
-    if (rainfall >= rainfallThresholdMm) {
-      if (!lastRainDate || dayDate > lastRainDate) {
-        lastRainDate = dayDate;
+    if (dayDate < startOfToday) {
+      const rainfall = getRainfall(entry.weather);
+      if (rainfall >= rainfallThresholdMm) {
+        if (!lastRainDate || dayDate > lastRainDate) {
+          lastRainDate = dayDate;
+        }
       }
     }
   });
@@ -466,6 +517,7 @@ function buildReason(params: {
   humidity: number | null;
   thresholdDays: number;
   todayRainfall: number;
+  todayRainObserved: boolean;
   tomorrowRainfall: number;
   recentRainfallTotalMm: number;
   recentRainfallThresholdMm: number;
@@ -486,6 +538,7 @@ function buildReason(params: {
     humidity,
     thresholdDays,
     todayRainfall,
+    todayRainObserved,
     tomorrowRainfall,
     recentRainfallTotalMm,
     recentRainfallThresholdMm,
@@ -521,7 +574,11 @@ function buildReason(params: {
 
   if (needsWater) {
     if (todayRainfall >= lightRainThresholdMm && todayRainfall < rainfallThresholdMm) {
-      reasonParts.push(`only light rain (${todayRainfall.toFixed(1)}mm) today`);
+      if (todayRainObserved) {
+        reasonParts.push(`only light rain (${todayRainfall.toFixed(1)}mm) today`);
+      } else {
+        reasonParts.push(`only light rain (~${todayRainfall.toFixed(1)}mm) is forecast today`);
+      }
     }
     if (climate.isVeryHot || climate.isHot) {
       reasonParts.push(`forecast high of ${Math.round(temperatureMax ?? HOT_TEMP_THRESHOLD)} degC`);
@@ -536,13 +593,15 @@ function buildReason(params: {
       reasonParts.push(`now beyond the ${thresholdDays.toFixed(1)} day watering window`);
     }
   } else {
-    if (todayRainfall >= rainfallThresholdMm) {
+    if (todayRainfall >= rainfallThresholdMm && todayRainObserved) {
       reasonParts.push(`received about ${todayRainfall.toFixed(1)}mm of rain today`);
       if (todayRainfall >= rainfallThresholdMm * 2) {
         reasonParts.push(
           `heavy rain likely soaked the root zone; skip watering for about ${Math.max(Math.round(thresholdDays), 1)} day(s)`,
         );
       }
+    } else if (todayRainfall >= rainfallThresholdMm) {
+      reasonParts.push(`forecast suggests around ${todayRainfall.toFixed(1)}mm of rain today`);
     } else if (recentRainfallTotalMm >= recentRainfallThresholdMm) {
       reasonParts.push(
         `recent rainfall totaled ~${recentRainfallTotalMm.toFixed(1)}mm over the last ${RECENT_RAIN_WINDOW_DAYS} days`,
@@ -611,7 +670,11 @@ function buildPlanBInsight(
       planBReason.push(`Only light rain fell today (${todayRainfall.toFixed(1)}mm).`);
     }
     if (typeof temperatureMax === 'number') {
-      planBReason.push(`Forecast is sunny/hot (high of ${Math.round(temperatureMax)}°C)`);
+      if (temperatureMax >= HOT_TEMP_THRESHOLD) {
+        planBReason.push(`Forecast is sunny/hot (high of ${Math.round(temperatureMax)}°C)`);
+      } else {
+        planBReason.push(`Forecast high is around ${Math.round(temperatureMax)}°C`);
+      }
     }
     planBReason.push('Watering is recommended.');
   }
@@ -636,7 +699,7 @@ function buildPlanBInsight(
   }
 
   const mildew = assessMildewFromTodayWeather(todayWeather);
-  const baseReason = `Yesterday’s weather data unavailable – assuming no water was received. ${planBReason.join(' ')} Using current and forecast data only.`;
+  const baseReason = `Yesterday's weather data unavailable - assuming no water was received. ${planBReason.join(' ')} Using current and forecast data only.`;
 
   return {
     plantId: plant.id,
@@ -724,6 +787,8 @@ async function evaluatePlantWatering(
   const tomorrowKey = formatDate(addDays(today, 1));
   const yesterdayKey = formatDate(addDays(today, -1));
   const targetDates = [todayKey, tomorrowKey];
+  const startOfToday = startOfDay(today);
+  const endOfToday = addDays(today, 1);
 
   // Phase 2: fill missing today/tomorrow weather from API cache refresh.
   range = await refreshWeatherIfMissing(plant, range, targetDates);
@@ -732,7 +797,7 @@ async function evaluatePlantWatering(
   const tomorrowWeather = range[tomorrowKey]?.weather ?? null;
 
   // Phase 3: if yesterday is missing but today exists, use a simpler fallback.
-  if (todayWeather && !range[yesterdayKey]?.weather) {
+  if (todayWeather && !range[yesterdayKey]?.weather && !hasUsefulHistoryBeforeDate(range, startOfToday)) {
     // Early exit: Plan B favors conservative guidance when continuity is broken.
     return buildPlanBInsight(plant, todayWeather, tomorrowWeather, options);
   }
@@ -763,17 +828,19 @@ async function evaluatePlantWatering(
 
   const todayRainfall = getRainfall(todayWeather);
   const tomorrowRainfall = getRainfall(tomorrowWeather);
+  const todayRainObserved = isObservedWeatherForDate(todayWeather, todayKey);
+  const hasObservedSignificantRainToday =
+    todayRainObserved && todayRainfall >= options.rainfallThresholdMm;
   const recentRainfallTotalMm = getRecentRainfallTotal(range, today, RECENT_RAIN_WINDOW_DAYS);
   const hasSaturatingRecentRain =
     recentRainfallTotalMm >= RECENT_RAIN_ACCUMULATION_THRESHOLD_MM;
+  const lightRainDelayDays = getLightRainDelayDays(range, today, options.rainfallThresholdMm);
   const temperatureMax = getTemperatureMax(todayWeather);
   const humidity = getHumidity(todayWeather);
   const windSpeed = getWindSpeed(todayWeather);
   const cloudCoverage = getCloudCoverage(todayWeather);
 
   // Phase 5: inspect historical logs/weather to find the latest water source.
-  const endOfToday = addDays(today, 1);
-  const startOfToday = startOfDay(today);
   const history = collectHistoricalSignals(
     range,
     yesterdayKey,
@@ -802,6 +869,10 @@ async function evaluatePlantWatering(
     options.lookbackDays,
     today,
   );
+  if (lightRainDelayDays > 0) {
+    // Recent light rain can delay dryness a bit without fully replacing a watering event.
+    daysSinceLastWater = Math.max(daysSinceLastWater - lightRainDelayDays, 0);
+  }
 
   const climate = buildClimateFlags(temperatureMax, humidity, cloudCoverage, windSpeed);
   const thresholdDays = calculateThresholdDays(
@@ -815,19 +886,24 @@ async function evaluatePlantWatering(
   let needsWater = drynessRatio >= 1;
 
   // Rain today/tomorrow can suppress manual watering need.
-  if (todayRainfall >= options.rainfallThresholdMm || hasSaturatingRecentRain) {
+  if (hasObservedSignificantRainToday || hasSaturatingRecentRain) {
     needsWater = false;
     lastWaterSource = 'rain';
     daysSinceLastWater = 0;
-  } else if (todayRainfall >= LIGHT_RAIN_THRESHOLD_MM) {
-    // Light rain can slightly delay dryness but does not fully replace watering.
-    daysSinceLastWater = Math.max(daysSinceLastWater - 0.35, 0);
-    needsWater = daysSinceLastWater / thresholdDays >= 1;
   }
 
   if (tomorrowRainfall >= options.rainfallThresholdMm && daysSinceLastWater < thresholdDays + 0.5) {
     needsWater = false;
   }
+
+  const effectiveDrynessRatio = thresholdDays > 0 ? daysSinceLastWater / thresholdDays : 0;
+  let score = effectiveDrynessRatio;
+  if (hasObservedSignificantRainToday || hasSaturatingRecentRain) {
+    score = 0;
+  } else if (!needsWater) {
+    score = Math.min(effectiveDrynessRatio, 0.99);
+  }
+  if (!Number.isFinite(score)) score = 0;
 
   // Phase 7: produce a human-readable explanation.
   const reason = buildReason({
@@ -842,6 +918,7 @@ async function evaluatePlantWatering(
     humidity,
     thresholdDays,
     todayRainfall,
+    todayRainObserved,
     tomorrowRainfall,
     recentRainfallTotalMm,
     recentRainfallThresholdMm: RECENT_RAIN_ACCUMULATION_THRESHOLD_MM,
@@ -857,7 +934,7 @@ async function evaluatePlantWatering(
     plantId: plant.id,
     plantName: plant.name || 'Unnamed plant',
     needsWater,
-    score: Number(drynessRatio.toFixed(2)),
+    score: Number(score.toFixed(2)),
     daysSinceLastWater: Number(daysSinceLastWater.toFixed(2)),
     thresholdDays: Number(thresholdDays.toFixed(2)),
     lastWaterSource,

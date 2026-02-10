@@ -435,4 +435,80 @@ describe('evaluateWateringInsights (black-box)', () => {
     expect(farInsight.needsWater).toBe(true);
     expect(farInsight.daysSinceLastWater).toBe(4);
   });
+
+  it('23) keeps full-path evaluation when yesterday weather is missing but older watering context exists', async () => {
+    const plant = makePlantSummary({ id: 'p-gap-with-history' });
+    const range = createRangeWindow(TODAY_START, 6);
+    setRangeWeather(
+      range,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 30, humidity: 40 }),
+    );
+    setRangeWeather(range, YESTERDAY_KEY, null);
+    setRangeWeather(range, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+
+    const olderManual = new Date(TODAY_START);
+    olderManual.setDate(olderManual.getDate() - 3);
+    olderManual.setHours(10, 0, 0, 0);
+    addRangeLog(range, toDateKey(addDays(TODAY_START, -3)), makeLog(olderManual, 'watering'));
+    fetchRangeMock.mockResolvedValue(range);
+
+    const [insight] = await evaluateWateringInsights([plant]);
+
+    expect(insight.reason).not.toContain('Using current and forecast data only');
+    expect(insight.lastWaterSource).toBe('manual');
+    expect(insight.daysSinceLastWater).toBe(3);
+  });
+
+  it('24) forecasted rain for today does not hard-reset watering state as observed rain', async () => {
+    const plant = makePlantSummary({ id: 'p-forecast-rain-today' });
+    const range = makeFullPathRange(6);
+
+    const manualAt = new Date(TODAY_START);
+    manualAt.setDate(manualAt.getDate() - 3);
+    manualAt.setHours(9, 0, 0, 0);
+    addRangeLog(range, toDateKey(addDays(TODAY_START, -3)), makeLog(manualAt, 'watering'));
+
+    setRangeWeather(
+      range,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, {
+        rainfall: 12,
+        temperature: 34,
+        humidity: 35,
+        forecasted: true,
+      }),
+    );
+    setRangeWeather(range, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 0 }));
+    fetchRangeMock.mockResolvedValue(range);
+
+    const [insight] = await evaluateWateringInsights([plant]);
+
+    expect(insight.needsWater).toBe(true);
+    expect(insight.lastWaterSource).toBe('manual');
+    expect(insight.daysSinceLastWater).toBe(3);
+  });
+
+  it('25) score stays below 1 when tomorrow-rain suppression flips needsWater to false', async () => {
+    const plant = makePlantSummary({ id: 'p-score-consistent' });
+    const range = makeFullPathRange(6);
+
+    const manualAt = new Date(TODAY_START);
+    manualAt.setDate(manualAt.getDate() - 2);
+    manualAt.setHours(14, 0, 0, 0);
+    addRangeLog(range, toDateKey(addDays(TODAY_START, -2)), makeLog(manualAt, 'watering'));
+
+    setRangeWeather(
+      range,
+      TODAY_KEY,
+      makeWeatherEntry(TODAY_KEY, { rainfall: 0, temperature: 33, humidity: 50 }),
+    );
+    setRangeWeather(range, TOMORROW_KEY, makeWeatherEntry(TOMORROW_KEY, { rainfall: 10 }));
+    fetchRangeMock.mockResolvedValue(range);
+
+    const [insight] = await evaluateWateringInsights([plant]);
+
+    expect(insight.needsWater).toBe(false);
+    expect(insight.score).toBe(0.99);
+  });
 });
