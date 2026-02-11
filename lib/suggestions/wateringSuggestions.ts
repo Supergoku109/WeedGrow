@@ -18,6 +18,7 @@ const DEFAULT_RAIN_THRESHOLD_MM = 8; // ~0.3in daily rain can often offset irrig
 const LIGHT_RAIN_THRESHOLD_MM = 3; // Below this is usually surface wetting only.
 const RECENT_RAIN_WINDOW_DAYS = 3;
 const RECENT_RAIN_ACCUMULATION_THRESHOLD_MM = 25; // ~1in over 3 days.
+const DRYNESS_TRIGGER_GRACE_DAYS = 0.25; // Reduces near-threshold churn from coarse day bucketing.
 const HOT_TEMP_THRESHOLD = 30;
 const VERY_HOT_TEMP_THRESHOLD = 33;
 const COOL_TEMP_THRESHOLD = 18;
@@ -26,6 +27,14 @@ const HEAT_STRESS_WARNING_TEMP_THRESHOLD = 32;
 const LOW_HUMIDITY_THRESHOLD = 45;
 const HIGH_HUMIDITY_THRESHOLD = 75;
 const HIGH_WIND_DRYING_THRESHOLD_KPH = 22;
+const HIGH_WIND_GUST_DRYING_THRESHOLD_KPH = 35;
+const HIGH_UV_INDEX_THRESHOLD = 8;
+const EXTREME_UV_INDEX_THRESHOLD = 11;
+const LONG_DAYLIGHT_HOURS_THRESHOLD = 13;
+const SHORT_DAYLIGHT_HOURS_THRESHOLD = 10;
+const HIGH_POP_RAIN_DELAY_THRESHOLD = 0.65;
+const LIKELY_FORECAST_RAIN_POP_THRESHOLD = 0.55;
+const DEFAULT_FORECAST_RAIN_CONFIDENCE = 0.35;
 const CLOUDY_THRESHOLD = 70;
 const MILDEW_SAMPLE_DAYS = 3;
 const LIGHT_RAIN_DELAY_WEIGHTS = [1, 0.6, 0.35] as const;
@@ -71,8 +80,27 @@ export interface WateringInsight {
   lastWaterSource: WaterSource;
   todayRainfall: number;
   tomorrowRainfall: number;
+  precipitationProbability: number | null;
+  tomorrowPrecipitationProbability: number | null;
+  forecastedToday: boolean;
+  forecastedTomorrow: boolean;
+  todayRainObserved: boolean;
+  recentRainfallTotalMm: number;
+  hasSaturatingRecentRain: boolean;
   temperatureMax: number | null;
+  temperatureMin: number | null;
+  temperatureDay: number | null;
+  temperatureNight: number | null;
   humidity: number | null;
+  cloudCoverage: number | null;
+  dewPoint: number | null;
+  windSpeed: number | null;
+  windGust: number | null;
+  uvIndex: number | null;
+  weatherSummary: string | null;
+  sunrise: string | null;
+  sunset: string | null;
+  dayLengthHours: number | null;
   mildewRiskLevel: MildewRiskLevel;
   mildewShouldWarn: boolean;
   mildewConsecutiveVeryHumidWarmDays: number;
@@ -102,6 +130,11 @@ interface ClimateFlags {
   isCoolAndCloudy: boolean;
   isLowHumidity: boolean;
   isHighWind: boolean;
+  isHighWindGust: boolean;
+  isHighUv: boolean;
+  isExtremeUv: boolean;
+  isLongDaylight: boolean;
+  isShortDaylight: boolean;
 }
 
 const LOW_MILDEW_ASSESSMENT: MildewRiskAssessment = {
@@ -143,11 +176,11 @@ function getBaseThreshold(environment: Plant['environment'] | undefined): number
 
 function formatDaysSince(days: number, source: Exclude<WaterSource, 'unknown'>): string {
   if (days < 0.5) return source === 'rain' ? 'watered by rain today' : 'watered today';
-  if (days < 1.5) return source === 'rain' ? 'watered by rain yesterday' : 'watered yesterday';
-  const rounded = Math.round(days);
-  const suffix = rounded === 1 ? 'day' : 'days';
-  if (source === 'rain') return `rainfall ${rounded} ${suffix} ago`;
-  return `watered ${rounded} ${suffix} ago`;
+  if (days < 2) return source === 'rain' ? 'watered by rain yesterday' : 'watered yesterday';
+  const wholeDays = Math.max(Math.floor(days), 2);
+  const suffix = wholeDays === 1 ? 'day' : 'days';
+  if (source === 'rain') return `rainfall ${wholeDays} ${suffix} ago`;
+  return `watered ${wholeDays} ${suffix} ago`;
 }
 
 function capitalize(text: string): string {
@@ -170,6 +203,43 @@ function hasValidCoordinates(plant: PlantSummary): plant is PlantSummary & {
 
 function getRainfall(weather: WeatherCacheEntry | null | undefined): number {
   return typeof weather?.rainfall === 'number' ? weather.rainfall : 0;
+}
+
+function clampProbability(value: number | null | undefined): number | null {
+  if (typeof value !== 'number') return null;
+  if (!Number.isFinite(value)) return null;
+  return Math.max(0, Math.min(1, value));
+}
+
+function getRainConfidence(
+  isForecasted: boolean,
+  precipitationProbability: number | null | undefined,
+): number {
+  if (!isForecasted) return 1;
+  return clampProbability(precipitationProbability) ?? DEFAULT_FORECAST_RAIN_CONFIDENCE;
+}
+
+function getEffectiveRainfallMm(
+  rainfallMm: number,
+  isForecasted: boolean,
+  precipitationProbability: number | null | undefined,
+): number {
+  if (!Number.isFinite(rainfallMm) || rainfallMm <= 0) return 0;
+  return rainfallMm * getRainConfidence(isForecasted, precipitationProbability);
+}
+
+function hasLikelyRainAtOrAboveThreshold(
+  rainfallMm: number,
+  thresholdMm: number,
+  isForecasted: boolean,
+  precipitationProbability: number | null | undefined,
+): boolean {
+  if (rainfallMm < thresholdMm) return false;
+  if (!isForecasted) return true;
+
+  const pop = clampProbability(precipitationProbability);
+  if (typeof pop === 'number' && pop >= LIKELY_FORECAST_RAIN_POP_THRESHOLD) return true;
+  return getEffectiveRainfallMm(rainfallMm, true, pop) >= thresholdMm;
 }
 
 function isObservedWeatherForDate(
@@ -218,7 +288,13 @@ function getRecentRainfallTotal(
 
   for (let offset = 0; offset < safeDays; offset += 1) {
     const key = formatDate(addDays(today, -offset));
-    total += getRainfall(range[key]?.weather);
+    const weather = range[key]?.weather;
+    const rainfall = getRainfall(weather);
+    if (offset === 0 && weather && !isObservedWeatherForDate(weather, key)) {
+      total += getEffectiveRainfallMm(rainfall, true, getPrecipitationProbability(weather));
+    } else {
+      total += rainfall;
+    }
   }
 
   return total;
@@ -248,6 +324,62 @@ function getNightTemperature(weather: WeatherCacheEntry | null | undefined): num
 
 function getCloudCoverage(weather: WeatherCacheEntry | null | undefined): number | null {
   return typeof weather?.cloudCoverage === 'number' ? weather.cloudCoverage : null;
+}
+
+function getUvIndex(weather: WeatherCacheEntry | null | undefined): number | null {
+  return typeof weather?.uvIndex === 'number' ? weather.uvIndex : null;
+}
+
+function getPrecipitationProbability(weather: WeatherCacheEntry | null | undefined): number | null {
+  return typeof weather?.pop === 'number' ? weather.pop : null;
+}
+
+function getWindGust(weather: WeatherCacheEntry | null | undefined): number | null {
+  return typeof weather?.windGust === 'number' ? weather.windGust : null;
+}
+
+function getWeatherSummary(weather: WeatherCacheEntry | null | undefined): string | null {
+  if (typeof weather?.weatherSummary !== 'string') return null;
+  const trimmed = weather.weatherSummary.trim();
+  return trimmed ? trimmed : null;
+}
+
+function getSunrise(weather: WeatherCacheEntry | null | undefined): string | null {
+  if (typeof weather?.sunrise !== 'string') return null;
+  const trimmed = weather.sunrise.trim();
+  return trimmed ? trimmed : null;
+}
+
+function getSunset(weather: WeatherCacheEntry | null | undefined): string | null {
+  if (typeof weather?.sunset !== 'string') return null;
+  const trimmed = weather.sunset.trim();
+  return trimmed ? trimmed : null;
+}
+
+function getDetailedTemp(
+  weather: WeatherCacheEntry | null | undefined,
+  key: 'min' | 'max' | 'day' | 'night',
+): number | null {
+  const value = weather?.detailedTemps?.[key];
+  return typeof value === 'number' ? value : null;
+}
+
+function parseDateMillis(value: string | null): number | null {
+  if (!value) return null;
+  const millis = Date.parse(value);
+  if (!Number.isFinite(millis)) return null;
+  return millis;
+}
+
+function getDayLengthHours(weather: WeatherCacheEntry | null | undefined): number | null {
+  const sunrise = parseDateMillis(getSunrise(weather));
+  const sunset = parseDateMillis(getSunset(weather));
+  if (sunrise === null || sunset === null) return null;
+
+  let hours = (sunset - sunrise) / (1000 * 60 * 60);
+  if (hours < 0) hours += 24;
+  if (!Number.isFinite(hours) || hours <= 0 || hours > 24) return null;
+  return Number(hours.toFixed(2));
 }
 
 function getNightHumidity(weather: WeatherCacheEntry | null | undefined): number | undefined {
@@ -394,6 +526,9 @@ function buildClimateFlags(
   humidity: number | null,
   cloudCoverage: number | null,
   windSpeed: number | null,
+  windGust: number | null,
+  uvIndex: number | null,
+  dayLengthHours: number | null,
 ): ClimateFlags {
   const isVeryHot = typeof temperatureMax === 'number' && temperatureMax >= VERY_HOT_TEMP_THRESHOLD;
   const isHot = typeof temperatureMax === 'number' && temperatureMax >= HOT_TEMP_THRESHOLD;
@@ -404,8 +539,27 @@ function buildClimateFlags(
     cloudCoverage >= CLOUDY_THRESHOLD;
   const isLowHumidity = typeof humidity === 'number' && humidity <= LOW_HUMIDITY_THRESHOLD;
   const isHighWind = typeof windSpeed === 'number' && windSpeed >= HIGH_WIND_DRYING_THRESHOLD_KPH;
+  const isHighWindGust =
+    typeof windGust === 'number' && windGust >= HIGH_WIND_GUST_DRYING_THRESHOLD_KPH;
+  const isExtremeUv = typeof uvIndex === 'number' && uvIndex >= EXTREME_UV_INDEX_THRESHOLD;
+  const isHighUv = typeof uvIndex === 'number' && uvIndex >= HIGH_UV_INDEX_THRESHOLD;
+  const isLongDaylight =
+    typeof dayLengthHours === 'number' && dayLengthHours >= LONG_DAYLIGHT_HOURS_THRESHOLD;
+  const isShortDaylight =
+    typeof dayLengthHours === 'number' && dayLengthHours <= SHORT_DAYLIGHT_HOURS_THRESHOLD;
 
-  return { isVeryHot, isHot, isCoolAndCloudy, isLowHumidity, isHighWind };
+  return {
+    isVeryHot,
+    isHot,
+    isCoolAndCloudy,
+    isLowHumidity,
+    isHighWind,
+    isHighWindGust,
+    isHighUv,
+    isExtremeUv,
+    isLongDaylight,
+    isShortDaylight,
+  };
 }
 
 function parsePotSizeLiters(potSize?: string): number | null {
@@ -474,6 +628,8 @@ function calculateThresholdDays(
   sunlightExposure: string | undefined,
   climate: ClimateFlags,
   tomorrowRainfall: number,
+  forecastedTomorrow: boolean,
+  tomorrowPop: number | null,
   rainfallThresholdMm: number,
 ): number {
   let thresholdDays = getBaseThreshold(environment);
@@ -486,8 +642,31 @@ function calculateThresholdDays(
 
   if (climate.isLowHumidity) thresholdDays -= 0.3;
   if (climate.isHighWind) thresholdDays -= 0.2;
+  if (climate.isHighWindGust) thresholdDays -= 0.15;
+  if (climate.isExtremeUv) thresholdDays -= 0.25;
+  else if (climate.isHighUv) thresholdDays -= 0.15;
+  if (climate.isLongDaylight) thresholdDays -= 0.15;
+  else if (climate.isShortDaylight) thresholdDays += 0.15;
   if (climate.isCoolAndCloudy) thresholdDays += 0.5;
-  if (tomorrowRainfall >= rainfallThresholdMm) thresholdDays += 0.5;
+  const likelyTomorrowSignificantRain = hasLikelyRainAtOrAboveThreshold(
+    tomorrowRainfall,
+    rainfallThresholdMm,
+    forecastedTomorrow,
+    tomorrowPop,
+  );
+  const likelyTomorrowLightRain =
+    tomorrowRainfall >= LIGHT_RAIN_THRESHOLD_MM
+    && (
+      !forecastedTomorrow
+      || (
+        typeof tomorrowPop === 'number'
+        && tomorrowPop >= HIGH_POP_RAIN_DELAY_THRESHOLD
+      )
+    );
+
+  if (likelyTomorrowSignificantRain || likelyTomorrowLightRain) {
+    thresholdDays += 0.5;
+  }
 
   if (thresholdDays < 1) return 1;
   if (thresholdDays > 4) return 4;
@@ -560,6 +739,8 @@ function buildReason(params: {
   todayRainfall: number;
   todayRainObserved: boolean;
   tomorrowRainfall: number;
+  forecastedTomorrow: boolean;
+  tomorrowPrecipitationProbability: number | null;
   recentRainfallTotalMm: number;
   recentRainfallThresholdMm: number;
   rainfallThresholdMm: number;
@@ -578,6 +759,8 @@ function buildReason(params: {
     todayRainfall,
     todayRainObserved,
     tomorrowRainfall,
+    forecastedTomorrow,
+    tomorrowPrecipitationProbability,
     recentRainfallTotalMm,
     recentRainfallThresholdMm,
     rainfallThresholdMm,
@@ -626,8 +809,32 @@ function buildReason(params: {
       reasonParts.push(
         `recent rainfall totaled ~${recentRainfallTotalMm.toFixed(1)}mm over the last ${RECENT_RAIN_WINDOW_DAYS} days`,
       );
-    } else if (tomorrowRainfall >= rainfallThresholdMm) {
-      reasonParts.push(`rain (~${tomorrowRainfall.toFixed(1)}mm) expected tomorrow`);
+    } else if (
+      hasLikelyRainAtOrAboveThreshold(
+        tomorrowRainfall,
+        rainfallThresholdMm,
+        forecastedTomorrow,
+        tomorrowPrecipitationProbability,
+      )
+    ) {
+      if (
+        forecastedTomorrow
+        && typeof tomorrowPrecipitationProbability === 'number'
+      ) {
+        reasonParts.push(
+          `rain (~${tomorrowRainfall.toFixed(1)}mm) likely tomorrow (${Math.round(tomorrowPrecipitationProbability * 100)}% chance)`,
+        );
+      } else {
+        reasonParts.push(`rain (~${tomorrowRainfall.toFixed(1)}mm) expected tomorrow`);
+      }
+    } else if (
+      forecastedTomorrow
+      && tomorrowRainfall >= rainfallThresholdMm
+      && typeof tomorrowPrecipitationProbability === 'number'
+    ) {
+      reasonParts.push(
+        `tomorrow rain forecast is low-confidence (${Math.round(tomorrowPrecipitationProbability * 100)}% chance)`,
+      );
     } else {
       const remaining = Math.max(thresholdDays - daysSinceLastWater, 0);
       reasonParts.push(
@@ -667,27 +874,108 @@ function buildPlanBInsight(
 ): WateringInsight {
   const todayRainfall = getRainfall(todayWeather);
   const tomorrowRainfall = getRainfall(tomorrowWeather);
+  const precipitationProbability = getPrecipitationProbability(todayWeather);
+  const tomorrowPrecipitationProbability = getPrecipitationProbability(tomorrowWeather);
+  const forecastedToday = todayWeather.forecasted === true;
+  const forecastedTomorrow = tomorrowWeather?.forecasted === true;
+  const effectiveTodayRainfall = getEffectiveRainfallMm(
+    todayRainfall,
+    forecastedToday,
+    precipitationProbability,
+  );
+  const effectiveTomorrowRainfall = getEffectiveRainfallMm(
+    tomorrowRainfall,
+    forecastedTomorrow,
+    tomorrowPrecipitationProbability,
+  );
   const temperatureMax = getTemperatureMax(todayWeather);
+  const temperatureMin = getDetailedTemp(todayWeather, 'min');
+  const temperatureDay = getDetailedTemp(todayWeather, 'day');
+  const temperatureNight = getDetailedTemp(todayWeather, 'night');
   const humidity = getHumidity(todayWeather);
+  const cloudCoverage = getCloudCoverage(todayWeather);
+  const dewPoint = getDewPoint(todayWeather);
+  const windSpeed = getWindSpeed(todayWeather);
+  const windGust = getWindGust(todayWeather);
+  const uvIndex = getUvIndex(todayWeather);
+  const weatherSummary = getWeatherSummary(todayWeather);
+  const sunrise = getSunrise(todayWeather);
+  const sunset = getSunset(todayWeather);
+  const dayLengthHours = getDayLengthHours(todayWeather);
   let needsWater = true;
   const planBReason: string[] = [];
+  const likelySignificantRainToday = hasLikelyRainAtOrAboveThreshold(
+    todayRainfall,
+    options.rainfallThresholdMm,
+    forecastedToday,
+    precipitationProbability,
+  );
+  const likelySignificantRainTomorrow = hasLikelyRainAtOrAboveThreshold(
+    tomorrowRainfall,
+    options.rainfallThresholdMm,
+    forecastedTomorrow,
+    tomorrowPrecipitationProbability,
+  );
+  const likelyLightRainTomorrow =
+    tomorrowRainfall >= LIGHT_RAIN_THRESHOLD_MM
+    && forecastedTomorrow
+    && typeof tomorrowPrecipitationProbability === 'number'
+    && tomorrowPrecipitationProbability >= HIGH_POP_RAIN_DELAY_THRESHOLD;
   const hasSignificantRainSoon =
-    todayRainfall >= options.rainfallThresholdMm || tomorrowRainfall >= options.rainfallThresholdMm;
+    likelySignificantRainToday || likelySignificantRainTomorrow || likelyLightRainTomorrow;
 
   // Plan B is intentionally conservative when yesterday's weather is missing.
   if (hasSignificantRainSoon) {
     needsWater = false;
-    if (todayRainfall >= options.rainfallThresholdMm) {
-      planBReason.push(`It rained today (${todayRainfall.toFixed(1)}mm)`);
+    if (likelySignificantRainToday) {
+      if (forecastedToday) {
+        const todayChance =
+          typeof precipitationProbability === 'number'
+            ? ` (${Math.round(precipitationProbability * 100)}% chance)`
+            : '';
+        planBReason.push(`Rain is likely today (~${effectiveTodayRainfall.toFixed(1)}mm effective${todayChance})`);
+      } else {
+        planBReason.push(`It rained today (${todayRainfall.toFixed(1)}mm)`);
+      }
     }
-    if (tomorrowRainfall >= options.rainfallThresholdMm) {
-      planBReason.push(`Rain expected tomorrow (${tomorrowRainfall.toFixed(1)}mm)`);
+    if (likelySignificantRainTomorrow) {
+      if (forecastedTomorrow) {
+        const tomorrowChance =
+          typeof tomorrowPrecipitationProbability === 'number'
+            ? ` (${Math.round(tomorrowPrecipitationProbability * 100)}% chance)`
+            : '';
+        planBReason.push(`Rain likely tomorrow (~${effectiveTomorrowRainfall.toFixed(1)}mm effective${tomorrowChance})`);
+      } else {
+        planBReason.push(`Rain expected tomorrow (${tomorrowRainfall.toFixed(1)}mm)`);
+      }
+    } else if (likelyLightRainTomorrow) {
+      planBReason.push(
+        `Light rain is likely tomorrow (${tomorrowRainfall.toFixed(1)}mm, ${Math.round((tomorrowPrecipitationProbability ?? 0) * 100)}% chance)`,
+      );
     }
     planBReason.push('No watering needed.');
   } else {
     planBReason.push('No significant rain today or tomorrow.');
     if (todayRainfall >= LIGHT_RAIN_THRESHOLD_MM) {
-      planBReason.push(`Only light rain fell today (${todayRainfall.toFixed(1)}mm).`);
+      if (forecastedToday) {
+        const todayChance =
+          typeof precipitationProbability === 'number'
+            ? ` (${Math.round(precipitationProbability * 100)}% chance)`
+            : '';
+        planBReason.push(
+          `Forecast rain today is not likely enough to replace watering (${todayRainfall.toFixed(1)}mm${todayChance}).`,
+        );
+      } else {
+        planBReason.push(`Only light rain fell today (${todayRainfall.toFixed(1)}mm).`);
+      }
+    } else if (
+      forecastedTomorrow
+      && tomorrowRainfall >= options.rainfallThresholdMm
+      && typeof tomorrowPrecipitationProbability === 'number'
+    ) {
+      planBReason.push(
+        `Tomorrow rain forecast is low-confidence (${Math.round(tomorrowPrecipitationProbability * 100)}% chance).`,
+      );
     }
     if (typeof temperatureMax === 'number') {
       if (temperatureMax >= HOT_TEMP_THRESHOLD) {
@@ -712,7 +1000,7 @@ function buildPlanBInsight(
     temperatureMax < COLD_TEMP_THRESHOLD &&
     typeof humidity === 'number' &&
     humidity >= HIGH_HUMIDITY_THRESHOLD &&
-    (todayRainfall >= LIGHT_RAIN_THRESHOLD_MM || tomorrowRainfall >= options.rainfallThresholdMm) &&
+    (effectiveTodayRainfall >= LIGHT_RAIN_THRESHOLD_MM || likelySignificantRainTomorrow) &&
     !needsWater
   ) {
     planBReason.push('Cool wet conditions increase root rot risk - avoid overwatering.');
@@ -731,8 +1019,27 @@ function buildPlanBInsight(
     lastWaterSource: 'unknown',
     todayRainfall,
     tomorrowRainfall,
+    precipitationProbability,
+    tomorrowPrecipitationProbability,
+    forecastedToday,
+    forecastedTomorrow,
+    todayRainObserved: !forecastedToday,
+    recentRainfallTotalMm: Number(todayRainfall.toFixed(2)),
+    hasSaturatingRecentRain: todayRainfall >= RECENT_RAIN_ACCUMULATION_THRESHOLD_MM,
     temperatureMax,
+    temperatureMin,
+    temperatureDay,
+    temperatureNight,
     humidity,
+    cloudCoverage,
+    dewPoint,
+    windSpeed,
+    windGust,
+    uvIndex,
+    weatherSummary,
+    sunrise,
+    sunset,
+    dayLengthHours,
     mildewRiskLevel: mildew.level,
     mildewShouldWarn: mildew.shouldWarn,
     mildewConsecutiveVeryHumidWarmDays: mildew.consecutiveVeryHumidWarmDays,
@@ -836,8 +1143,27 @@ async function evaluatePlantWatering(
       lastWaterSource: 'unknown',
       todayRainfall: 0,
       tomorrowRainfall: 0,
+      precipitationProbability: null,
+      tomorrowPrecipitationProbability: null,
+      forecastedToday: false,
+      forecastedTomorrow: false,
+      todayRainObserved: false,
+      recentRainfallTotalMm: 0,
+      hasSaturatingRecentRain: false,
       temperatureMax: null,
+      temperatureMin: null,
+      temperatureDay: null,
+      temperatureNight: null,
       humidity: null,
+      cloudCoverage: null,
+      dewPoint: null,
+      windSpeed: null,
+      windGust: null,
+      uvIndex: null,
+      weatherSummary: null,
+      sunrise: null,
+      sunset: null,
+      dayLengthHours: null,
       mildewRiskLevel: 'low',
       mildewShouldWarn: false,
       mildewConsecutiveVeryHumidWarmDays: 0,
@@ -848,17 +1174,42 @@ async function evaluatePlantWatering(
 
   const todayRainfall = getRainfall(todayWeather);
   const tomorrowRainfall = getRainfall(tomorrowWeather);
+  const precipitationProbability = getPrecipitationProbability(todayWeather);
+  const tomorrowPrecipitationProbability = getPrecipitationProbability(tomorrowWeather);
+  const forecastedToday = todayWeather.forecasted === true;
+  const forecastedTomorrow = tomorrowWeather?.forecasted === true;
   const todayRainObserved = isObservedWeatherForDate(todayWeather, todayKey);
   const hasObservedSignificantRainToday =
     todayRainObserved && todayRainfall >= options.rainfallThresholdMm;
+  const hasLikelySignificantRainTomorrow = hasLikelyRainAtOrAboveThreshold(
+    tomorrowRainfall,
+    options.rainfallThresholdMm,
+    forecastedTomorrow,
+    tomorrowPrecipitationProbability,
+  );
+  const hasLikelyHighConfidenceLightRainTomorrow =
+    tomorrowRainfall >= LIGHT_RAIN_THRESHOLD_MM
+    && forecastedTomorrow
+    && typeof tomorrowPrecipitationProbability === 'number'
+    && tomorrowPrecipitationProbability >= HIGH_POP_RAIN_DELAY_THRESHOLD;
   const recentRainfallTotalMm = getRecentRainfallTotal(range, today, RECENT_RAIN_WINDOW_DAYS);
   const hasSaturatingRecentRain =
     recentRainfallTotalMm >= RECENT_RAIN_ACCUMULATION_THRESHOLD_MM;
   const lightRainDelayDays = getLightRainDelayDays(range, today, options.rainfallThresholdMm);
   const temperatureMax = getTemperatureMax(todayWeather);
+  const temperatureMin = getDetailedTemp(todayWeather, 'min');
+  const temperatureDay = getDetailedTemp(todayWeather, 'day');
+  const temperatureNight = getDetailedTemp(todayWeather, 'night');
   const humidity = getHumidity(todayWeather);
   const windSpeed = getWindSpeed(todayWeather);
+  const windGust = getWindGust(todayWeather);
   const cloudCoverage = getCloudCoverage(todayWeather);
+  const dewPoint = getDewPoint(todayWeather);
+  const uvIndex = getUvIndex(todayWeather);
+  const weatherSummary = getWeatherSummary(todayWeather);
+  const sunrise = getSunrise(todayWeather);
+  const sunset = getSunset(todayWeather);
+  const dayLengthHours = getDayLengthHours(todayWeather);
 
   // Phase 5: inspect historical logs/weather to find the latest water source.
   const history = collectHistoricalSignals(
@@ -886,7 +1237,15 @@ async function evaluatePlantWatering(
     daysSinceLastWater = Math.max(daysSinceLastWater - lightRainDelayDays, 0);
   }
 
-  const climate = buildClimateFlags(temperatureMax, humidity, cloudCoverage, windSpeed);
+  const climate = buildClimateFlags(
+    temperatureMax,
+    humidity,
+    cloudCoverage,
+    windSpeed,
+    windGust,
+    uvIndex,
+    dayLengthHours,
+  );
   const thresholdDays = calculateThresholdDays(
     plant.environment,
     plant.growthStage,
@@ -894,11 +1253,12 @@ async function evaluatePlantWatering(
     plant.sunlightExposure,
     climate,
     tomorrowRainfall,
+    forecastedTomorrow,
+    tomorrowPrecipitationProbability,
     options.rainfallThresholdMm,
   );
 
-  const drynessRatio = daysSinceLastWater / thresholdDays;
-  let needsWater = drynessRatio >= 1;
+  let needsWater = daysSinceLastWater >= thresholdDays + DRYNESS_TRIGGER_GRACE_DAYS;
 
   // Rain today/tomorrow can suppress manual watering need.
   if (hasObservedSignificantRainToday || hasSaturatingRecentRain) {
@@ -907,7 +1267,14 @@ async function evaluatePlantWatering(
     daysSinceLastWater = 0;
   }
 
-  if (tomorrowRainfall >= options.rainfallThresholdMm && daysSinceLastWater < thresholdDays + 0.5) {
+  if (hasLikelySignificantRainTomorrow && daysSinceLastWater < thresholdDays + 0.5) {
+    needsWater = false;
+  }
+  if (
+    !hasLikelySignificantRainTomorrow
+    && hasLikelyHighConfidenceLightRainTomorrow
+    && daysSinceLastWater < thresholdDays + 0.25
+  ) {
     needsWater = false;
   }
 
@@ -932,6 +1299,8 @@ async function evaluatePlantWatering(
     todayRainfall,
     todayRainObserved,
     tomorrowRainfall,
+    forecastedTomorrow,
+    tomorrowPrecipitationProbability,
     recentRainfallTotalMm,
     recentRainfallThresholdMm: RECENT_RAIN_ACCUMULATION_THRESHOLD_MM,
     rainfallThresholdMm: options.rainfallThresholdMm,
@@ -952,8 +1321,27 @@ async function evaluatePlantWatering(
     lastWaterSource,
     todayRainfall: Number(todayRainfall.toFixed(2)),
     tomorrowRainfall: Number(tomorrowRainfall.toFixed(2)),
+    precipitationProbability,
+    tomorrowPrecipitationProbability,
+    forecastedToday,
+    forecastedTomorrow,
+    todayRainObserved,
+    recentRainfallTotalMm: Number(recentRainfallTotalMm.toFixed(2)),
+    hasSaturatingRecentRain,
     temperatureMax: temperatureMax ?? null,
+    temperatureMin,
+    temperatureDay,
+    temperatureNight,
     humidity,
+    cloudCoverage,
+    dewPoint,
+    windSpeed,
+    windGust,
+    uvIndex,
+    weatherSummary,
+    sunrise,
+    sunset,
+    dayLengthHours,
     mildewRiskLevel: mildew.level,
     mildewShouldWarn: mildew.shouldWarn,
     mildewConsecutiveVeryHumidWarmDays: mildew.consecutiveVeryHumidWarmDays,

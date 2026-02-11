@@ -1,125 +1,280 @@
 import { HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT } from '@/constants/Layout';
 import { Spacing } from '@/design-system/tokens/spacing';
 import logger from '@/lib/logger';
-import { evaluateWateringInsights, type PlantSummary, type WateringInsight } from '@/lib/suggestions/wateringSuggestions';
+import {
+  evaluateSuggestionCardsForPlant,
+  type SuggestionCard,
+} from '@/lib/suggestions/suggestionCards';
+import { type PlantSummary } from '@/lib/suggestions/wateringSuggestions';
 import { ThemedText } from '@/ui/ThemedText';
 import WeedGrowLogForm from '@/ui/WeedGrowLogForm';
 import WeedGrowLogTypeSheet from '@/ui/WeedGrowLogTypeSheet';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
-import { BackHandler, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import {
+  BackHandler,
+  FlatList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  StyleSheet,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import EditPlantModal from '../components/EditPlantModal';
 import LoadingView from '../components/LoadingView';
 import NotesSection from '../components/NotesSection';
 import NotFoundView from '../components/NotFoundView';
 import PlantHeader from '../components/PlantHeader';
 import WeeklyCalendar from '../components/WeeklyCalendar';
-import EditPlantModal from '../components/EditPlantModal';
 import { useCollapsingHeader } from '../hooks/useCollapsingHeader';
 import { useDailyLogs } from '../hooks/useDailyLogs';
 import { usePlant } from '../hooks/usePlant';
 import { useWateringHistory } from '../hooks/useWateringHistory';
 import { useWeeklyData } from '../hooks/useWeeklyData';
 
+type MaterialIconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+type InsightCardTone =
+  | 'needsWater'
+  | 'allGood'
+  | 'neutral'
+  | 'error'
+  | 'mildewWatch'
+  | 'mildewWarn';
+
+interface InsightCardData {
+  key: string;
+  headline: string;
+  reason: string;
+  iconName: MaterialIconName;
+  iconColor: string;
+  tone: InsightCardTone;
+}
+
 type WateringInsightSectionProps = {
   isLoading: boolean;
-  insight: WateringInsight | null;
+  cards: SuggestionCard[];
   error: string | null;
   isLocationMissing: boolean;
+  cardWidth: number;
 };
 
-function WateringInsightSection({
-  isLoading,
-  insight,
-  error,
-  isLocationMissing,
-}: WateringInsightSectionProps) {
+function buildFallbackCards(params: {
+  isLoading: boolean;
+  error: string | null;
+  isLocationMissing: boolean;
+}): InsightCardData[] {
+  const { isLoading, error, isLocationMissing } = params;
   if (isLoading) {
-    return (
-      <View style={[styles.wateringInsightCard, styles.wateringInsightNeutral]}>
-        <MaterialCommunityIcons
-          name="progress-clock"
-          size={22}
-          color="#2f6b3b"
-          style={styles.wateringInsightIcon}
-        />
-        <View style={styles.wateringInsightTextContainer}>
-          <ThemedText style={styles.wateringInsightHeadline}>Checking watering needs...</ThemedText>
-          <ThemedText style={styles.wateringInsightReason}>Hold on while we analyse the latest weather.</ThemedText>
-        </View>
-      </View>
-    );
-  }
-
-  if (insight) {
-    return (
-      <View
-        style={[
-          styles.wateringInsightCard,
-          insight.needsWater
-            ? styles.wateringInsightNeedsWater
-            : styles.wateringInsightAllGood,
-        ]}
-      >
-        <MaterialCommunityIcons
-          name={insight.needsWater ? 'water-alert' : 'water-check'}
-          size={22}
-          color={insight.needsWater ? '#a4432d' : '#2f6b3b'}
-          style={styles.wateringInsightIcon}
-        />
-        <View style={styles.wateringInsightTextContainer}>
-          <ThemedText style={styles.wateringInsightHeadline}>
-            {insight.needsWater
-              ? (insight.reason.includes("Yesterday's weather data unavailable")
-                ? "Yesterday's weather data unavailable - assuming no water was received... using current and forecast data only. Watering needed today."
-                : 'Watering needed today')
-              : (insight.reason.includes("Yesterday's weather data unavailable")
-                ? "Yesterday's weather data unavailable - assuming no water was received... using current and forecast data only. No watering needed today."
-                : 'No watering needed today')}
-          </ThemedText>
-          <ThemedText style={styles.wateringInsightReason}>
-            {insight.reason}
-          </ThemedText>
-        </View>
-      </View>
-    );
+    return [
+      {
+        key: 'loading',
+        iconName: 'progress-clock',
+        iconColor: '#2f6b3b',
+        headline: 'Checking watering needs...',
+        reason: 'Hold on while we analyse the latest weather.',
+        tone: 'neutral',
+      },
+    ];
   }
 
   if (error) {
-    return (
-      <View style={[styles.wateringInsightCard, styles.wateringInsightError]}>
-        <MaterialCommunityIcons
-          name="alert-circle-outline"
-          size={22}
-          color="#b9504b"
-          style={styles.wateringInsightIcon}
-        />
-        <View style={styles.wateringInsightTextContainer}>
-          <ThemedText style={styles.wateringInsightHeadline}>Couldn't fetch watering guidance</ThemedText>
-          <ThemedText style={styles.wateringInsightReason}>{error}</ThemedText>
-        </View>
-      </View>
-    );
+    return [
+      {
+        key: 'error',
+        iconName: 'alert-circle-outline',
+        iconColor: '#b9504b',
+        headline: "Couldn't fetch suggestions",
+        reason: error,
+        tone: 'error',
+      },
+    ];
   }
 
+  return [
+    {
+      key: 'unavailable',
+      iconName: isLocationMissing ? 'map-marker-alert-outline' : 'information-outline',
+      iconColor: '#4f6b5b',
+      headline: 'Suggestions unavailable',
+      reason: isLocationMissing
+        ? 'Add a location to this plant to enable weather-based suggestions.'
+        : 'No weather history yet. Suggestions will appear once data is available.',
+      tone: 'neutral',
+    },
+  ];
+}
+
+function mapSuggestionCardToUiCard(card: SuggestionCard): InsightCardData {
+  const detailText = card.reasons.slice(0, 2).join(' ');
+  const reasonText = detailText ? `${card.summary} ${detailText}` : card.summary;
+
+  if (card.kind === 'watering') {
+    const needsWater = card.metrics.needsWater === true;
+    return {
+      key: card.id,
+      headline: card.title,
+      reason: reasonText,
+      iconName: needsWater ? 'water-alert' : 'water-check',
+      iconColor: needsWater ? '#a4432d' : '#2f6b3b',
+      tone: needsWater ? 'needsWater' : 'allGood',
+    };
+  }
+
+  if (card.kind === 'powderyMildew') {
+    const isWarn = card.severity === 'warn' || card.severity === 'critical';
+    return {
+      key: card.id,
+      headline: card.title,
+      reason: reasonText,
+      iconName: 'leaf',
+      iconColor: isWarn ? '#9f3a33' : '#876415',
+      tone: isWarn ? 'mildewWarn' : 'mildewWatch',
+    };
+  }
+
+  const isWarn = card.severity === 'warn' || card.severity === 'critical';
+  return {
+    key: card.id,
+    headline: card.title,
+    reason: reasonText,
+    iconName: 'weather-pouring',
+    iconColor: isWarn ? '#9f3a33' : '#876415',
+    tone: isWarn ? 'mildewWarn' : 'mildewWatch',
+  };
+}
+
+function getCardToneStyle(tone: InsightCardTone): StyleProp<ViewStyle> {
+  switch (tone) {
+    case 'needsWater':
+      return styles.wateringInsightNeedsWater;
+    case 'allGood':
+      return styles.wateringInsightAllGood;
+    case 'error':
+      return styles.wateringInsightError;
+    case 'mildewWatch':
+      return styles.wateringInsightMildewWatch;
+    case 'mildewWarn':
+      return styles.wateringInsightMildewWarn;
+    default:
+      return styles.wateringInsightNeutral;
+  }
+}
+
+function InsightCard({
+  card,
+  style,
+}: {
+  card: InsightCardData;
+  style?: StyleProp<ViewStyle>;
+}) {
   return (
-    <View style={[styles.wateringInsightCard, styles.wateringInsightNeutral]}>
+    <View style={[styles.wateringInsightCard, getCardToneStyle(card.tone), style]}>
       <MaterialCommunityIcons
-        name={isLocationMissing ? 'map-marker-alert-outline' : 'information-outline'}
+        name={card.iconName}
         size={22}
-        color="#4f6b5b"
+        color={card.iconColor}
         style={styles.wateringInsightIcon}
       />
       <View style={styles.wateringInsightTextContainer}>
-        <ThemedText style={styles.wateringInsightHeadline}>Watering guidance unavailable</ThemedText>
-        <ThemedText style={styles.wateringInsightReason}>
-          {isLocationMissing
-            ? 'Add a location to this plant to enable weather-based watering advice.'
-            : 'No weather history yet. We will update this insight once data is available.'}
+        <ThemedText style={styles.wateringInsightHeadline}>{card.headline}</ThemedText>
+        <ThemedText style={styles.wateringInsightReason}>{card.reason}</ThemedText>
+      </View>
+    </View>
+  );
+}
+
+function WateringInsightSection({
+  isLoading,
+  cards,
+  error,
+  isLocationMissing,
+  cardWidth,
+}: WateringInsightSectionProps) {
+  const uiCards = React.useMemo(() => {
+    if (cards.length > 0) {
+      return cards.map((card) => mapSuggestionCardToUiCard(card));
+    }
+    return buildFallbackCards({ isLoading, error, isLocationMissing });
+  }, [cards, isLoading, error, isLocationMissing]);
+  const [activeCardIndex, setActiveCardIndex] = React.useState(0);
+  const cardsSignature = React.useMemo(
+    () => uiCards.map((card) => `${card.key}:${card.headline}`).join('|'),
+    [uiCards],
+  );
+  const pageSize = cardWidth + INSIGHT_CARD_GAP;
+
+  React.useEffect(() => {
+    setActiveCardIndex(0);
+  }, [cardsSignature]);
+
+  const handleMomentumEnd = React.useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (uiCards.length <= 1) return;
+      if (pageSize <= 0) return;
+
+      const offsetX = event.nativeEvent.contentOffset.x;
+      const rawIndex = Math.round(offsetX / pageSize);
+      const nextIndex = Math.max(0, Math.min(uiCards.length - 1, rawIndex));
+      setActiveCardIndex(nextIndex);
+    },
+    [uiCards.length, pageSize],
+  );
+
+  const suggestionCountText = `${uiCards.length} suggestion${uiCards.length === 1 ? '' : 's'}`;
+  const positionText = uiCards.length > 1 ? ` (${activeCardIndex + 1}/${uiCards.length})` : '';
+
+  return (
+    <View style={styles.wateringInsightSection}>
+      <View style={styles.wateringInsightMetaRow}>
+        <ThemedText style={styles.wateringInsightMetaLabel}>Suggestions</ThemedText>
+        <ThemedText style={styles.wateringInsightMetaCount}>
+          {`${suggestionCountText}${positionText}`}
         </ThemedText>
       </View>
+
+      {uiCards.length > 1 ? (
+        <>
+          <FlatList
+            data={uiCards}
+            keyExtractor={(item) => item.key}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={pageSize}
+            decelerationRate="fast"
+            disableIntervalMomentum
+            contentContainerStyle={styles.wateringInsightCarouselContent}
+            ItemSeparatorComponent={() => <View style={styles.wateringInsightCardSpacer} />}
+            onMomentumScrollEnd={handleMomentumEnd}
+            renderItem={({ item }) => (
+              <InsightCard
+                card={item}
+                style={{ width: cardWidth }}
+              />
+            )}
+          />
+          <View style={styles.wateringInsightPaginationRow}>
+            {uiCards.map((card, index) => (
+              <View
+                key={`${card.key}-dot`}
+                style={[
+                  styles.wateringInsightPaginationDot,
+                  index === activeCardIndex
+                    ? styles.wateringInsightPaginationDotActive
+                    : styles.wateringInsightPaginationDotInactive,
+                ]}
+              />
+            ))}
+          </View>
+        </>
+      ) : (
+        <InsightCard card={uiCards[0]} style={styles.wateringInsightSingleCard} />
+      )}
     </View>
   );
 }
@@ -127,7 +282,7 @@ function WateringInsightSection({
 export default function PlantDetailScreen() {
   const { id, fromGroupId } = useLocalSearchParams<{ id: string; fromGroupId?: string }>();
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   const router = useRouter();
   const screenBackgroundColor = '#0f1012';
   const normalizedFromGroupId = React.useMemo(
@@ -138,9 +293,11 @@ export default function PlantDetailScreen() {
   const { plant, loading } = usePlant(id);
   const { history } = useWateringHistory(plant, id);
   const { weekData, updateWeekData } = useWeeklyData(plant, history, id);
-  const [wateringInsight, setWateringInsight] = React.useState<WateringInsight | null>(null);
+  const [suggestionCards, setSuggestionCards] = React.useState<SuggestionCard[]>([]);
   const [isWateringInsightLoading, setIsWateringInsightLoading] = React.useState(false);
   const [wateringInsightError, setWateringInsightError] = React.useState<string | null>(null);
+  const [insightRefreshToken, setInsightRefreshToken] = React.useState(0);
+  const [insightDayKey, setInsightDayKey] = React.useState(() => getLocalDateString());
   const [isEditVisible, setEditVisible] = React.useState(false);
   const { expandedLogDate, setExpandedLogDate, dailyLogs, loadingLogs } = useDailyLogs(id);
   const isLocationAvailable =
@@ -155,19 +312,37 @@ export default function PlantDetailScreen() {
   const fabBottomOffset = insets.bottom + FAB_BOTTOM_MARGIN;
   const scrollContentPaddingBottom = fabBottomOffset + FAB_DIAMETER + FAB_CONTENT_SPACER;
   const scrollContentMinHeight = windowHeight + headerCollapseRange;
+  const insightCardWidth = React.useMemo(
+    () => Math.max(260, windowWidth - (SCREEN_SIDE_PADDING * 2)),
+    [windowWidth],
+  );
+  const bumpInsightRefresh = React.useCallback(() => {
+    setInsightRefreshToken((previous) => previous + 1);
+  }, []);
+
+  React.useEffect(() => {
+    const intervalId = setInterval(() => {
+      const nextDayKey = getLocalDateString();
+      setInsightDayKey((previousDayKey) => (
+        previousDayKey === nextDayKey ? previousDayKey : nextDayKey
+      ));
+    }, 60 * 1000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   React.useEffect(() => {
     let cancelled = false;
 
     if (!plant || !id) {
-      setWateringInsight(null);
+      setSuggestionCards([]);
       setWateringInsightError(null);
       setIsWateringInsightLoading(false);
       return;
     }
 
     if (!isLocationAvailable) {
-      setWateringInsight(null);
+      setSuggestionCards([]);
       setWateringInsightError(null);
       setIsWateringInsightLoading(false);
       return;
@@ -178,15 +353,15 @@ export default function PlantDetailScreen() {
       setWateringInsightError(null);
       try {
         const summary: PlantSummary = { ...plant, id: String(id) };
-        const [insight] = await evaluateWateringInsights([summary]);
+        const result = await evaluateSuggestionCardsForPlant(summary);
         if (!cancelled) {
-          setWateringInsight(insight ?? null);
+          setSuggestionCards(result?.cards ?? []);
         }
       } catch (error: unknown) {
-        logger.error('Failed to evaluate watering insight', error);
+        logger.error('Failed to evaluate plant suggestion cards', error);
         if (!cancelled) {
-          setWateringInsight(null);
-          setWateringInsightError('Unable to evaluate watering guidance right now.');
+          setSuggestionCards([]);
+          setWateringInsightError('Unable to evaluate suggestions right now.');
         }
       } finally {
         if (!cancelled) {
@@ -200,7 +375,7 @@ export default function PlantDetailScreen() {
     return () => {
       cancelled = true;
     };
-  }, [plant, id, isLocationAvailable]);
+  }, [plant, id, isLocationAvailable, weekData, insightRefreshToken, insightDayKey]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -219,6 +394,13 @@ export default function PlantDetailScreen() {
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
       return () => subscription.remove();
     }, [router, normalizedFromGroupId])
+  );
+
+  useFocusEffect(
+    React.useCallback(() => {
+      bumpInsightRefresh();
+      return undefined;
+    }, [bumpInsightRefresh])
   );
 
   const todayLocalDate = React.useMemo(() => {
@@ -308,9 +490,10 @@ export default function PlantDetailScreen() {
         <View style={styles.wateringInsightWrapper}>
           <WateringInsightSection
             isLoading={isWateringInsightLoading}
-            insight={wateringInsight}
+            cards={suggestionCards}
             error={wateringInsightError}
             isLocationMissing={isLocationMissing}
+            cardWidth={insightCardWidth}
           />
         </View>
 
@@ -381,11 +564,40 @@ const SECTION_TOP_MARGIN = Spacing.sm;
 const SECTION_TOP_MARGIN_LARGE = SECTION_TOP_MARGIN;
 const INSIGHT_TOP_MARGIN = Spacing.sm;
 const INSIGHT_BOTTOM_MARGIN = 0;
+const INSIGHT_CARD_GAP = Spacing.sm;
 
 const styles = StyleSheet.create({
   wateringInsightWrapper: {
     marginTop: INSIGHT_TOP_MARGIN,
     marginBottom: INSIGHT_BOTTOM_MARGIN,
+  },
+  wateringInsightSection: {
+    gap: Spacing.xs,
+  },
+  wateringInsightMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.xs,
+    paddingHorizontal: 2,
+  },
+  wateringInsightMetaLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    color: '#9eb1a8',
+    letterSpacing: 0.6,
+  },
+  wateringInsightMetaCount: {
+    fontSize: 12,
+    color: '#c8d6d0',
+    fontWeight: '600',
+  },
+  wateringInsightCarouselContent: {
+    paddingRight: INSIGHT_CARD_GAP,
+  },
+  wateringInsightCardSpacer: {
+    width: INSIGHT_CARD_GAP,
   },
   wateringInsightCard: {
     borderRadius: 20,
@@ -430,6 +642,37 @@ const styles = StyleSheet.create({
     backgroundColor: '#f2dddd',
     borderWidth: 1,
     borderColor: '#d9a1a1',
+  },
+  wateringInsightMildewWatch: {
+    backgroundColor: '#f7efde',
+    borderWidth: 1,
+    borderColor: '#d8bf79',
+  },
+  wateringInsightMildewWarn: {
+    backgroundColor: '#f3e1df',
+    borderWidth: 1,
+    borderColor: '#d79d9b',
+  },
+  wateringInsightSingleCard: {
+    width: '100%',
+  },
+  wateringInsightPaginationRow: {
+    marginTop: Spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  wateringInsightPaginationDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  wateringInsightPaginationDotActive: {
+    backgroundColor: '#8cc09d',
+  },
+  wateringInsightPaginationDotInactive: {
+    backgroundColor: '#56645d',
   },
   section: {
     marginTop: SECTION_TOP_MARGIN,
