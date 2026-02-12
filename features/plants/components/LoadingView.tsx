@@ -1,8 +1,8 @@
 import React from 'react';
-import { SafeAreaView } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
 import { Container } from '@/design-system/components';
 import { useTheme } from '@/design-system/utils/useTheme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoadingView() {
   const theme = useTheme();

@@ -302,10 +302,11 @@ export default function PlantDetailScreen() {
   const { expandedLogDate, setExpandedLogDate, dailyLogs, loadingLogs } = useDailyLogs(id);
   const isLocationAvailable =
     typeof plant?.location?.lat === 'number' && typeof plant?.location?.lng === 'number';
+  const expandedHeaderHeight = HEADER_MAX_HEIGHT + insets.top;
   const collapsedHeaderHeight = HEADER_MIN_HEIGHT + insets.top;
-  const headerCollapseRange = Math.max(0, HEADER_MAX_HEIGHT - collapsedHeaderHeight);
+  const headerCollapseRange = Math.max(0, expandedHeaderHeight - collapsedHeaderHeight);
   const { onScroll, animatedBgImageStyle, collapseProgress } = useCollapsingHeader(
-    HEADER_MAX_HEIGHT,
+    expandedHeaderHeight,
     collapsedHeaderHeight
   );
 
@@ -463,7 +464,7 @@ export default function PlantDetailScreen() {
       <Animated.View style={[animatedBgImageStyle, styles.headerOverlay]} pointerEvents="box-none">
         <PlantHeader
           imageUri={plant.imageUri}
-          height={HEADER_MAX_HEIGHT}
+          height={expandedHeaderHeight}
           name={plant.name}
           strain={plant.strain}
           stage={plant.growthStage}
@@ -476,8 +477,11 @@ export default function PlantDetailScreen() {
       {/* Main content */}
       <Animated.ScrollView
         style={styles.scroll}
+        contentInsetAdjustmentBehavior="never"
+        automaticallyAdjustContentInsets={false}
+        automaticallyAdjustsScrollIndicatorInsets={false}
         contentContainerStyle={{
-          paddingTop: HEADER_MAX_HEIGHT,
+          paddingTop: expandedHeaderHeight,
           paddingBottom: scrollContentPaddingBottom,
           paddingHorizontal: SCREEN_SIDE_PADDING,
           minHeight: scrollContentMinHeight,

@@ -9,7 +9,7 @@ export function useCollapsingHeader(
 
   const onScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
-      scrollY.value = Math.min(event.contentOffset.y, maxScroll);
+      scrollY.value = Math.max(0, Math.min(event.contentOffset.y, maxScroll));
     },
   });
 
