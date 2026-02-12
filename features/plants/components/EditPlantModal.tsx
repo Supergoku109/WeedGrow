@@ -51,6 +51,7 @@ const STAGE_OPTIONS = [
   { label: 'Seedling', value: 'seedling' },
   { label: 'Vegetative', value: 'vegetative' },
   { label: 'Flowering', value: 'flowering' },
+  { label: 'Clone', value: 'clone' },
 ];
 
 const ENVIRONMENT_OPTIONS = [

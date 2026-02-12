@@ -39,6 +39,7 @@ export const AnimatedMakikoDropdownInput = forwardRef<TextInput, AnimatedMakikoD
   const [focused, setFocused] = useState(false);
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [inputValue, setInputValue] = useState(value || '');
+  const [isFiltering, setIsFiltering] = useState(false);
 
   const labelAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
   const dropdownAnim = useRef(new Animated.Value(0)).current;
@@ -68,8 +69,10 @@ export const AnimatedMakikoDropdownInput = forwardRef<TextInput, AnimatedMakikoD
   }, [dropdownVisible, arrowAnim, dropdownAnim]);
 
   useEffect(() => {
-    setInputValue(value || '');
-  }, [value]);
+    const selected = options.find((opt) => opt.value === value);
+    setInputValue(selected?.label ?? value ?? '');
+    setIsFiltering(false);
+  }, [value, options]);
 
   // Android hardware back button handling for blur/close
   useEffect(() => {
@@ -117,11 +120,17 @@ export const AnimatedMakikoDropdownInput = forwardRef<TextInput, AnimatedMakikoD
     ],
   };
 
-  const filteredOptions = options.filter(opt =>
-    opt.label.toLowerCase().includes(inputValue.toLowerCase())
-  );
+  const normalizedInput = inputValue.trim().toLowerCase();
+  const filteredOptions = isFiltering
+    ? options.filter((opt) => opt.label.toLowerCase().includes(normalizedInput))
+    : options;
   const isCustomValue =
-    inputValue && !options.some(opt => opt.label.toLowerCase() === inputValue.toLowerCase());
+    normalizedInput.length > 0 &&
+    !options.some(
+      (opt) =>
+        opt.label.toLowerCase() === normalizedInput ||
+        opt.value.toLowerCase() === normalizedInput,
+    );
 
   return (
     <View style={[styles.container, style]}>
@@ -152,15 +161,18 @@ export const AnimatedMakikoDropdownInput = forwardRef<TextInput, AnimatedMakikoD
           onFocus={() => {
             setFocused(true);
             setDropdownVisible(true);
+            setIsFiltering(false);
             if (typeof onFocusInput === 'function') onFocusInput();
           }}
           onBlur={() => {
             setFocused(false);
             setDropdownVisible(false);
+            setIsFiltering(false);
           }}
           onChangeText={text => {
             setInputValue(text);
             setDropdownVisible(true);
+            setIsFiltering(true);
           }}
           placeholder={''}
           placeholderTextColor="#aaa"
@@ -169,12 +181,19 @@ export const AnimatedMakikoDropdownInput = forwardRef<TextInput, AnimatedMakikoD
             if (isCustomValue) {
               onSelect(inputValue);
               setDropdownVisible(false);
+              setIsFiltering(false);
             }
           }}
         />
         <TouchableOpacity
           style={styles.arrowTouchable}
-          onPress={() => setDropdownVisible(v => !v)}
+          onPress={() => {
+            setDropdownVisible((v) => {
+              const nextVisible = !v;
+              if (nextVisible) setIsFiltering(false);
+              return nextVisible;
+            });
+          }}
           activeOpacity={0.7}
         >
           <Animated.View style={arrowStyle}>
@@ -197,6 +216,7 @@ export const AnimatedMakikoDropdownInput = forwardRef<TextInput, AnimatedMakikoD
                   onSelect(item.value);
                   setDropdownVisible(false);
                   setInputValue(item.label);
+                  setIsFiltering(false);
                 }}
               >
                 <Text style={{ color: value === item.value ? '#fff' : '#fff', fontWeight: '600' }}>{item.label}</Text>
@@ -208,6 +228,7 @@ export const AnimatedMakikoDropdownInput = forwardRef<TextInput, AnimatedMakikoD
                 onPress={() => {
                   onSelect(inputValue);
                   setDropdownVisible(false);
+                  setIsFiltering(false);
                 }}
               >
                 <Text style={{ color: '#fff', fontWeight: '600' }}>
