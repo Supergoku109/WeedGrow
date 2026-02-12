@@ -455,7 +455,7 @@ export default function PlantDetailScreen() {
   if (!plant) return <NotFoundView />;
 
   const isLocationMissing = !isLocationAvailable;
-  const shouldShowWeeklyCalendar = plant.environment === 'outdoor' && weekData.length === 7;
+  const shouldShowWeeklyCalendar = plant.environment === 'outdoor' && weekData.length >= 7;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: screenBackgroundColor }} edges={['left', 'right']}>

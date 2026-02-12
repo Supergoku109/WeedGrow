@@ -25,14 +25,72 @@ interface WeeklyCalendarProps {
 export default function WeeklyCalendar(props: WeeklyCalendarProps) {
   const router = useRouter();
   const detailCardTopMargin = props.detailCardTopMargin ?? Spacing.sm;
+  const [rangeDays, setRangeDays] = React.useState<7 | 14>(7);
+  const expandedLogDate = props.expandedLogDate;
+  const setExpandedLogDate = props.setExpandedLogDate;
+  const getLogsForDate = props.getLogsForDate;
+  const todayDateKey = React.useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, []);
 
-  if (props.weekData.length !== 7) return null;
+  const hasFourteenDays = props.weekData.length >= 14;
+  const effectiveRangeDays = rangeDays === 14 && hasFourteenDays ? 14 : 7;
+  const todayIndex = React.useMemo(() => {
+    const index = props.weekData.findIndex(
+      (day) => day.isToday || day.date === todayDateKey,
+    );
+    if (index >= 0) return index;
+    return Math.max(0, props.weekData.length - 1);
+  }, [props.weekData, todayDateKey]);
+  const visibleDays = React.useMemo(() => {
+    if (props.weekData.length === 0) return [];
 
-  const selectedDay = props.expandedLogDate
-    ? props.weekData.find((d) => d.date === props.expandedLogDate)
+    const targetLength = Math.min(effectiveRangeDays, props.weekData.length);
+    const beforeCount = Math.floor(targetLength / 2);
+    const afterCount = targetLength - beforeCount - 1;
+    let startIndex = todayIndex - beforeCount;
+    let endIndex = todayIndex + afterCount;
+
+    if (startIndex < 0) {
+      endIndex = Math.min(props.weekData.length - 1, endIndex - startIndex);
+      startIndex = 0;
+    }
+
+    if (endIndex > props.weekData.length - 1) {
+      const overshoot = endIndex - (props.weekData.length - 1);
+      startIndex = Math.max(0, startIndex - overshoot);
+      endIndex = props.weekData.length - 1;
+    }
+
+    return props.weekData.slice(startIndex, endIndex + 1);
+  }, [props.weekData, effectiveRangeDays, todayIndex]);
+
+  React.useEffect(() => {
+    if (rangeDays === 14 && !hasFourteenDays) {
+      setRangeDays(7);
+    }
+  }, [rangeDays, hasFourteenDays]);
+
+  React.useEffect(() => {
+    if (!expandedLogDate) return;
+    if (visibleDays.some((d) => d.date === expandedLogDate)) return;
+    const fallback =
+      visibleDays.find((day) => day.isToday || day.date === todayDateKey)
+      ?? visibleDays[visibleDays.length - 1];
+    if (fallback) {
+      setExpandedLogDate(fallback.date);
+    }
+  }, [visibleDays, expandedLogDate, setExpandedLogDate, todayDateKey]);
+
+  const selectedDay = expandedLogDate
+    ? visibleDays.find((d) => d.date === expandedLogDate)
     : undefined;
 
-  const logsForDay = props.expandedLogDate ? props.getLogsForDate(props.expandedLogDate) : [];
+  const logsForDay = expandedLogDate ? getLogsForDate(expandedLogDate) : [];
   const safeLogs = props.loadingLogs ? [] : logsForDay;
   const logCount = safeLogs.length;
 
@@ -71,14 +129,16 @@ export default function WeeklyCalendar(props: WeeklyCalendarProps) {
     }
   };
 
+  if (props.weekData.length < 7) return null;
+
   return (
     <>
       <WeeklyPlantCalendarBar
-        weekData={props.weekData}
+        weekData={visibleDays}
         onLogWater={() => {}}  // actual handler wired from parent
-        expandedLogDate={props.expandedLogDate}
-        setExpandedLogDate={props.setExpandedLogDate}
-        getLogsForDate={props.getLogsForDate}
+        expandedLogDate={expandedLogDate}
+        setExpandedLogDate={setExpandedLogDate}
+        getLogsForDate={getLogsForDate}
         plantId={props.plantId}
         uploading={props.loadingLogs}
         onUpdateWeekData={(updater) => props.updateWeekData((prev) => updater([...prev]))}
@@ -86,6 +146,43 @@ export default function WeeklyCalendar(props: WeeklyCalendarProps) {
         onAddPicture={props.onAddPicture}
         locationLabel={props.locationLabel}
       />
+      <View style={styles.rangeToggleRow}>
+        <TouchableOpacity
+          style={[styles.rangeToggleButton, effectiveRangeDays === 7 && styles.rangeToggleButtonActive]}
+          onPress={() => setRangeDays(7)}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Show last 7 days"
+        >
+          <ThemedText style={[styles.rangeToggleLabel, effectiveRangeDays === 7 && styles.rangeToggleLabelActive]}>
+            7D
+          </ThemedText>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.rangeToggleButton,
+            effectiveRangeDays === 14 && styles.rangeToggleButtonActive,
+            !hasFourteenDays && styles.rangeToggleButtonDisabled,
+          ]}
+          onPress={() => {
+            if (hasFourteenDays) setRangeDays(14);
+          }}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Show last 14 days"
+          accessibilityState={{ disabled: !hasFourteenDays }}
+        >
+          <ThemedText
+            style={[
+              styles.rangeToggleLabel,
+              effectiveRangeDays === 14 && styles.rangeToggleLabelActive,
+              !hasFourteenDays && styles.rangeToggleLabelDisabled,
+            ]}
+          >
+            14D
+          </ThemedText>
+        </TouchableOpacity>
+      </View>
 
       {selectedDay ? (
         <View style={[styles.detailCard, { marginTop: detailCardTopMargin }]}>
@@ -118,7 +215,7 @@ export default function WeeklyCalendar(props: WeeklyCalendarProps) {
         </View>
       ) : null}
 
-      {props.expandedLogDate ? (
+      {expandedLogDate ? (
         <View style={styles.logsCard}>
           <View style={styles.logsHeader}>
             <ThemedText style={styles.logsTitle}>Logs ({logCount})</ThemedText>
@@ -168,6 +265,40 @@ export default function WeeklyCalendar(props: WeeklyCalendarProps) {
 }
 
 const styles = StyleSheet.create({
+  rangeToggleRow: {
+    marginTop: 2,
+    marginBottom: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  rangeToggleButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#2d3538',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: '#171b1e',
+  },
+  rangeToggleButtonActive: {
+    borderColor: '#84b895',
+    backgroundColor: '#264030',
+  },
+  rangeToggleButtonDisabled: {
+    opacity: 0.5,
+  },
+  rangeToggleLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#9ca5ab',
+    letterSpacing: 0.4,
+  },
+  rangeToggleLabelActive: {
+    color: '#d6efe0',
+  },
+  rangeToggleLabelDisabled: {
+    color: '#7f878c',
+  },
   detailCard: {
     marginBottom: 10,
     padding: 16,

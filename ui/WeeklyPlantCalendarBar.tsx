@@ -1,5 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, UIManager, Modal, Pressable, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Platform,
+  UIManager,
+  Modal,
+  Pressable,
+  Alert,
+  useWindowDimensions,
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ThemedText } from '@/ui/ThemedText';
 import WeedGrowLogTypeSheet, { LogType } from './WeedGrowLogTypeSheet';
@@ -38,7 +50,7 @@ interface WeeklyPlantCalendarBarProps {
   onLogWater: (date: string) => void;
   expandedLogDate?: string | null;
   setExpandedLogDate?: (date: string | null) => void;
-  getLogsForDate?: (date: string) => { type: string; description?: string; updatedBy?: string; timestamp?: any }[];
+  getLogsForDate?: (date: string) => PlantLog[];
   plantId?: string;
   onViewGallery?: () => void;
   onAddLog?: () => void;
@@ -52,8 +64,10 @@ export default function WeeklyPlantCalendarBar({
   weekData,
   expandedLogDate: controlledExpandedLogDate,
   setExpandedLogDate: setControlledExpandedLogDate,
+  getLogsForDate,
   onUpdateWeekData,
 }: WeeklyPlantCalendarBarProps) {
+  const { width: windowWidth } = useWindowDimensions();
   const [actionBubble, setActionBubble] = useState<{ visible: boolean; x: number; y: number; date: string | null }>({ visible: false, x: 0, y: 0, date: null });
   const [logTypeSheetVisible, setLogTypeSheetVisible] = useState(false);
   const [pendingLogDate, setPendingLogDate] = useState<string | null>(null);
@@ -67,6 +81,16 @@ export default function WeeklyPlantCalendarBar({
   const didInitDefault = React.useRef(false);
   const [scrollWidth, setScrollWidth] = useState(0);
   const [contentWidth, setContentWidth] = useState(0);
+  const selectedDay = React.useMemo(
+    () => weekData.find((day) => day.date === expandedLogDate) ?? null,
+    [weekData, expandedLogDate],
+  );
+  const selectedDayLogs = React.useMemo(
+    () => (selectedDay ? getLogsForDate?.(selectedDay.date) ?? [] : []),
+    [selectedDay, getLogsForDate],
+  );
+  const selectedDayWatered =
+    !!selectedDay && (selectedDay.watered || selectedDayLogs.some((log) => log.type === 'watering'));
 
   // Enable LayoutAnimation for Android (suppress warning in Fabric)
   React.useEffect(() => {
@@ -164,6 +188,10 @@ export default function WeeklyPlantCalendarBar({
     }
   }, [weekData, expandedLogDate, setExpandedLogDate, todayKey]);
 
+  const bubbleWidth = 176;
+  const bubbleLeft = Math.max(8, Math.min(actionBubble.x - bubbleWidth / 2, windowWidth - bubbleWidth - 8));
+  const bubbleTop = Math.max(12, actionBubble.y + 8);
+
   return (
     <><View style={{ flexDirection: 'column', paddingBottom: 8 }}>
 
@@ -177,15 +205,53 @@ export default function WeeklyPlantCalendarBar({
         onContentSizeChange={(width) => setContentWidth(width)}
       >
         {weekData.map((d) => {
+          const logsForDay = getLogsForDate?.(d.date) ?? [];
+          const isWatered = d.watered || logsForDay.some((log) => log.type === 'watering');
+          const isFed = !!d.fed || logsForDay.some((log) => log.type === 'fertilizing');
           const isToday = !!d.isToday;
           const isSelected = expandedLogDate === d.date;
-          const baseIconColor = isSelected ? '#24372a' : '#9aa3ab';
-          const wateredColor = d.watered ? (isSelected ? '#1f3628' : '#5fa3da') : baseIconColor;
-          const fedColor = d.fed ? (isSelected ? '#23412e' : '#6abf7f') : baseIconColor;
-          const weatherColor = isSelected ? '#24372a' : '#9aa3ab';
-          // Pick weather icon based on summary (simple mapping)
+          const baseIconColor = '#9aa3ab';
+          const wateredColor = isWatered ? '#62addf' : '#8c9399';
+          const fedColor = isFed ? '#6abf7f' : baseIconColor;
+          const wateringIconName = isWatered ? 'water-check' : 'water-off-outline';
+          let weatherSeverityLabel = 'mild';
+          let weatherBadgeColor = 'rgba(154,163,171,0.18)';
           let weatherIcon: any = 'weather-partly-cloudy';
-          if (d.weatherSummary) {
+          let weatherColor = '#9aa3ab';
+          const rain = typeof d.rain === 'number' && Number.isFinite(d.rain) ? d.rain : null;
+          const maxTemp = typeof d.maxTemp === 'number' && Number.isFinite(d.maxTemp) ? d.maxTemp : null;
+
+          if (rain != null && rain >= 10) {
+            weatherSeverityLabel = 'heavy rain';
+            weatherIcon = 'weather-pouring';
+            weatherColor = '#ec7f57';
+            weatherBadgeColor = 'rgba(236,127,87,0.20)';
+          } else if (rain != null && rain >= 4) {
+            weatherSeverityLabel = 'moderate rain';
+            weatherIcon = 'weather-rainy';
+            weatherColor = '#6fb6e4';
+            weatherBadgeColor = 'rgba(111,182,228,0.20)';
+          } else if (rain != null && rain > 0.2) {
+            weatherSeverityLabel = 'light rain';
+            weatherIcon = 'weather-partly-rainy';
+            weatherColor = '#84c0e6';
+            weatherBadgeColor = 'rgba(132,192,230,0.20)';
+          } else if (maxTemp != null && maxTemp >= 34) {
+            weatherSeverityLabel = 'high heat';
+            weatherIcon = 'white-balance-sunny';
+            weatherColor = '#f0ae52';
+            weatherBadgeColor = 'rgba(240,174,82,0.20)';
+          } else if (maxTemp != null && maxTemp >= 30) {
+            weatherSeverityLabel = 'warm';
+            weatherIcon = 'weather-sunny';
+            weatherColor = '#d1b36f';
+            weatherBadgeColor = 'rgba(209,179,111,0.20)';
+          } else if (typeof d.minTemp === 'number' && d.minTemp <= 2) {
+            weatherSeverityLabel = 'cold';
+            weatherIcon = 'snowflake';
+            weatherColor = '#8eb8df';
+            weatherBadgeColor = 'rgba(142,184,223,0.20)';
+          } else if (d.weatherSummary) {
             const sum = d.weatherSummary.toLowerCase();
             if (sum.includes('rain')) weatherIcon = 'weather-rainy';
             else if (sum.includes('cloud')) weatherIcon = 'weather-cloudy';
@@ -193,6 +259,11 @@ export default function WeeklyPlantCalendarBar({
             else if (sum.includes('storm')) weatherIcon = 'weather-lightning';
             else if (sum.includes('snow')) weatherIcon = 'weather-snowy';
           }
+
+          const weatherSummaryForA11y =
+            typeof d.weatherSummary === 'string' && d.weatherSummary.trim().length > 0
+              ? d.weatherSummary
+              : 'No weather summary';
           return (
             <TouchableOpacity
               key={d.date}
@@ -206,7 +277,9 @@ export default function WeeklyPlantCalendarBar({
                 centerOnDate(d.date, true);
               }}
               onLongPress={(e) => handleLongPress(d.date, e)}
-              accessibilityLabel={`Show weather details for ${d.day} ${d.dayNum}`}
+              accessibilityRole="button"
+              accessibilityLabel={`${d.day} ${d.dayNum}. ${isWatered ? 'Watered' : 'Not watered'}. Weather severity: ${weatherSeverityLabel}. ${weatherSummaryForA11y}.`}
+              accessibilityHint="Tap for details. Long-press to add a log."
               activeOpacity={0.8}
               onLayout={(event) => {
                 itemLayouts.current[d.date] = {
@@ -218,11 +291,12 @@ export default function WeeklyPlantCalendarBar({
                 }
               }}
             >
+              {isSelected ? <View style={styles.selectedIndicator} /> : <View style={styles.selectedIndicatorSpacer} />}
               <ThemedText style={[styles.day, isSelected && styles.daySelected]}>{d.day}</ThemedText>
               <ThemedText style={[styles.dayNum, isSelected && styles.dayNumSelected]}>{d.dayNum}</ThemedText>
               <View style={styles.iconRow}>
                 <MaterialCommunityIcons
-                  name="water"
+                  name={wateringIconName as any}
                   size={14}
                   color={wateredColor}
                 />
@@ -231,16 +305,30 @@ export default function WeeklyPlantCalendarBar({
                   size={14}
                   color={fedColor}
                 />
-                <MaterialCommunityIcons
-                  name={weatherIcon}
-                  size={14}
-                  color={weatherColor}
-                />
+                <View style={[styles.weatherIconBadge, { backgroundColor: weatherBadgeColor }]}>
+                  <MaterialCommunityIcons
+                    name={weatherIcon}
+                    size={14}
+                    color={weatherColor}
+                  />
+                </View>
               </View>
             </TouchableOpacity>
           );
         })}
       </ScrollView>
+      {selectedDay ? (
+        <View style={styles.selectedStatusRow}>
+          <MaterialCommunityIcons
+            name={selectedDayWatered ? 'water-check' : 'water-off-outline'}
+            size={15}
+            color={selectedDayWatered ? '#66b8ec' : '#97a1a9'}
+          />
+          <ThemedText style={styles.selectedStatusText}>
+            {selectedDayWatered ? 'Watered on selected day' : 'Not watered on selected day'}
+          </ThemedText>
+        </View>
+      ) : null}
       </View>
       <Modal
         visible={actionBubble.visible}
@@ -249,7 +337,7 @@ export default function WeeklyPlantCalendarBar({
         onRequestClose={handleCloseBubble}
       >
         <Pressable style={styles.bubbleOverlay} onPress={handleCloseBubble}>
-          <View style={[styles.bubble, { top: actionBubble.y + 8, left: actionBubble.x - 60 }]}> 
+          <View style={[styles.bubble, { top: bubbleTop, left: bubbleLeft, width: bubbleWidth }]}>
             <TouchableOpacity style={styles.bubbleAction} onPress={handleLogWaterPress}>
               <MaterialCommunityIcons name="water" color="#2563eb" size={20} />
               <Text style={styles.bubbleActionText}>Log Watering</Text>
@@ -337,15 +425,15 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     gap: 8,
-    paddingHorizontal: 2,
+    paddingHorizontal: 4,
   },
   card: {
-    width: 58,
-    height: 90,
+    width: 64,
+    height: 102,
     backgroundColor: '#1f2326',
     borderRadius: 16,
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 7,
     paddingHorizontal: 4,
     marginBottom: 2,
     borderWidth: 1,
@@ -360,14 +448,26 @@ const styles = StyleSheet.create({
     borderColor: '#4a5a53',
   },
   selectedCard: {
-    borderColor: '#b6d5b7',
-    borderWidth: 1,
-    backgroundColor: '#9dc79b',
+    borderColor: '#90d0a5',
+    borderWidth: 2,
+    backgroundColor: '#1f2326',
     shadowColor: '#7ea58a',
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
+    shadowOpacity: 0.24,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
-    elevation: Platform.OS === 'android' ? 3 : 1,
+    elevation: Platform.OS === 'android' ? 4 : 2,
+  },
+  selectedIndicator: {
+    width: 18,
+    height: 3,
+    borderRadius: 999,
+    backgroundColor: '#8fd3a5',
+    marginBottom: 4,
+  },
+  selectedIndicatorSpacer: {
+    width: 18,
+    height: 3,
+    marginBottom: 4,
   },
   day: {
     fontWeight: '700',
@@ -376,21 +476,40 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   daySelected: {
-    color: '#1f2d22',
+    color: '#dcf2e5',
   },
   dayNum: {
     fontWeight: '700',
-    fontSize: 17,
+    fontSize: 18,
     color: '#f0f3f5',
     marginBottom: 2,
   },
   dayNumSelected: {
-    color: '#1f2d22',
+    color: '#eefaf3',
   },
   iconRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
-    marginTop: 6,
+    marginTop: 7,
+  },
+  weatherIconBadge: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedStatusRow: {
+    marginTop: 8,
+    marginLeft: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  selectedStatusText: {
+    fontSize: 12,
+    color: '#b8c1c8',
   },
   bubbleOverlay: {
     flex: 1,

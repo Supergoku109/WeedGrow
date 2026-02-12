@@ -4,6 +4,17 @@ import { fetchLogsAndWeatherForRange } from '@/lib/logs/fetchLogsAndWeatherForRa
 import { WeeklyDayData } from '@/ui/WeeklyPlantCalendarBar';
 import { WateringHistoryEntry } from '@/lib/logs/fetchWateringHistory';
 
+const CALENDAR_WINDOW_DAYS = 14;
+const CALENDAR_PAST_DAYS = Math.floor(CALENDAR_WINDOW_DAYS / 2);
+const CALENDAR_FUTURE_DAYS = CALENDAR_WINDOW_DAYS - CALENDAR_PAST_DAYS - 1;
+
+function toLocalDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function useWeeklyData(plant: Plant | null, history: WateringHistoryEntry[], id?: string) {
   const [weekData, setWeekData] = useState<WeeklyDayData[]>([]);
 
@@ -12,21 +23,28 @@ export function useWeeklyData(plant: Plant | null, history: WateringHistoryEntry
 
     const fetchWeekData = async () => {
       const today = new Date();
-      const weekStart = new Date(today);
-      weekStart.setDate(today.getDate() - today.getDay());
-      const startDate = weekStart.toISOString().split('T')[0];
-      const endDate = new Date(weekStart);
-      endDate.setDate(weekStart.getDate() + 6);
-      const endDateStr = endDate.toISOString().split('T')[0];
+      const start = new Date(today);
+      start.setDate(today.getDate() - CALENDAR_PAST_DAYS);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(today);
+      end.setDate(today.getDate() + CALENDAR_FUTURE_DAYS);
+      end.setHours(23, 59, 59, 999);
+      const startDate = toLocalDateKey(start);
+      const endDateStr = toLocalDateKey(end);
 
       const logsAndWeather = await fetchLogsAndWeatherForRange(String(id), startDate, endDateStr);
 
       const days: WeeklyDayData[] = [];
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(weekStart);
-        d.setDate(weekStart.getDate() + i);
-        const dateStr = d.toISOString().split('T')[0];
+      for (let i = -CALENDAR_PAST_DAYS; i <= CALENDAR_FUTURE_DAYS; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        const dateStr = toLocalDateKey(d);
+        const logsForDay = logsAndWeather[dateStr]?.logs ?? [];
         const weather = logsAndWeather[dateStr]?.weather;
+        const wateredFromLogs = logsForDay.some((log) => log.type === 'watering');
+        const wateredFromHistory = history.some((entry) => entry.date === dateStr && entry.watered);
+        const fedFromLogs = logsForDay.some((log) => log.type === 'fertilizing');
+
         days.push({
           date: dateStr,
           day: d.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -35,7 +53,8 @@ export function useWeeklyData(plant: Plant | null, history: WateringHistoryEntry
           maxTemp: weather?.detailedTemps?.max ?? null,
           rain: weather?.rainfall ?? null,
           humidity: weather?.humidity ?? null,
-          watered: !!history.find(h => h.date === dateStr),
+          watered: wateredFromLogs || wateredFromHistory,
+          fed: fedFromLogs,
           isToday: d.toDateString() === today.toDateString(),
           plantId: String(id),
           weatherSummary: weather?.weatherSummary,
