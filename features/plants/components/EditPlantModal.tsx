@@ -1,11 +1,11 @@
 import React from 'react';
 import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as Location from 'expo-location';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import { Feather } from '@expo/vector-icons';
 import { ThemedText } from '@/ui/ThemedText';
-import { WeedGrowFormSection } from '@/ui/WeedGrowFormSection';
 import { AnimatedMakikoInput } from '@/components/ui/AnimatedMakikoInput';
 import { AnimatedMakikoDropdownInput } from '@/components/ui/AnimatedMakikoDropdownInput';
 import { getAvailableStrains } from '@/features/addPlant/api/basicInfoApi';
@@ -16,6 +16,7 @@ import type { Plant } from '@/firestoreModels';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ColorTokens, Typography } from '@/design-system/tokens';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { MapPicker } from '@/ui/MapPicker';
 
 type EditPlantFormState = {
   name: string;
@@ -25,6 +26,7 @@ type EditPlantFormState = {
   growthStage: string;
   environment: string;
   sunlightExposure: string;
+  locationNickname: string;
   lat: string;
   lng: string;
 };
@@ -57,6 +59,12 @@ const ENVIRONMENT_OPTIONS = [
   { label: 'Indoor', value: 'indoor' },
 ];
 
+const ENVIRONMENT_META: Record<string, { icon: string; color: string; label: string }> = {
+  outdoor: { icon: 'weather-sunny', color: ColorTokens.environment.outdoor, label: 'Outdoor' },
+  greenhouse: { icon: 'greenhouse', color: ColorTokens.environment.greenhouse, label: 'Greenhouse' },
+  indoor: { icon: 'home-city', color: ColorTokens.environment.indoor, label: 'Indoor' },
+};
+
 const emptyFormState: EditPlantFormState = {
   name: '',
   height: '',
@@ -65,9 +73,20 @@ const emptyFormState: EditPlantFormState = {
   growthStage: '',
   environment: '',
   sunlightExposure: '',
+  locationNickname: '',
   lat: '',
   lng: '',
 };
+
+function getEnvironmentMeta(environment: string) {
+  return (
+    ENVIRONMENT_META[environment] ?? {
+      icon: 'help-circle-outline',
+      color: ColorTokens.text.secondary,
+      label: environment ? environment.charAt(0).toUpperCase() + environment.slice(1) : 'Unknown',
+    }
+  );
+}
 
 export default function EditPlantModal({ visible, plant, plantId, onClose }: EditPlantModalProps) {
   const router = useRouter();
@@ -76,7 +95,28 @@ export default function EditPlantModal({ visible, plant, plantId, onClose }: Edi
   const [errors, setErrors] = React.useState<EditPlantFormErrors>({});
   const [saving, setSaving] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
+  const [locating, setLocating] = React.useState(false);
   const hydratedForId = React.useRef<string | null>(null);
+
+  const stageLabel = React.useMemo(
+    () => STAGE_OPTIONS.find((option) => option.value === form.growthStage)?.label ?? 'Not set',
+    [form.growthStage],
+  );
+  const environmentMeta = React.useMemo(() => getEnvironmentMeta(form.environment), [form.environment]);
+  const strainOptions = React.useMemo(
+    () => getAvailableStrains().map((option) => ({ label: option, value: option })),
+    [],
+  );
+
+  const mapLocation = React.useMemo(() => {
+    const lat = Number(form.lat);
+    const lng = Number(form.lng);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return undefined;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return undefined;
+
+    return { lat, lng };
+  }, [form.lat, form.lng]);
 
   React.useEffect(() => {
     if (!visible) {
@@ -92,6 +132,7 @@ export default function EditPlantModal({ visible, plant, plantId, onClose }: Edi
       growthStage: plant.growthStage ?? '',
       environment: plant.environment ?? '',
       sunlightExposure: plant.sunlightExposure ?? '',
+      locationNickname: plant.locationNickname ?? '',
       lat: typeof plant.location?.lat === 'number' ? String(plant.location.lat) : '',
       lng: typeof plant.location?.lng === 'number' ? String(plant.location.lng) : '',
     });
@@ -120,8 +161,14 @@ export default function EditPlantModal({ visible, plant, plantId, onClose }: Edi
   const validate = React.useCallback(() => {
     const nextErrors: EditPlantFormErrors = {};
     if (!form.name.trim()) nextErrors.name = 'Name is required.';
-    if (form.height.trim() && Number.isNaN(Number(form.height))) {
-      nextErrors.height = 'Height must be a number.';
+
+    if (form.height.trim()) {
+      const nextHeight = Number(form.height);
+      if (Number.isNaN(nextHeight)) {
+        nextErrors.height = 'Height must be a number.';
+      } else if (nextHeight < 0) {
+        nextErrors.height = 'Height cannot be negative.';
+      }
     }
 
     const latFilled = form.lat.trim().length > 0;
@@ -130,8 +177,18 @@ export default function EditPlantModal({ visible, plant, plantId, onClose }: Edi
       if (!latFilled || !lngFilled) {
         nextErrors.location = 'Enter both latitude and longitude.';
       } else {
-        if (Number.isNaN(Number(form.lat))) nextErrors.lat = 'Latitude must be a number.';
-        if (Number.isNaN(Number(form.lng))) nextErrors.lng = 'Longitude must be a number.';
+        const lat = Number(form.lat);
+        const lng = Number(form.lng);
+
+        if (Number.isNaN(lat)) nextErrors.lat = 'Latitude must be a number.';
+        if (Number.isNaN(lng)) nextErrors.lng = 'Longitude must be a number.';
+
+        if (!nextErrors.lat && (lat < -90 || lat > 90)) {
+          nextErrors.lat = 'Latitude must be between -90 and 90.';
+        }
+        if (!nextErrors.lng && (lng < -180 || lng > 180)) {
+          nextErrors.lng = 'Longitude must be between -180 and 180.';
+        }
       }
     }
 
@@ -166,12 +223,19 @@ export default function EditPlantModal({ visible, plant, plantId, onClose }: Edi
       updates.sunlightExposure = nextSunlight as any;
     }
 
+    const nextLocationNickname = form.locationNickname.trim() || null;
+    const currentLocationNickname = current.locationNickname?.trim() || null;
+    if (currentLocationNickname !== nextLocationNickname) {
+      updates.locationNickname = nextLocationNickname as any;
+    }
+
     const latFilled = form.lat.trim().length > 0;
     const lngFilled = form.lng.trim().length > 0;
     let nextLocation: Plant['location'] | null = null;
     if (latFilled && lngFilled) {
       nextLocation = { lat: Number(form.lat), lng: Number(form.lng) };
     }
+
     const currentLocation = current.location ?? null;
     const locationChanged =
       (!currentLocation && nextLocation) ||
@@ -179,6 +243,7 @@ export default function EditPlantModal({ visible, plant, plantId, onClose }: Edi
       (currentLocation &&
         nextLocation &&
         (currentLocation.lat !== nextLocation.lat || currentLocation.lng !== nextLocation.lng));
+
     if (locationChanged) updates.location = nextLocation as any;
 
     return updates;
@@ -233,9 +298,65 @@ export default function EditPlantModal({ visible, plant, plantId, onClose }: Edi
     ]);
   }, [plantId, deleting, router, onClose]);
 
+  const handleUseCurrentLocation = React.useCallback(async () => {
+    if (locating) return;
+    try {
+      setLocating(true);
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission denied', 'Location access is needed to auto-fill your position.');
+        return;
+      }
+
+      const lastKnown = await Location.getLastKnownPositionAsync();
+      const coords = lastKnown?.coords
+        ? lastKnown.coords
+        : (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })).coords;
+
+      setForm((prev) => ({
+        ...prev,
+        lat: coords.latitude.toFixed(6),
+        lng: coords.longitude.toFixed(6),
+      }));
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.lat;
+        delete next.lng;
+        delete next.location;
+        return next;
+      });
+    } catch (error) {
+      logger.error('Error fetching current location for plant edit', error);
+      Alert.alert('Location unavailable', 'Could not get your current location. Try moving the map pin manually.');
+    } finally {
+      setLocating(false);
+    }
+  }, [locating]);
+
+  const handleMapLocationChange = React.useCallback((coords: { lat: number; lng: number }) => {
+    setForm((prev) => ({
+      ...prev,
+      lat: coords.lat.toFixed(6),
+      lng: coords.lng.toFixed(6),
+    }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.lat;
+      delete next.lng;
+      delete next.location;
+      return next;
+    });
+  }, []);
+
+  const handleClearLocation = React.useCallback(() => {
+    setField('lat', '');
+    setField('lng', '');
+  }, [setField]);
+
   if (!visible) return null;
 
-  const saveDisabled = saving;
+  const saveDisabled = saving || deleting;
+  const cancelDisabled = saving || deleting || locating;
 
   return (
     <Modal
@@ -259,9 +380,14 @@ export default function EditPlantModal({ visible, plant, plantId, onClose }: Edi
           />
 
           <View style={styles.headerRow}>
-            <ThemedText type="title" style={styles.title} accessibilityRole="header">
-              Edit Plant
-            </ThemedText>
+            <View style={styles.titleWrap}>
+              <ThemedText type="subtitle" style={styles.title} accessibilityRole="header">
+                Edit Plant
+              </ThemedText>
+              <ThemedText style={styles.subtitle}>
+                Refine details, setup, and location.
+              </ThemedText>
+            </View>
             <Pressable
               onPress={onClose}
               style={styles.iconBtn}
@@ -272,104 +398,189 @@ export default function EditPlantModal({ visible, plant, plantId, onClose }: Edi
             </Pressable>
           </View>
 
+          <View style={styles.metaRow}>
+            <View style={[styles.metaPill, styles.metaPillStage]}>
+              <MaterialCommunityIcons name="sprout" size={14} color="#a7f3d0" />
+              <ThemedText style={[styles.metaText, styles.metaTextStage]}>{stageLabel}</ThemedText>
+            </View>
+            <View style={styles.metaPill}>
+              <MaterialCommunityIcons name={environmentMeta.icon} size={14} color={environmentMeta.color} />
+              <ThemedText style={[styles.metaText, { color: environmentMeta.color }]}>{environmentMeta.label}</ThemedText>
+            </View>
+          </View>
+
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <WeedGrowFormSection label="Basics" style={styles.section} labelStyle={styles.sectionLabel} spacing={16}>
-              <AnimatedMakikoInput
-                label="Plant Name"
-                iconClass={FontAwesomeIcon}
-                iconName="leaf"
-                iconColor="#4caf50"
-                value={form.name}
-                onChangeText={(val) => setField('name', val)}
-                inputStyle={styles.input}
-              />
-              {errors.name ? <ThemedText style={styles.errorText}>{errors.name}</ThemedText> : null}
+            <View style={[styles.sectionCard, theme === 'dark' ? styles.sectionCardDark : styles.sectionCardLight]}>
+              <View style={styles.sectionHead}>
+                <ThemedText style={styles.sectionTitle}>Essentials</ThemedText>
+                <ThemedText style={styles.sectionHint}>Core details used across your plant profile.</ThemedText>
+              </View>
 
-              <AnimatedMakikoInput
-                label="Height"
-                iconClass={MaterialCommunityIcons}
-                iconName="ruler"
-                iconColor="#4caf50"
-                value={form.height}
-                onChangeText={(val) => setField('height', val)}
-                keyboardType="numeric"
-                inputStyle={styles.input}
-              />
-              {errors.height ? <ThemedText style={styles.errorText}>{errors.height}</ThemedText> : null}
+              <View style={styles.row}>
+                <View style={styles.fieldWide}>
+                  <AnimatedMakikoInput
+                    label="Plant Name"
+                    iconClass={FontAwesomeIcon}
+                    iconName="leaf"
+                    iconColor={ColorTokens.brand.primary}
+                    value={form.name}
+                    onChangeText={(val) => setField('name', val)}
+                    inputStyle={styles.input}
+                    style={styles.tightInput}
+                  />
+                  {errors.name ? <ThemedText style={styles.errorText}>{errors.name}</ThemedText> : null}
+                </View>
+
+                <View style={styles.fieldCompact}>
+                  <AnimatedMakikoInput
+                    label="Height (cm)"
+                    iconClass={MaterialCommunityIcons}
+                    iconName="ruler"
+                    iconColor={ColorTokens.brand.primary}
+                    value={form.height}
+                    onChangeText={(val) => setField('height', val)}
+                    keyboardType="decimal-pad"
+                    inputStyle={styles.input}
+                    style={styles.tightInput}
+                  />
+                  {errors.height ? <ThemedText style={styles.errorText}>{errors.height}</ThemedText> : null}
+                </View>
+              </View>
 
               <AnimatedMakikoDropdownInput
                 label="Strain"
                 iconName="dna"
                 iconClass={MaterialCommunityIcons}
-                iconColor="#4caf50"
+                iconColor={ColorTokens.brand.primary}
                 value={form.strain}
-                options={getAvailableStrains().map((opt) => ({ label: opt, value: opt }))}
+                options={strainOptions}
                 onSelect={(val) => setField('strain', val)}
                 placeholder="Select strain"
+                style={styles.dropdownField}
               />
-            </WeedGrowFormSection>
+            </View>
 
-            <WeedGrowFormSection label="Setup" style={styles.section} labelStyle={styles.sectionLabel} spacing={16}>
+            <View style={[styles.sectionCard, theme === 'dark' ? styles.sectionCardDark : styles.sectionCardLight]}>
+              <View style={styles.sectionHead}>
+                <ThemedText style={styles.sectionTitle}>Setup</ThemedText>
+                <ThemedText style={styles.sectionHint}>Keep growth and environment options consistent.</ThemedText>
+              </View>
+
               <AnimatedMakikoDropdownInput
-                label="Stage"
+                label="Growth Stage"
                 iconName="sprout"
                 iconClass={MaterialCommunityIcons}
-                iconColor="#4caf50"
+                iconColor={ColorTokens.brand.primary}
                 value={form.growthStage}
                 options={STAGE_OPTIONS}
                 onSelect={(val) => setField('growthStage', val)}
                 placeholder="Select stage"
+                style={styles.dropdownField}
               />
               <AnimatedMakikoDropdownInput
                 label="Environment"
                 iconName="weather-partly-cloudy"
                 iconClass={MaterialCommunityIcons}
-                iconColor="#4caf50"
+                iconColor={ColorTokens.brand.primary}
                 value={form.environment}
                 options={ENVIRONMENT_OPTIONS}
                 onSelect={(val) => setField('environment', val)}
                 placeholder="Select environment"
+                style={styles.dropdownField}
               />
               <AnimatedMakikoDropdownInput
                 label="Pot Size"
                 iconName="flower-pot"
                 iconClass={MaterialCommunityIcons}
-                iconColor="#4caf50"
+                iconColor={ColorTokens.brand.primary}
                 value={form.potSize}
                 options={potSizeOptions.map((opt) => ({ label: opt, value: opt }))}
                 onSelect={(val) => setField('potSize', val)}
                 placeholder="Select pot size"
+                style={styles.dropdownField}
               />
               <AnimatedMakikoDropdownInput
                 label="Sunlight Exposure"
                 iconName="white-balance-sunny"
                 iconClass={MaterialCommunityIcons}
-                iconColor="#4caf50"
+                iconColor={ColorTokens.brand.primary}
                 value={form.sunlightExposure}
                 options={sunlightOptions.map((opt) => ({ label: opt.label, value: opt.value }))}
                 onSelect={(val) => setField('sunlightExposure', val)}
                 placeholder="Select sunlight"
               />
-            </WeedGrowFormSection>
+            </View>
 
-            <WeedGrowFormSection label="Location" style={styles.section} labelStyle={styles.sectionLabel} spacing={16}>
-              <View style={styles.locationRow}>
+            <View style={[styles.sectionCard, theme === 'dark' ? styles.sectionCardDark : styles.sectionCardLight]}>
+              <View style={styles.sectionHead}>
+                <ThemedText style={styles.sectionTitle}>Location</ThemedText>
+                <ThemedText style={styles.sectionHint}>Set nickname and pin location directly on the map.</ThemedText>
+              </View>
+
+              <View style={styles.locationActionRow}>
+                <Pressable
+                  onPress={handleUseCurrentLocation}
+                  style={({ pressed }) => [styles.locationActionBtn, pressed && styles.btnPressed]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Use current location"
+                  disabled={locating}
+                >
+                  {locating ? (
+                    <ActivityIndicator size="small" color="#d1fae5" style={{ marginRight: 8 }} />
+                  ) : (
+                    <MaterialCommunityIcons name="crosshairs-gps" size={16} color="#d1fae5" style={{ marginRight: 8 }} />
+                  )}
+                  <ThemedText style={styles.locationActionText}>
+                    {locating ? 'Locating...' : 'Use My Location'}
+                  </ThemedText>
+                </Pressable>
+
+                <Pressable
+                  onPress={handleClearLocation}
+                  style={({ pressed }) => [styles.clearLocationBtn, pressed && styles.btnPressed]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear location pin"
+                >
+                  <Feather name="x-circle" size={14} color="#cbd5e1" style={{ marginRight: 6 }} />
+                  <ThemedText style={styles.clearLocationText}>Clear Pin</ThemedText>
+                </Pressable>
+              </View>
+
+              <AnimatedMakikoInput
+                label="Location Name"
+                iconClass={MaterialCommunityIcons}
+                iconName="map-marker-outline"
+                iconColor={ColorTokens.brand.primary}
+                value={form.locationNickname}
+                onChangeText={(val) => setField('locationNickname', val)}
+                inputStyle={styles.input}
+                style={styles.tightInput}
+                autoCapitalize="words"
+                autoCorrect={false}
+              />
+
+              <View style={styles.mapWrap}>
+                <MapPicker location={mapLocation} onLocationChange={handleMapLocationChange} />
+              </View>
+              <ThemedText style={styles.mapHint}>Tap on the map to move your plant marker.</ThemedText>
+
+              <View style={styles.row}>
                 <View style={styles.locationField}>
                   <AnimatedMakikoInput
                     label="Latitude"
                     iconClass={MaterialCommunityIcons}
-                    iconName="map-marker"
-                    iconColor="#4caf50"
+                    iconName="latitude"
+                    iconColor={ColorTokens.brand.primary}
                     value={form.lat}
                     onChangeText={(val) => setField('lat', val)}
-                    keyboardType="numeric"
+                    keyboardType="numbers-and-punctuation"
                     inputStyle={styles.input}
-                    style={styles.inlineInput}
+                    style={styles.tightInput}
                   />
                   {errors.lat ? <ThemedText style={styles.errorText}>{errors.lat}</ThemedText> : null}
                 </View>
@@ -377,35 +588,21 @@ export default function EditPlantModal({ visible, plant, plantId, onClose }: Edi
                   <AnimatedMakikoInput
                     label="Longitude"
                     iconClass={MaterialCommunityIcons}
-                    iconName="map-marker-outline"
-                    iconColor="#4caf50"
+                    iconName="longitude"
+                    iconColor={ColorTokens.brand.primary}
                     value={form.lng}
                     onChangeText={(val) => setField('lng', val)}
-                    keyboardType="numeric"
+                    keyboardType="numbers-and-punctuation"
                     inputStyle={styles.input}
-                    style={styles.inlineInput}
+                    style={styles.tightInput}
                   />
                   {errors.lng ? <ThemedText style={styles.errorText}>{errors.lng}</ThemedText> : null}
                 </View>
               </View>
               {errors.location ? <ThemedText style={styles.errorText}>{errors.location}</ThemedText> : null}
-            </WeedGrowFormSection>
+            </View>
 
-            <View style={styles.buttonRow}>
-              <Pressable
-                onPress={onClose}
-                style={({ pressed }) => [
-                  styles.actionBtn,
-                  styles.cancelBtn,
-                  pressed && styles.btnPressed,
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Cancel editing plant"
-                disabled={saving}
-              >
-                <ThemedText style={styles.cancelText}>Cancel</ThemedText>
-              </Pressable>
-
+            <View style={styles.buttonStack}>
               <LinearGradient
                 colors={[ColorTokens.brand.primary, ColorTokens.brand.primaryDark]}
                 start={{ x: 0, y: 0 }}
@@ -427,40 +624,56 @@ export default function EditPlantModal({ visible, plant, plantId, onClose }: Edi
                   {saving ? (
                     <ActivityIndicator size="small" color="#ffffff" style={{ marginRight: 8 }} />
                   ) : (
-                    <MaterialCommunityIcons name="content-save" size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                    <MaterialCommunityIcons name="content-save-outline" size={18} color="#ffffff" style={{ marginRight: 8 }} />
                   )}
                   <ThemedText style={styles.saveText}>{saving ? 'Saving...' : 'Save Changes'}</ThemedText>
                 </Pressable>
               </LinearGradient>
-            </View>
 
-            <View style={styles.deleteRow}>
-              <LinearGradient
-                colors={['#ef4444', '#b91c1c']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.deleteGradient}
-              >
+              <View style={styles.secondaryButtonRow}>
                 <Pressable
-                  onPress={handleDelete}
+                  onPress={onClose}
                   style={({ pressed }) => [
                     styles.actionBtn,
-                    styles.deleteBtn,
-                    pressed && !deleting && styles.btnPressed,
-                    deleting && styles.btnDisabled,
+                    styles.cancelBtn,
+                    theme === 'dark' ? styles.cancelBtnDark : styles.cancelBtnLight,
+                    pressed && styles.btnPressed,
+                    cancelDisabled && styles.btnDisabled,
                   ]}
                   accessibilityRole="button"
-                  accessibilityLabel="Delete plant"
-                  disabled={deleting}
+                  accessibilityLabel="Cancel editing plant"
+                  disabled={cancelDisabled}
                 >
-                  {deleting ? (
-                    <ActivityIndicator size="small" color="#ffffff" style={{ marginRight: 8 }} />
-                  ) : (
-                    <MaterialCommunityIcons name="trash-can-outline" size={18} color="#ffffff" style={{ marginRight: 8 }} />
-                  )}
-                  <ThemedText style={styles.deleteText}>{deleting ? 'Deleting...' : 'Delete Plant'}</ThemedText>
+                  <ThemedText style={styles.cancelText}>Cancel</ThemedText>
                 </Pressable>
-              </LinearGradient>
+
+                <LinearGradient
+                  colors={['#ef4444', '#b91c1c']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.deleteGradient}
+                >
+                  <Pressable
+                    onPress={handleDelete}
+                    style={({ pressed }) => [
+                      styles.actionBtn,
+                      styles.deleteBtn,
+                      pressed && !deleting && styles.btnPressed,
+                      deleting && styles.btnDisabled,
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Delete plant"
+                    disabled={deleting}
+                  >
+                    {deleting ? (
+                      <ActivityIndicator size="small" color="#ffffff" style={{ marginRight: 8 }} />
+                    ) : (
+                      <MaterialCommunityIcons name="trash-can-outline" size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                    )}
+                    <ThemedText style={styles.deleteText}>{deleting ? 'Deleting...' : 'Delete Plant'}</ThemedText>
+                  </Pressable>
+                </LinearGradient>
+              </View>
             </View>
           </ScrollView>
         </LinearGradient>
@@ -475,51 +688,60 @@ const ThemeColorsBgEnd = 'rgba(20, 24, 31, 1)';
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: 'rgba(0,0,0,0.58)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
   },
   card: {
     width: '100%',
-    maxWidth: 640,
-    maxHeight: '92%',
-    borderRadius: 16,
-    padding: 16,
+    maxWidth: 760,
+    maxHeight: '94%',
+    borderRadius: 20,
+    padding: 18,
     overflow: 'hidden',
     borderWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.3,
     shadowRadius: 24,
-    elevation: 10,
+    elevation: 12,
   },
   cardDark: {
     backgroundColor: ColorTokens.background.card,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   cardLight: {
     backgroundColor: '#ffffff',
-    borderColor: 'rgba(0,0,0,0.06)',
+    borderColor: 'rgba(0,0,0,0.08)',
   },
   accent: {
     position: 'absolute',
-    top: -60,
-    right: -80,
-    width: 280,
+    top: -48,
+    right: -72,
+    width: 300,
     height: 220,
-    transform: [{ rotate: '20deg' }],
+    transform: [{ rotate: '18deg' }],
     borderRadius: 140,
   },
   headerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 12,
+  },
+  titleWrap: {
+    flex: 1,
+    paddingRight: 12,
   },
   title: {
     ...Typography.styles.h3,
     color: ColorTokens.text.primary,
+    marginBottom: 2,
+  },
+  subtitle: {
+    ...Typography.styles.bodySmall,
+    color: ColorTokens.text.secondary,
   },
   iconBtn: {
     padding: 6,
@@ -528,21 +750,87 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
   },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+    marginBottom: 14,
+  },
+  metaPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: 'rgba(59,130,246,0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(59,130,246,0.22)',
+  },
+  metaPillStage: {
+    backgroundColor: 'rgba(16,185,129,0.15)',
+    borderColor: 'rgba(16,185,129,0.25)',
+  },
+  metaText: {
+    ...Typography.styles.label,
+    color: '#dbeafe',
+  },
+  metaTextStage: {
+    color: '#d1fae5',
+  },
   scroll: {
     flexGrow: 0,
   },
   scrollContent: {
-    paddingBottom: 12,
-    gap: 16,
+    paddingBottom: 10,
+    gap: 14,
   },
-  section: {
-    marginTop: 0,
+  sectionCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+    gap: 12,
   },
-  sectionLabel: {
-    ...Typography.styles.label,
+  sectionCardDark: {
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  sectionCardLight: {
+    backgroundColor: 'rgba(17,24,39,0.03)',
+    borderColor: 'rgba(17,24,39,0.08)',
+  },
+  sectionHead: {
+    marginBottom: 2,
+  },
+  sectionTitle: {
+    ...Typography.styles.h4,
+    color: ColorTokens.text.primary,
+  },
+  sectionHint: {
+    ...Typography.styles.caption,
     color: ColorTokens.text.secondary,
-    marginBottom: 12,
-    marginLeft: 2,
+    marginTop: 1,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  fieldWide: {
+    flex: 1,
+  },
+  fieldCompact: {
+    width: 132,
+  },
+  locationField: {
+    flex: 1,
+    minWidth: 130,
+  },
+  tightInput: {
+    marginBottom: 0,
+  },
+  dropdownField: {
+    marginBottom: 2,
   },
   input: {
     color: '#fff',
@@ -556,45 +844,73 @@ const styles = StyleSheet.create({
   errorText: {
     color: ColorTokens.status.error,
     fontSize: 12,
-    marginTop: -8,
+    marginTop: 6,
   },
-  locationRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  locationField: {
-    flex: 1,
-  },
-  inlineInput: {
-    marginBottom: 0,
-  },
-  buttonRow: {
+  locationActionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginTop: 4,
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  locationActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(16,185,129,0.28)',
+    backgroundColor: 'rgba(16,185,129,0.16)',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  locationActionText: {
+    ...Typography.styles.label,
+    color: '#d1fae5',
+  },
+  clearLocationBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.28)',
+    backgroundColor: 'rgba(148,163,184,0.12)',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  clearLocationText: {
+    ...Typography.styles.label,
+    color: '#cbd5e1',
+  },
+  mapWrap: {
+    alignItems: 'center',
+  },
+  mapHint: {
+    ...Typography.styles.caption,
+    color: ColorTokens.text.secondary,
+    marginTop: -2,
+    marginBottom: 2,
+  },
+  buttonStack: {
+    gap: 10,
+    marginTop: 2,
+  },
+  secondaryButtonRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  saveGradient: {
+    borderRadius: 12,
+  },
+  deleteGradient: {
+    flex: 1,
+    borderRadius: 12,
   },
   actionBtn: {
-    flex: 1,
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-  },
-  cancelBtn: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1,
-  },
-  cancelText: {
-    color: ColorTokens.text.primary,
-    fontWeight: '700',
-  },
-  saveGradient: {
-    flex: 1,
-    borderRadius: 12,
   },
   saveBtn: {
     backgroundColor: 'transparent',
@@ -603,12 +919,21 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '700',
   },
-  deleteRow: {
-    marginTop: 12,
-  },
-  deleteGradient: {
+  cancelBtn: {
     flex: 1,
-    borderRadius: 12,
+    borderWidth: 1,
+  },
+  cancelBtnDark: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  cancelBtnLight: {
+    backgroundColor: 'rgba(17,24,39,0.06)',
+    borderColor: 'rgba(17,24,39,0.12)',
+  },
+  cancelText: {
+    color: ColorTokens.text.primary,
+    fontWeight: '700',
   },
   deleteBtn: {
     backgroundColor: 'transparent',
@@ -618,7 +943,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   btnPressed: {
-    opacity: 0.8,
+    opacity: 0.82,
   },
   btnDisabled: {
     opacity: 0.6,
