@@ -3,7 +3,7 @@
 // It allows the user to set the plant's physical location using a map and nickname, and optionally use device geolocation.
 
 import React, { memo, useCallback } from 'react'
-import { ScrollView, StyleSheet } from 'react-native'
+import { Platform, ScrollView, StyleSheet } from 'react-native'
 import { Button } from 'react-native-paper'
 import { ThemedText } from '@/ui/ThemedText'
 import { WeedGrowCard } from '@/ui/WeedGrowCard'
@@ -29,6 +29,10 @@ interface LocationFormProps {
 export const LocationForm = memo(function LocationForm({ form, logic, next, back }: LocationFormProps) {
   const handleLocationNicknameChange = useCallback((val: string) => logic.setField('locationNickname', val), [logic])
   const handleMapLocationChange = useCallback((coords: any) => logic.setField('location', coords), [logic])
+  const mapHint =
+    Platform.OS === 'web'
+      ? 'Use My Location or enter coordinates manually for the web preview'
+      : 'Tap the map to adjust your plant location'
 
   return (
     <WeedGrowCard style={styles.card}>
@@ -75,7 +79,7 @@ export const LocationForm = memo(function LocationForm({ form, logic, next, back
               onLocationChange={handleMapLocationChange}
             />
             <ThemedText style={styles.mapHint}>
-              Tap the map to adjust your plant location
+              {mapHint}
             </ThemedText>
           </WeedGrowFormSection>
 

@@ -1,4 +1,8 @@
-import type { PlantSummary, WateringInsight } from './wateringSuggestions';
+import {
+  evaluateWateringInsights,
+  type PlantSummary,
+  type WateringInsight,
+} from './wateringSuggestions';
 import type { SuggestionAlgorithmContext, SuggestionCard, SuggestionKind, SuggestionSeverity } from './types';
 import { evaluatePowderyMildewAlgorithm } from './algorithms/powderyMildewAlgorithm';
 import { evaluateRootRotAlgorithm } from './algorithms/rootRotAlgorithm';
@@ -61,7 +65,6 @@ export async function evaluateSuggestionCardsForPlants(
   plants: PlantSummary[],
   options?: SuggestionEvalOptions,
 ): Promise<PlantSuggestionResult[]> {
-  const { evaluateWateringInsights } = await import('./wateringSuggestions');
   const insights = await evaluateWateringInsights(plants, options);
   return insights.map((insight) => ({
     plantId: insight.plantId,

@@ -1,0 +1,107 @@
+env: load .env
+env: export FIREBASE_API_KEY FIREBASE_AUTH_DOMAIN FIREBASE_PROJECT_ID FIREBASE_STORAGE_BUCKET FIREBASE_MESSAGING_SENDER_ID FIREBASE_APP_ID FIREBASE_MEASUREMENT_ID OPENWEATHERMAP_API_KEY FIRESTORE_EMULATOR_HOST FIREBASE_AUTH_EMULATOR_HOST
+Starting project at c:\Users\Zane\dev\WeedGrow
+Metro is running in CI mode, reloads are disabled. Remove CI=true to enable watch mode.
+Starting Metro Bundler
+The following packages should be updated for best compatibility with the installed expo version:
+  @expo/vector-icons@15.0.2 - expected version: ^15.0.3
+  expo@54.0.10 - expected version: ~54.0.33
+  expo-blur@15.0.7 - expected version: ~15.0.8
+  expo-camera@17.0.8 - expected version: ~17.0.10
+  expo-constants@18.0.9 - expected version: ~18.0.13
+  expo-font@14.0.8 - expected version: ~14.0.11
+  expo-haptics@15.0.7 - expected version: ~15.0.8
+  expo-image@3.0.8 - expected version: ~3.0.11
+  expo-image-picker@17.0.8 - expected version: ~17.0.10
+  expo-linear-gradient@15.0.7 - expected version: ~15.0.8
+  expo-linking@8.0.8 - expected version: ~8.0.11
+  expo-location@19.0.7 - expected version: ~19.0.8
+  expo-router@6.0.8 - expected version: ~6.0.23
+  expo-splash-screen@31.0.10 - expected version: ~31.0.13
+  expo-status-bar@3.0.8 - expected version: ~3.0.9
+  expo-symbols@1.0.7 - expected version: ~1.0.8
+  expo-system-ui@6.0.7 - expected version: ~6.0.9
+  expo-web-browser@15.0.7 - expected version: ~15.0.10
+  react-native@0.81.4 - expected version: 0.81.5
+  @types/jest@30.0.0 - expected version: 29.5.14
+Your project may not work correctly until you install the expected versions of the packages.
+Waiting on http://localhost:8082
+Logs for your project will appear below.
+Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 78.7% (1242/1400)
+λ node_modules\expo-router\node\render.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 80.9% (1406/1576)
+Web Bundled 3347ms node_modules\expo-router\entry.js (2084 modules)
+λ Bundled 3968ms node_modules\expo-router\node\render.js (2210 modules)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents 
+  console.warn (c:\Users\Zane\dev\WeedGrow\node_modules\expo\node_modules\@expo\cli\src\start\server\serverLogLikeMetro.ts:160:21)
+  warnOnce (c:\Users\Zane\dev\WeedGrow\node_modules\react-native-web\dist\modules\warnOnce\index.js:24:13)
+  createDOMProps (c:\Users\Zane\dev\WeedGrow\node_modules\react-native-web\dist\modules\createDOMProps\index.js:805:13)
+  createElement (c:\Users\Zane\dev\WeedGrow\node_modules\react-native-web\dist\exports\createElement\index.js:23:32)
+  Component (c:\Users\Zane\dev\WeedGrow\node_modules\react-native-web\dist\exports\View\index.js:111:23)
+  Object.callComponentInDEV [as react-stack-bottom-frame] (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:8970:18)
+  renderWithHooks (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:4699:19)
+  run (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5539:39)
+  retryNode (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5899:31)
+  renderNodeDestructive (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5849:11)
+Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 48.0% ( 716/1035)
+| Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+|   npx update-browserslist-db@latest
+|   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 85.6% (1750/1891)
+Web Bundled 7547ms node_modules\expo-router\entry.js (2086 modules)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 55ms node_modules\expo-router\node\render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents 
+  console.warn (c:\Users\Zane\dev\WeedGrow\node_modules\expo\node_modules\@expo\cli\src\start\server\serverLogLikeMetro.ts:160:21)
+  warnOnce (c:\Users\Zane\dev\WeedGrow\node_modules\react-native-web\dist\modules\warnOnce\index.js:24:13)
+  createDOMProps (c:\Users\Zane\dev\WeedGrow\node_modules\react-native-web\dist\modules\createDOMProps\index.js:805:13)
+  createElement (c:\Users\Zane\dev\WeedGrow\node_modules\react-native-web\dist\exports\createElement\index.js:23:32)
+  Component (c:\Users\Zane\dev\WeedGrow\node_modules\react-native-web\dist\exports\View\index.js:111:23)
+  Object.callComponentInDEV [as react-stack-bottom-frame] (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:8970:18)
+  renderWithHooks (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:4699:19)
+  run (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5539:39)
+  retryNode (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5899:31)
+  renderNodeDestructive (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5849:11)
+Web Bundled 709ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 61ms node_modules\expo-router\entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 38ms node_modules\expo-router\node\render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents 
+  console.warn (c:\Users\Zane\dev\WeedGrow\node_modules\expo\node_modules\@expo\cli\src\start\server\serverLogLikeMetro.ts:160:21)
+  warnOnce (c:\Users\Zane\dev\WeedGrow\node_modules\react-native-web\dist\modules\warnOnce\index.js:24:13)
+  createDOMProps (c:\Users\Zane\dev\WeedGrow\node_modules\react-native-web\dist\modules\createDOMProps\index.js:805:13)
+  createElement (c:\Users\Zane\dev\WeedGrow\node_modules\react-native-web\dist\exports\createElement\index.js:23:32)
+  Component (c:\Users\Zane\dev\WeedGrow\node_modules\react-native-web\dist\exports\View\index.js:111:23)
+  Object.callComponentInDEV [as react-stack-bottom-frame] (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:8970:18)
+  renderWithHooks (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:4699:19)
+  run (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5539:39)
+  retryNode (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5899:31)
+  renderNodeDestructive (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5849:11)
+Web Bundled 671ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 57ms node_modules\expo-router\entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 58ms node_modules\expo-router\node\render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents 
+  console.warn (c:\Users\Zane\dev\WeedGrow\node_modules\expo\node_modules\@expo\cli\src\start\server\serverLogLikeMetro.ts:160:21)
+  warnOnce (c:\Users\Zane\dev\WeedGrow\node_modules\react-native-web\dist\modules\warnOnce\index.js:24:13)
+  createDOMProps (c:\Users\Zane\dev\WeedGrow\node_modules\react-native-web\dist\modules\createDOMProps\index.js:805:13)
+  createElement (c:\Users\Zane\dev\WeedGrow\node_modules\react-native-web\dist\exports\createElement\index.js:23:32)
+  Component (c:\Users\Zane\dev\WeedGrow\node_modules\react-native-web\dist\exports\View\index.js:111:23)
+  Object.callComponentInDEV [as react-stack-bottom-frame] (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:8970:18)
+  renderWithHooks (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:4699:19)
+  run (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5539:39)
+  retryNode (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5899:31)
+  renderNodeDestructive (c:\Users\Zane\dev\WeedGrow\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5849:11)
+Web Bundled 747ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 53ms node_modules\expo-router\entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
