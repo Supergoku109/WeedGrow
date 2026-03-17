@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ThemedText } from '@/ui/ThemedText';
 import Animated, { useAnimatedStyle, interpolate, Extrapolate } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
+import { getRenderablePlantImageUri } from '@/lib/plants/plantImages';
 
 interface PlantHeaderProps {
   imageUri?: string;
@@ -33,6 +34,7 @@ export default function PlantHeader({
   topInset = 0,
 }: PlantHeaderProps) {
   const progress = collapseProgress ?? ({ value: 0 } as SharedValue<number>);
+  const renderableImageUri = getRenderablePlantImageUri(imageUri);
   const AnimatedImageBackground = React.useMemo(
     () => Animated.createAnimatedComponent(ImageBackground),
     []
@@ -91,9 +93,9 @@ export default function PlantHeader({
 
   return (
     <View style={[styles.container, { height }]}>
-      {imageUri ? (
+      {renderableImageUri ? (
         <AnimatedImageBackground
-          source={{ uri: imageUri }}
+          source={{ uri: renderableImageUri }}
           style={[styles.image, imageFadeStyle]}
           resizeMode="cover"
         >

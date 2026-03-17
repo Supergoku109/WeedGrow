@@ -4,6 +4,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { PlantItem } from '../api/fetchPlants';
 import GroupLocationSelector from './GroupLocationSelector';
+import { getRenderablePlantImageUri } from '@/lib/plants/plantImages';
 
 interface PlantSelectionProps {
   plants: PlantItem[];
@@ -28,6 +29,7 @@ export const PlantSelection: React.FC<PlantSelectionProps> = ({ plants, selected
     <ScrollView contentContainerStyle={styles.container}>
       {plants.map((plant) => {
         const isSelected = selectedPlantIds.includes(plant.id);
+        const imageUri = getRenderablePlantImageUri(plant.imageUri);
         // Prefer enforced environment if provided, else lock based on first selected plant
         const selectedEnv = allowedEnvironment ?? (selectedPlantIds.length > 0
           ? plants.find(p => p.id === selectedPlantIds[0])?.environment
@@ -53,8 +55,8 @@ export const PlantSelection: React.FC<PlantSelectionProps> = ({ plants, selected
             ]}
             disabled={isDisabled}
           >
-            {plant.imageUri ? (
-              <Image source={{ uri: plant.imageUri }} style={styles.image} />
+            {imageUri ? (
+              <Image source={{ uri: imageUri }} style={styles.image} />
             ) : (
               <View style={[styles.image, { backgroundColor: '#ccc', alignItems: 'center', justifyContent: 'center' }]}> 
                 <Text style={{ fontSize: 32, color: '#fff' }}>{plant.name?.[0] || '?'}</Text>

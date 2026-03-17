@@ -74,7 +74,7 @@ const PotSizeSection = memo(function PotSizeSection({ form, logic }: { form: Pla
     <WeedGrowFormSection style={styles.section}>
       <AnimatedMakikoDropdownInput
         label="Pot Size"
-        iconName="flower-pot"
+        iconName="flower-outline"
         iconClass={MaterialCommunityIcons}
         iconColor="#4caf50"
         value={form.potSize || ''}

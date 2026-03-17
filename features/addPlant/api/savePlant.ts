@@ -1,11 +1,12 @@
 // /features/plants/add/api/savePlant.ts
 
-import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, Timestamp, updateDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 import { MILLISECONDS_PER_DAY } from '@/constants/Time';
 import { fetchWeather } from '@/lib/weather/fetchWeather';
 import { parseWeatherData } from '@/lib/weather/parseWeatherData';
 import { updateWeatherCache } from '@/lib/weather/updateFirestore';
+import { shouldUploadPlantImageUri, uploadPlantImageUri } from '@/lib/plants/plantImages';
 import { invalidatePlantCache } from '@/features/plants/hooks/usePlantList';
 import type { PlantForm } from '@/features/plants/form/PlantForm';
 
@@ -36,6 +37,18 @@ export async function savePlantToFirestore(form: PlantForm) {
     createdAt,
     updatedAt: serverTimestamp(),
   });
+
+  if (shouldUploadPlantImageUri(form.imageUri)) {
+    try {
+      const uploadedImageUri = await uploadPlantImageUri(plantRef.id, form.imageUri!);
+      await updateDoc(plantRef, {
+        imageUri: uploadedImageUri,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.warn('Could not upload plant cover image:', err);
+    }
+  }
 
   if (form.location?.lat && form.location?.lng) {
     try {

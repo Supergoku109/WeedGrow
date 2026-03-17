@@ -496,7 +496,7 @@ export default function EditPlantModal({ visible, plant, plantId, onClose }: Edi
               />
               <AnimatedMakikoDropdownInput
                 label="Pot Size"
-                iconName="flower-pot"
+                iconName="flower-outline"
                 iconClass={MaterialCommunityIcons}
                 iconColor={ColorTokens.brand.primary}
                 value={form.potSize}
@@ -568,7 +568,9 @@ export default function EditPlantModal({ visible, plant, plantId, onClose }: Edi
               <View style={styles.mapWrap}>
                 <MapPicker location={mapLocation} onLocationChange={handleMapLocationChange} />
               </View>
-              <ThemedText style={styles.mapHint}>Tap on the map to move your plant marker.</ThemedText>
+              <ThemedText style={styles.mapHint}>
+                Use the map or coordinates to move your plant marker.
+              </ThemedText>
 
               <View style={styles.row}>
                 <View style={styles.locationField}>

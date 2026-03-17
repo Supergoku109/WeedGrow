@@ -22,6 +22,7 @@ import { waterAllPlantsInGroup } from '@/features/groups/api/groupApi';
 import { useGroupWeather } from '@/features/groups/hooks/useGroupWeather';
 import { ThemedView } from '@/ui/ThemedView';
 import { usePlantsWateredToday } from '@/features/plants/hooks/usePlantsWateredToday';
+import { getRenderablePlantImageUri } from '@/lib/plants/plantImages';
 
 export interface GroupCardProps {
   group: Group & { id: string };
@@ -234,12 +235,13 @@ const GroupCard = React.memo(function GroupCard({
               {/* <View style={styles.clusterRing} /> */}
               <View style={styles.avatarsRow}>
                 {avatars.map((p, idx) => {
+                  const imageUri = getRenderablePlantImageUri(p.imageUri);
                   const style = [
                     styles.avatar,
                     idx > 0 && { marginLeft: -AVATAR_OVERLAP },
                   ];
-                  return p.imageUri ? (
-                    <Image key={p.id} source={{ uri: p.imageUri }} style={style as unknown as any} />
+                  return imageUri ? (
+                    <Image key={p.id} source={{ uri: imageUri }} style={style as unknown as any} />
                   ) : (
                     <View key={p.id} style={[styles.avatarPlaceholder, idx > 0 && { marginLeft: -AVATAR_OVERLAP }]} />
                   );

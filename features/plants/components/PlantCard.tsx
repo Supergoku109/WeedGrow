@@ -7,6 +7,7 @@ import { Plant } from '@/firestoreModels';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { WeedGrowEnvBadge } from '@/ui/WeedGrowEnvBadge';
 import { ThemedView } from '@/ui/ThemedView';
+import { getRenderablePlantImageUri } from '@/lib/plants/plantImages';
 
 export interface PlantCardProps {
   plant: Plant & { id: string };
@@ -43,6 +44,7 @@ export function PlantCard({ plant, onAddLog, wateredToday = false, waterLoading 
   }, [opacityAnim, scaleAnim]);
 
   const env = (plant as any).environment ?? 'indoor';
+  const imageUri = getRenderablePlantImageUri((plant as any).imageUri);
 
   const isWatered = wateredToday;
 
@@ -62,8 +64,8 @@ export function PlantCard({ plant, onAddLog, wateredToday = false, waterLoading 
         <ThemedView style={[styles.card, { flexDirection: 'row', alignItems: 'stretch', minHeight: 90 }]}> 
           {/* Left: Image, fixed width */}
           <View style={[styles.leftSection, { alignItems: 'flex-start', paddingLeft: 8 }]}> 
-            {(plant as any).imageUri ? (
-              <Image source={{ uri: (plant as any).imageUri }} style={styles.imageSmall} />
+            {imageUri ? (
+              <Image source={{ uri: imageUri }} style={styles.imageSmall} />
             ) : (
               <View style={styles.imageSmallPlaceholder}>
                 <MaterialCommunityIcons name="leaf" size={36} color="#00c853" />

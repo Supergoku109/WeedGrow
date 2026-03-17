@@ -32,7 +32,7 @@ export const LocationForm = memo(function LocationForm({ form, logic, next, back
   const mapHint =
     Platform.OS === 'web'
       ? 'Use My Location or enter coordinates manually for the web preview'
-      : 'Tap the map to adjust your plant location'
+      : 'Use the map or coordinates to adjust your plant location'
 
   return (
     <WeedGrowCard style={styles.card}>

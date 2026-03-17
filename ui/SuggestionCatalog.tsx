@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, FlatList, Dimensions } from 'react-native';
+import { FlatList, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Text, Container } from '@/design-system';
 import { ColorTokens, Spacing, BorderRadius } from '@/design-system/tokens';
 import GradientOverlay from './GradientOverlay';
@@ -17,7 +17,8 @@ interface SuggestionCatalogProps {
   suggestions: Suggestion[];
 }
 
-const CARD_WIDTH = Math.min(Dimensions.get('window').width - 32, 340);
+const HORIZONTAL_GUTTER = 12;
+const CARD_GAP = Spacing.sm;
 
 // Color codes for suggestion types
 const SUGGESTION_COLORS = {
@@ -38,6 +39,55 @@ const getCardColor = (suggestion: Suggestion) => {
 };
 
 export function SuggestionCatalog({ suggestions }: SuggestionCatalogProps) {
+  const { width } = useWindowDimensions();
+  const cardWidth = Math.max(width - HORIZONTAL_GUTTER * 2, 0);
+
+  const renderCard = (item: Suggestion) => (
+    <Container
+      style={[
+        styles.card,
+        {
+          width: cardWidth,
+          backgroundColor: getCardColor(item),
+          overflow: 'hidden',
+        },
+      ]}
+    >
+      <GradientOverlay color={getCardColor(item)} />
+      <Container direction="row" align="center" style={{ marginBottom: Spacing.xs }}>
+        <Text style={styles.icon}>{item.icon}</Text>
+        <Text style={styles.title}>{item.title}</Text>
+      </Container>
+      {item.description && (
+        <Text style={styles.description}>{item.description}</Text>
+      )}
+      <Container
+        direction="row"
+        align="center"
+        style={{ marginTop: Spacing.xs, flexWrap: 'wrap' }}
+      >
+        <Text style={styles.affectedName}>
+          {item.affected.slice(0, 3).join(', ')}
+        </Text>
+        {item.affected.length > 3 && item.onExpand && (
+          <TouchableOpacity onPress={item.onExpand}>
+            <Text style={styles.expandText}>+{item.affected.length - 3} more</Text>
+          </TouchableOpacity>
+        )}
+      </Container>
+    </Container>
+  );
+
+  if (suggestions.length === 1) {
+    return (
+      <Container style={styles.catalogContainer}>
+        <View style={styles.singleCardContainer}>
+          {renderCard(suggestions[0])}
+        </View>
+      </Container>
+    );
+  }
+
   return (
     <Container style={styles.catalogContainer}>
       <FlatList
@@ -45,44 +95,12 @@ export function SuggestionCatalog({ suggestions }: SuggestionCatalogProps) {
         keyExtractor={s => s.key}
         horizontal
         showsHorizontalScrollIndicator={false}
-        snapToInterval={CARD_WIDTH + Spacing.sm}
+        snapToAlignment="start"
+        snapToInterval={cardWidth + CARD_GAP}
         decelerationRate="fast"
-        contentContainerStyle={{ paddingHorizontal: Spacing.xs }}
-        renderItem={({ item }) => (
-          <Container 
-            style={[
-              styles.card, 
-              { 
-                width: CARD_WIDTH, 
-                backgroundColor: getCardColor(item),
-                overflow: 'hidden'
-              }
-            ]}
-          > 
-            <GradientOverlay color={getCardColor(item)} />
-            <Container direction="row" align="center" style={{ marginBottom: Spacing.xs }}>
-              <Text style={styles.icon}>{item.icon}</Text>
-              <Text style={styles.title}>{item.title}</Text>
-            </Container>
-            {item.description && (
-              <Text style={styles.description}>{item.description}</Text>
-            )}
-            <Container 
-              direction="row" 
-              align="center" 
-              style={{ marginTop: Spacing.xs, flexWrap: 'wrap' }}
-            >
-              <Text style={styles.affectedName}>
-                {item.affected.slice(0, 3).join(', ')}
-              </Text>
-              {item.affected.length > 3 && item.onExpand && (
-                <TouchableOpacity onPress={item.onExpand}>
-                  <Text style={styles.expandText}>+{item.affected.length - 3} more</Text>
-                </TouchableOpacity>
-              )}
-            </Container>
-          </Container>
-        )}
+        contentContainerStyle={styles.listContent}
+        ItemSeparatorComponent={() => <View style={styles.listSeparator} />}
+        renderItem={({ item }) => renderCard(item)}
       />
     </Container>
   );
@@ -102,18 +120,25 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
-    marginHorizontal: Spacing.xs,
-    alignSelf: 'center',
   },
   icon: {
     fontSize: 22,
     marginRight: Spacing.xs,
+  },
+  listContent: {
+    paddingHorizontal: HORIZONTAL_GUTTER,
+  },
+  listSeparator: {
+    width: CARD_GAP,
   },
   title: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
     flex: 1,
+  },
+  singleCardContainer: {
+    paddingHorizontal: HORIZONTAL_GUTTER,
   },
   description: {
     color: '#b5e0c7',

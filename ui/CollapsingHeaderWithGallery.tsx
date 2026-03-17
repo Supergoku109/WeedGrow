@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Image } from 'react-native';
 import Animated, { useAnimatedStyle, interpolate, Extrapolate } from 'react-native-reanimated';
+import { getRenderablePlantImageUri } from '@/lib/plants/plantImages';
 
 interface CollapsingHeaderWithGalleryProps {
   plantId: string;
@@ -18,6 +19,7 @@ export default function CollapsingHeaderWithGallery({
   scrollY,
   children,
 }: CollapsingHeaderWithGalleryProps) {
+  const renderableImageUri = getRenderablePlantImageUri(plantImageUri);
   const animatedBgImageStyle = useAnimatedStyle(() => {
     const height = interpolate(
       scrollY.value,
@@ -39,8 +41,8 @@ export default function CollapsingHeaderWithGallery({
   return (
     <View style={{ flex: 1 }}>
       <Animated.View style={animatedBgImageStyle}>
-        {plantImageUri ? (
-          <Image source={{ uri: plantImageUri }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+        {renderableImageUri ? (
+          <Image source={{ uri: renderableImageUri }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
         ) : (
           <View style={{ width: '100%', height: '100%', backgroundColor: '#e5e7eb' }} />
         )}

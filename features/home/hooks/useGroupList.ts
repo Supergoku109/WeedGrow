@@ -9,6 +9,7 @@ import type { Plant } from '@/firestoreModels';
 import { Alert } from 'react-native';
 import { PlantWithId } from '../../groups/hooks/useGroupDetail';
 import logger from '@/lib/logger';
+import { migrateStoredPlantImageIfNeeded } from '@/lib/plants/plantImages';
 
 // TODO: Replace with actual authentication user ID
 const CURRENT_USER_ID = 'demoUser';
@@ -68,6 +69,25 @@ export function useGroupList() {
         ...(d.data() as Plant) 
       }));
       setAllPlants(plantsData);
+
+      void Promise.all(
+        plantsData.map(async (plant) => {
+          const imageUri = await migrateStoredPlantImageIfNeeded(plant.id, plant.imageUri);
+          return imageUri ? { plantId: plant.id, imageUri } : null;
+        })
+      ).then((results) => {
+        const migrations = results.filter(
+          (result): result is { plantId: string; imageUri: string } => result !== null
+        );
+        if (!migrations.length) return;
+
+        setAllPlants((currentPlants) =>
+          currentPlants.map((plant) => {
+            const migration = migrations.find((entry) => entry.plantId === plant.id);
+            return migration ? { ...plant, imageUri: migration.imageUri } : plant;
+          })
+        );
+      });
     } catch (error) {
       logger.error('Error fetching plants:', error);
       // Non-critical error, don't show alert

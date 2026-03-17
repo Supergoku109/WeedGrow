@@ -6,6 +6,7 @@ import { PlantAdviceContext } from '@/lib/weather/getPlantAdvice';
 import { collection, getDocs, query } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 import { fetchPlantWeatherContext } from '@/lib/weather/fetchPlantWeatherContext';
+import { migrateStoredPlantImageIfNeeded } from '@/lib/plants/plantImages';
 
 interface PlantItem extends Plant {
   id: string;
@@ -47,12 +48,45 @@ export function usePlantList() {
   const [weatherMap, setWeatherMap] = useState<Record<string, PlantAdviceContext | undefined>>(globalPlantCache.weatherMap);
 
   useEffect(() => {
+    const syncMigratedImages = (migrations: { plantId: string; imageUri: string }[]) => {
+      if (!migrations.length) return;
+
+      setPlants((prev) =>
+        prev.map((plant) => {
+          const migration = migrations.find((entry) => entry.plantId === plant.id);
+          return migration ? { ...plant, imageUri: migration.imageUri } : plant;
+        })
+      );
+
+      if (globalPlantCache.plants) {
+        globalPlantCache.plants = globalPlantCache.plants.map((plant) => {
+          const migration = migrations.find((entry) => entry.plantId === plant.id);
+          return migration ? { ...plant, imageUri: migration.imageUri } : plant;
+        });
+      }
+    };
+
+    const queueImageMigrations = (items: PlantItem[]) => {
+      void Promise.all(
+        items.map(async (plant) => {
+          const imageUri = await migrateStoredPlantImageIfNeeded(plant.id, plant.imageUri);
+          return imageUri ? { plantId: plant.id, imageUri } : null;
+        })
+      ).then((results) => {
+        const migrations = results.filter(
+          (result): result is { plantId: string; imageUri: string } => result !== null
+        );
+        syncMigratedImages(migrations);
+      });
+    };
+
     // If we already have cached data, use it immediately and don't show loading
     if (globalPlantCache.plants) {
       console.log('Using cached plants data');
       setPlants(globalPlantCache.plants);
       setWeatherMap(globalPlantCache.weatherMap);
       setLoading(false);
+      queueImageMigrations(globalPlantCache.plants);
       return;
     }
 
@@ -85,6 +119,7 @@ export function usePlantList() {
         console.log('Fetched plants:', items);
         setPlants(items);
         globalPlantCache.plants = items;
+        queueImageMigrations(items);
 
         const weatherResults = await Promise.all(
           items.map(async (p) => {

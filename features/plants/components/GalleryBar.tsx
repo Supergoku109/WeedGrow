@@ -3,6 +3,7 @@ import { Image, FlatList } from 'react-native';
 import { Plant } from '@/firestoreModels';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import { getRenderablePlantImageUri } from '@/lib/plants/plantImages';
 
 interface GalleryBarProps {
   plant: Plant;
@@ -13,9 +14,11 @@ export default function GalleryBar({ plant, progressPics }: GalleryBarProps) {
   const theme = (useColorScheme() ?? 'dark') as keyof typeof Colors;
 
   const galleryImages = [
-    plant?.imageUri,
-    ...progressPics.filter((url) => url && url !== plant?.imageUri),
-  ].filter(Boolean);
+    getRenderablePlantImageUri(plant?.imageUri),
+    ...progressPics
+      .map((url) => getRenderablePlantImageUri(url))
+      .filter((url) => url && url !== getRenderablePlantImageUri(plant?.imageUri)),
+  ].filter((url): url is string => Boolean(url));
 
   return (
     <FlatList

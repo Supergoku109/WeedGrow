@@ -26,7 +26,6 @@ import {
 } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import EditPlantModal from '../components/EditPlantModal';
 import LoadingView from '../components/LoadingView';
 import NotesSection from '../components/NotesSection';
 import NotFoundView from '../components/NotFoundView';
@@ -298,7 +297,6 @@ export default function PlantDetailScreen() {
   const [wateringInsightError, setWateringInsightError] = React.useState<string | null>(null);
   const [insightRefreshToken, setInsightRefreshToken] = React.useState(0);
   const [insightDayKey, setInsightDayKey] = React.useState(() => getLocalDateString());
-  const [isEditVisible, setEditVisible] = React.useState(false);
   const { expandedLogDate, setExpandedLogDate, dailyLogs, loadingLogs } = useDailyLogs(id);
   const isLocationAvailable =
     typeof plant?.location?.lat === 'number' && typeof plant?.location?.lng === 'number';
@@ -449,8 +447,8 @@ export default function PlantDetailScreen() {
 
   const handleEditPlant = React.useCallback(() => {
     if (!id) return;
-    setEditVisible(true);
-  }, [id]);
+    router.push({ pathname: '/plant/[id]/edit', params: { id: String(id) } });
+  }, [id, router]);
 
   if (loading) return <LoadingView />;
   if (!plant) return <NotFoundView />;
@@ -539,13 +537,6 @@ export default function PlantDetailScreen() {
         logType={selectedLogType || 'notes'}
         onSubmit={handleLogFormSubmit}
         onCancel={handleLogFormCancel}
-      />
-
-      <EditPlantModal
-        visible={isEditVisible}
-        plant={plant}
-        plantId={String(id)}
-        onClose={() => setEditVisible(false)}
       />
 
       <TouchableOpacity
